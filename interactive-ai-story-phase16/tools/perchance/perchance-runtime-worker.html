@@ -1,0 +1,188 @@
+<!--
+Paste this block ONCE into the Perchance generator HTML, immediately after
+[generateInterfaceHTML(settings)]. Do not keep older mailbox/worker blocks.
+The page never fetches localhost; Violentmonkey owns localhost transport.
+-->
+<div id="go-perchance-mailbox" hidden>
+  <div id="go-perchance-job-mailbox"></div>
+  <div id="go-perchance-result-mailbox"></div>
+</div>
+<script>
+(() => {
+  const DIGITAL_PAINTING_PROMPT = [
+    "cinematic digital illustration",
+    "detailed painterly rendering",
+    "controlled bold shading",
+    "physically coherent global illumination",
+    "expressive faces and readable body language",
+    "natural anatomy and realistic hands",
+    "integrated atmospheric background",
+    "strong composition and clear depth",
+    "sharp focal subject",
+    "rich but balanced color"
+  ].join(", ");
+  const DIGITAL_PAINTING_NEGATIVE = [
+    "low quality",
+    "jpeg artifacts",
+    "deformed anatomy",
+    "malformed hands",
+    "extra limbs",
+    "flat lighting",
+    "cluttered composition",
+    "signature",
+    "watermark",
+    "text"
+  ].join(", ");
+
+  const jobBox = document.getElementById("go-perchance-job-mailbox");
+  const resultBox = document.getElementById("go-perchance-result-mailbox");
+  let activeId = null;
+  let lastCompletedId = null;
+  let lastCompletedResult = null;
+
+  const statusBox = document.createElement("div");
+  Object.assign(statusBox.style, {
+    position: "fixed",
+    left: "12px",
+    bottom: "12px",
+    zIndex: "2147483647",
+    padding: "10px 12px",
+    maxWidth: "440px",
+    borderRadius: "8px",
+    border: "1px solid rgba(124,252,152,.45)",
+    background: "rgba(10,10,12,.94)",
+    color: "#7CFC98",
+    font: "12px monospace",
+    whiteSpace: "pre-wrap",
+    pointerEvents: "none"
+  });
+  document.documentElement.appendChild(statusBox);
+
+  function setStatus(text) {
+    statusBox.textContent = "PERCHANCE RUNTIME\n" + text;
+    console.log("[perchance-runtime]", text);
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("FileReader failed"));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function joinPromptParts(...parts) {
+    return parts
+      .map(value => String(value || "").trim().replace(/^,+|,+$/g, "").trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function generationOptions(job) {
+    const allowedResolutions = new Set(["768x768", "512x768", "768x512"]);
+    const requestedResolution = String(job.resolution || `${job.width || ""}x${job.height || ""}`);
+    const options = {
+      prompt: joinPromptParts(job.prompt, job.stylePrompt || DIGITAL_PAINTING_PROMPT),
+      negativePrompt: joinPromptParts(job.negative, job.styleNegativePrompt || DIGITAL_PAINTING_NEGATIVE),
+      resolution: allowedResolutions.has(requestedResolution) ? requestedResolution : "768x768"
+    };
+
+    const guidanceScale = Number(job.guidanceScale);
+    if (Number.isFinite(guidanceScale) && guidanceScale >= 1 && guidanceScale <= 30) {
+      options.guidanceScale = guidanceScale;
+    }
+    if (job.seed !== undefined && job.seed !== null && String(job.seed).trim() !== "") {
+      const seed = Number(job.seed);
+      if (Number.isSafeInteger(seed) && seed >= 0) options.seed = seed;
+    }
+    return options;
+  }
+
+  async function dataUrlOf(value) {
+    if (value instanceof Blob) return blobToDataURL(value);
+    if (value?.blob instanceof Blob) return blobToDataURL(value.blob);
+
+    const candidate = value?.dataUrl ?? value?.dataURL ?? value?.url ?? value?.value ?? value;
+    if (typeof candidate !== "string") throw new Error("Unsupported generateImage() result");
+    if (candidate.startsWith("data:image/")) return candidate;
+
+    if (candidate.startsWith("blob:") || candidate.startsWith("https://") || candidate.startsWith("http://")) {
+      const response = await fetch(candidate);
+      if (!response.ok) throw new Error(`Could not fetch generated image: HTTP ${response.status}`);
+      const blob = await response.blob();
+      if (!String(blob.type || "").startsWith("image/")) throw new Error("Generated URL did not return an image");
+      return blobToDataURL(blob);
+    }
+
+    throw new Error("Perchance returned an unsupported image result");
+  }
+
+  function publishResult(value) {
+    const serialized = JSON.stringify(value);
+    resultBox.textContent = serialized;
+    resultBox.dataset.version = String(Date.now());
+
+  }
+
+  async function run(job) {
+    if (!job || !job.id || activeId) return;
+    if (!String(job.prompt || "").trim()) return;
+
+    if (String(job.id) === String(lastCompletedId) && lastCompletedResult) {
+      publishResult(lastCompletedResult);
+      setStatus(`Replayed cached result for ${job.id}`);
+      return;
+    }
+
+    activeId = job.id;
+    try {
+      if (typeof generateImage !== "function") throw new Error("generateImage is unavailable");
+
+      if (Number(job.count || 2) !== 2) throw new Error("Worker supports exactly two variants");
+      const options = generationOptions(job);
+
+      setStatus(`Generating ${job.id}\nDigital Painting · ${options.resolution} · 2 images`);
+      const [first, second] = await Promise.all([
+        generateImage({...options}),
+        generateImage({...options})
+      ]);
+      const images = await Promise.all([dataUrlOf(first), dataUrlOf(second)]);
+      if (images.some(x => typeof x !== "string" || !x.startsWith("data:image/"))) {
+        throw new Error("Perchance returned invalid image data");
+      }
+
+      lastCompletedResult = {id: job.id, images};
+      publishResult(lastCompletedResult);
+      lastCompletedId = job.id;
+      setStatus(`Generated ${job.id}\nResult sent to local transport`);
+    } catch (error) {
+      publishResult({
+        id: job.id,
+        images: [],
+        error: String(error?.message ?? error)
+      });
+      setStatus(`ERROR\n${String(error?.message ?? error)}`);
+    } finally {
+      activeId = null;
+    }
+  }
+
+  function readMailbox() {
+    const raw = String(jobBox.textContent || "").trim();
+    if (!raw || activeId) return;
+    try { void run(JSON.parse(raw)); }
+    catch (error) { setStatus(`Mailbox JSON error\n${String(error?.message ?? error)}`); }
+  }
+
+  new MutationObserver(readMailbox).observe(jobBox, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+    attributes: true
+  });
+
+  setStatus(`generateImage: ${typeof generateImage}\nWaiting for local transport...`);
+  readMailbox();
+})();
+</script>
