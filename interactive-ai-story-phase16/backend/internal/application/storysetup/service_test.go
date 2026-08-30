@@ -65,6 +65,32 @@ func (l *onlineAssistBarrierLLM) Generate(ctx context.Context, request aiport.St
 	return aiport.StoryResponse{Output: []byte(`{"summary":"checked","operations":[]}`)}, nil
 }
 
+func TestParseWorldRulesPreservesEmptyResourceArray(t *testing.T) {
+	raw := json.RawMessage(`{
+		"systems":[{"id":"devourer","name":"Пожиратель","kind":"magic","description":"Глубинная способность Алекса.","resources":[]}],
+		"rules":[{"id":"DEV-001","systemId":"devourer","title":"Поглощение","category":"mechanism","severity":"hard","statement":"Пожиратель способен поглощать только доступную энергию.","preconditions":[],"costs":[],"forbiddenResults":[],"exceptions":[],"tags":[],"visibility":"known_to_hero","status":"established"}],
+		"glossary":[]
+	}`)
+
+	systems, rules, err := parseWorldRules(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(systems) != 1 || len(rules) != 1 {
+		t.Fatalf("unexpected world rules shape: systems=%d rules=%d", len(systems), len(rules))
+	}
+	if systems[0].Resources == nil {
+		t.Fatal("empty resources must remain a non-nil slice")
+	}
+	encoded, err := json.Marshal(systems[0].Resources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(encoded) != `[]` {
+		t.Fatalf("empty resources encoded as %s, want []", encoded)
+	}
+}
+
 func (l *setupDAGLLM) Identity() aiport.ProviderIdentity {
 	return aiport.ProviderIdentity{Kind: aiport.KindStoryLLM, Provider: "google_gemini", Model: "dag-setup-test", Profile: "hosted"}
 }

@@ -1944,7 +1944,7 @@ func assistOutputConstraints(key setup.ComponentKey, action string, target Assis
 	case setup.VisualBible:
 		return base + " Keep style fields concise. Never expand negativePromptEn; if changing it, use only unique short English tags and at most 250 characters."
 	case setup.OpeningSituation:
-		return base + " Change choices separately from text. Rewrite text only when the instruction explicitly concerns prose; preserve 7-9 paragraph boundaries and exactly four choices."
+		return base + " Change choices separately from text. Rewrite text only when the instruction explicitly concerns prose; preserve 4-6 paragraph boundaries and exactly four choices."
 	case setup.InitialCast:
 		return base + " Use update_item on characters rather than replacing characters. Preserve names unless explicitly asked otherwise."
 	case setup.WorldRules:
@@ -2539,7 +2539,13 @@ func parseWorldRules(raw json.RawMessage) ([]setuprepo.InitialWorldSystem, []set
 	}
 	systems := make([]setuprepo.InitialWorldSystem, 0, len(payload.Systems))
 	for _, system := range payload.Systems {
-		out := setuprepo.InitialWorldSystem{ID: system.ID, Name: system.Name, Kind: system.Kind, Description: system.Description}
+		out := setuprepo.InitialWorldSystem{
+			ID:          system.ID,
+			Name:        system.Name,
+			Kind:        system.Kind,
+			Description: system.Description,
+			Resources:   make([]setuprepo.InitialWorldResource, 0, len(system.Resources)),
+		}
 		for _, resource := range system.Resources {
 			out.Resources = append(out.Resources, setuprepo.InitialWorldResource{ID: resource.ID, Name: resource.Name, Unit: resource.Unit, OwnerScope: resource.OwnerScope, InitialValue: resource.InitialValue, MinValue: resource.MinValue, MaxValue: resource.MaxValue})
 		}

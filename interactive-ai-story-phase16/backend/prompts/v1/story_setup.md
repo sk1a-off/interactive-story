@@ -56,9 +56,9 @@ Required component shapes:
 
 Opening narrative rules:
 - Write in Russian unless the user explicitly requested another narrative language.
-- Write the opening as 7-9 substantial narrative paragraphs separated by real blank lines.
-- Aim for roughly 900-1300 Russian words when the premise supports it.
-- Prefer about 4-7 meaningful sentences per paragraph where natural.
+- Write the opening as 4-6 substantial narrative paragraphs separated by real blank lines.
+- Aim for roughly 350-550 Russian words when the premise supports it.
+- Prefer about 3-5 meaningful sentences per paragraph where natural.
 - These are writing targets only: never pad merely to hit a count, but do not reduce the opening to a synopsis or a few short sentences.
 - Use immersive scene prose: concrete environment, physical action, dialogue/internal perception when appropriate, sensory detail, tension and character-specific reactions.
 - Keep the requested POV stable.

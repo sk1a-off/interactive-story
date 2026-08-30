@@ -277,7 +277,10 @@ func (r *SetupRepository) StartStory(ctx context.Context, sid story.ID, tl timel
 		}
 	}
 	for _, system := range m.WorldSystems {
-		resources, _ := json.Marshal(system.Resources)
+		resources, err := marshalInitialWorldResources(system.Resources)
+		if err != nil {
+			return err
+		}
 		if _, e = tx.Exec(ctx, `INSERT INTO world_systems(timeline_id,system_id,name,kind,description,resources,status,version) VALUES($1,$2,$3,$4,$5,$6,'active',1)`, tl.ID, system.ID, system.Name, system.Kind, system.Description, resources); e != nil {
 			return e
 		}
@@ -293,11 +296,26 @@ func (r *SetupRepository) StartStory(ctx context.Context, sid story.ID, tl timel
 		}
 	}
 	for ruleIndex, rule := range m.WorldRules {
-		pre, _ := json.Marshal(rule.Preconditions)
-		costs, _ := json.Marshal(rule.Costs)
-		forbidden, _ := json.Marshal(rule.ForbiddenResults)
-		exceptions, _ := json.Marshal(rule.Exceptions)
-		tags, _ := json.Marshal(rule.Tags)
+		pre, err := marshalStringArray(rule.Preconditions)
+		if err != nil {
+			return err
+		}
+		costs, err := marshalStringArray(rule.Costs)
+		if err != nil {
+			return err
+		}
+		forbidden, err := marshalStringArray(rule.ForbiddenResults)
+		if err != nil {
+			return err
+		}
+		exceptions, err := marshalStringArray(rule.Exceptions)
+		if err != nil {
+			return err
+		}
+		tags, err := marshalStringArray(rule.Tags)
+		if err != nil {
+			return err
+		}
 		establishedAtSeq := int64(5 + len(objectives) + len(m.WorldSystems) + ruleIndex)
 		if _, e = tx.Exec(ctx, `INSERT INTO world_rules(timeline_id,rule_id,system_id,title,category,severity,statement,preconditions,costs,forbidden_results,exceptions,tags,visibility,status,exception_of,source,evidence,version,established_at_seq) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'setup','',1,$16)`, tl.ID, rule.ID, rule.SystemID, rule.Title, rule.Category, rule.Severity, rule.Statement, pre, costs, forbidden, exceptions, tags, rule.Visibility, rule.Status, rule.ExceptionOf, establishedAtSeq); e != nil {
 			return e
@@ -346,7 +364,10 @@ func (r *SetupRepository) StartStory(ctx context.Context, sid story.ID, tl timel
 	}
 	seq := int64(5 + len(objectives))
 	for _, system := range m.WorldSystems {
-		resources, _ := json.Marshal(system.Resources)
+		resources, err := marshalInitialWorldResources(system.Resources)
+		if err != nil {
+			return err
+		}
 		payload, _ := json.Marshal(map[string]any{"systemId": system.ID, "name": system.Name, "kind": system.Kind, "description": system.Description, "resources": json.RawMessage(resources), "status": "active", "version": 1})
 		eventID, err := id.New()
 		if err != nil {
@@ -358,7 +379,7 @@ func (r *SetupRepository) StartStory(ctx context.Context, sid story.ID, tl timel
 		seq++
 	}
 	for _, rule := range m.WorldRules {
-		payload, _ := json.Marshal(map[string]any{"ruleId": rule.ID, "systemId": rule.SystemID, "title": rule.Title, "category": rule.Category, "severity": rule.Severity, "statement": rule.Statement, "preconditions": rule.Preconditions, "costs": rule.Costs, "forbiddenResults": rule.ForbiddenResults, "exceptions": rule.Exceptions, "tags": rule.Tags, "visibility": rule.Visibility, "status": rule.Status, "exceptionOf": rule.ExceptionOf, "source": "setup", "evidence": "", "version": 1})
+		payload, _ := json.Marshal(map[string]any{"ruleId": rule.ID, "systemId": rule.SystemID, "title": rule.Title, "category": rule.Category, "severity": rule.Severity, "statement": rule.Statement, "preconditions": nonNilStrings(rule.Preconditions), "costs": nonNilStrings(rule.Costs), "forbiddenResults": nonNilStrings(rule.ForbiddenResults), "exceptions": nonNilStrings(rule.Exceptions), "tags": nonNilStrings(rule.Tags), "visibility": rule.Visibility, "status": rule.Status, "exceptionOf": rule.ExceptionOf, "source": "setup", "evidence": "", "version": 1})
 		eventID, err := id.New()
 		if err != nil {
 			return err
@@ -390,6 +411,25 @@ func (r *SetupRepository) StartStory(ctx context.Context, sid story.ID, tl timel
 	}
 	return tx.Commit(ctx)
 }
+
+func marshalInitialWorldResources(resources []setuprepo.InitialWorldResource) ([]byte, error) {
+	if resources == nil {
+		resources = make([]setuprepo.InitialWorldResource, 0)
+	}
+	return json.Marshal(resources)
+}
+
+func marshalStringArray(values []string) ([]byte, error) {
+	return json.Marshal(nonNilStrings(values))
+}
+
+func nonNilStrings(values []string) []string {
+	if values == nil {
+		return make([]string, 0)
+	}
+	return values
+}
+
 func eventIDs4() (string, string, string, string) {
 	a, _ := newUUID()
 	b, _ := newUUID()
