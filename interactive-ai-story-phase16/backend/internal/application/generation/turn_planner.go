@@ -24,7 +24,8 @@ type TurnPlan struct {
 		Goal  string `json:"goal,omitempty"`
 		Tone  string `json:"tone,omitempty"`
 	} `json:"chapter,omitempty"`
-	RiskFlags []string `json:"riskFlags"`
+	RiskFlags          []string `json:"riskFlags"`
+	IntentFallbackUsed bool     `json:"-"`
 }
 
 type TurnPlanner interface {
@@ -54,6 +55,10 @@ func (p LLMTurnPlanner) Plan(ctx context.Context, action PlayerAction, target ge
 	}
 	plan.Intent = strings.TrimSpace(plan.Intent)
 	plan.ImmediateGoal = strings.TrimSpace(plan.ImmediateGoal)
+	if plan.Intent != "" && !intentPreservesAction(action.Text, plan.Intent) {
+		plan.Intent = strings.TrimSpace(action.Text)
+		plan.IntentFallbackUsed = true
+	}
 	if err := validateTurnPlan(action.Text, plan); err != nil {
 		return TurnPlan{}, err
 	}

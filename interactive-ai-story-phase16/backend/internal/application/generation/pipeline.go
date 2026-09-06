@@ -240,6 +240,9 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		if planErr != nil {
 			return fail(planErr)
 		}
+		if plan.IntentFallbackUsed {
+			metrics.ActionIntentFallbackUsed = true
+		}
 		in.Intent, dir.Goal, pacing = plan.Intent, plan.ImmediateGoal, pacingFromTurnPlan(plan)
 		pub(PhaseDirecting, "", "")
 		pub(PhasePacing, "", "")

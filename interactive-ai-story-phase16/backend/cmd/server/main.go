@@ -195,7 +195,11 @@ func main() {
 			if err != nil {
 				return appgen.Pipeline{}, err
 			}
-			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, ProvisionalBeat: cfg.GenerationProvisionalBeat}, nil
+			var planner appgen.TurnPlanner
+			if cfg.GenerationTurnPlanner {
+				planner = appgen.LLMTurnPlanner{LLM: llm}
+			}
+			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, Planner: planner, ProvisionalBeat: cfg.GenerationProvisionalBeat}, nil
 		}
 		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}
 		imageStorage, storageErr := localimages.New(cfg.MediaRoot, cfg.MediaBaseURL)

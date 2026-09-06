@@ -1,0 +1,90 @@
+{
+  "name": "generation-workflow",
+  "revision": 1,
+  "cases": [
+    {
+      "id": "conversation-01",
+      "category": "conversation",
+      "action": "Спокойно расспросить ближайшего собеседника о том, что произошло здесь недавно.",
+      "expectedImportantFacts": ["Сохраняются личность и уже известные сведения собеседника"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}, {"eventType": "choices_ready", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "physical-01",
+      "category": "physical_action",
+      "action": "Осторожно осмотреть ближайшую дверь и попробовать открыть её, не повреждая замок.",
+      "expectedImportantFacts": ["Намерение открыть дверь не считается автоматическим успехом"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "danger-01",
+      "category": "danger_or_combat",
+      "action": "Занять укрытие и оценить источник непосредственной опасности, прежде чем атаковать.",
+      "expectedImportantFacts": ["Установленная угроза и состояние героя не теряются"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "ability-01",
+      "category": "world_limited_ability",
+      "action": "Применить доступную герою способность строго в пределах уже установленных ограничений.",
+      "expectedImportantFacts": ["Не появляется новая неподтверждённая способность"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "continuity-01",
+      "category": "continuity",
+      "action": "Продолжить текущий план, учитывая последнее обещание героя и уже известные отношения участников сцены.",
+      "expectedImportantFacts": ["Последнее обещание и текущие отношения сохраняются"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "quest-01",
+      "category": "quest_progress",
+      "action": "Сделать следующий проверяемый шаг к активной цели, не объявляя её завершённой раньше времени.",
+      "expectedImportantFacts": ["Цель завершается только при прямом выполнении success criteria"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "inventory-01",
+      "category": "inventory_resource",
+      "action": "Проверить имеющиеся ресурсы и использовать только один подходящий предмет, если он действительно доступен.",
+      "expectedImportantFacts": ["Количество предмета меняется только при явном использовании в новом Beat"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "world-01",
+      "category": "npc_location_mutation",
+      "action": "Познакомиться с новым человеком или местом только если это естественно следует из текущей сцены.",
+      "expectedImportantFacts": ["Существующие NPC и локации обновляются по стабильному UUID"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "scene-01",
+      "category": "scene_transition",
+      "action": "Завершить текущее локальное действие и перейти в логически следующую сцену.",
+      "expectedImportantFacts": ["Новый Beat прикрепляется к новой сцене после transition"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "chapter-01",
+      "category": "chapter_transition",
+      "action": "Подвести текущую сюжетную фазу к развязке, не перескакивая через незавершённые последствия.",
+      "expectedImportantFacts": ["Chapter transition сохраняет причинные последствия предыдущей сцены"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "director-01",
+      "category": "hard_director_instruction",
+      "action": "Действовать естественно, сохраняя приоритет активной обязательной режиссёрской инструкции.",
+      "expectedImportantFacts": ["Активная hard Director instruction отражена в результате"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    },
+    {
+      "id": "history-01",
+      "category": "long_history_fork_fact",
+      "action": "Принять решение, опираясь на важный факт из ранней истории этой ветки и не смешивая её с другими ветками.",
+      "expectedImportantFacts": ["Факт относится к текущей ветке и не заимствован из sibling fork"],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}]
+    }
+  ]
+}

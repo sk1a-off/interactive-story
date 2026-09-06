@@ -21,6 +21,7 @@ type Config struct {
 	SecretStorePath           string
 	OmniVoiceURL              string
 	GenerationContextShadow   bool
+	GenerationTurnPlanner     bool
 	GenerationProvisionalBeat bool
 	EmbeddingBaseURL          string
 	EmbeddingModel            string
@@ -42,6 +43,7 @@ func Load() (Config, error) {
 		SecretStorePath:           envOrDefault("SECRET_STORE_PATH", "../data/secrets/provider-keys.json"),
 		OmniVoiceURL:              envOrDefault("OMNIVOICE_BASE_URL", "http://127.0.0.1:6655"),
 		GenerationContextShadow:   envEnabled("GENERATION_CONTEXT_SHADOW_V1"),
+		GenerationTurnPlanner:     envEnabled("GENERATION_TURN_PLANNER_V1"),
 		GenerationProvisionalBeat: envEnabled("GENERATION_PROVISIONAL_BEAT_V1"),
 		EmbeddingBaseURL:          envOrDefault("EMBEDDING_BASE_URL", "http://127.0.0.1:8090"),
 		EmbeddingModel:            envOrDefault("EMBEDDING_MODEL", "deepvk/USER2-small"),

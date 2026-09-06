@@ -31,7 +31,7 @@ func TestSafeHybridRoutesOnlyNonCanonicalPreparationToFastModel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fastRoles := []string{"action_interpreter", "pacing", "choices"}
+	fastRoles := []string{"action_interpreter", "turn_planner", "pacing", "choices"}
 	qualityRoles := []string{"director", "writer", "world_evaluator", "state_evaluator", "quest_evaluator", "structured_repair", "setup_architect", "image_prompt"}
 	for _, role := range append(append([]string{}, fastRoles...), qualityRoles...) {
 		if _, err = router.Generate(context.Background(), aiport.StoryRequest{Role: role}); err != nil {

@@ -9,6 +9,7 @@ import (
 
 var safeHybridFastRoles = map[string]struct{}{
 	"action_interpreter": {},
+	"turn_planner":       {},
 	"pacing":             {},
 	"choices":            {},
 }
