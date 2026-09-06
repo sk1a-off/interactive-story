@@ -58,7 +58,7 @@ FROM stories s
 LEFT JOIN LATERAL (
   SELECT count(*)::integer AS ready_components
   FROM story_setup_components sc
-  WHERE sc.story_id=s.id AND sc.status='ready'
+  WHERE sc.story_id=s.id AND sc.status='ready' AND sc.component_key<>'world_rules'
 ) c ON true
 LEFT JOIN LATERAL (
   SELECT tl.id,tl.name,tl.status,tl.head_event_seq,tl.updated_at

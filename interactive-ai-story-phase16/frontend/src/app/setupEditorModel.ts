@@ -2,13 +2,12 @@ import type { SetupComponent } from '../lib/api'
 
 export type SetupPayload = Record<string, unknown>
 
-export const SETUP_COMPONENT_ORDER = ['story_bible', 'player', 'world', 'world_rules', 'initial_cast', 'visual_bible', 'initial_quests', 'opening_situation'] as const
+export const SETUP_COMPONENT_ORDER = ['story_bible', 'player', 'world', 'initial_cast', 'visual_bible', 'initial_quests', 'opening_situation'] as const
 
 const TITLES: Record<string, string> = {
   story_bible: 'Основа истории',
   player: 'Главный герой',
   world: 'Мир',
-  world_rules: 'Законы мира',
   initial_cast: 'Персонажи',
   visual_bible: 'Визуальный стиль',
   initial_quests: 'Стартовые квесты',
@@ -19,7 +18,6 @@ const DESCRIPTIONS: Record<string, string> = {
   story_bible: 'Главная идея, тон, темы и правила повествования.',
   player: 'Кто является главным героем, чего он хочет и как выглядит.',
   world: 'Состояние мира, важные места и визуальные ориентиры.',
-  world_rules: 'Системы магии, технологий и других сил: законы, цены, пределы и исключения.',
   initial_cast: 'Персонажи, которые присутствуют в истории с самого начала.',
   visual_bible: 'Единый художественный язык для всех иллюстраций.',
   initial_quests: 'Главные и побочные квесты с их стартовыми этапами.',

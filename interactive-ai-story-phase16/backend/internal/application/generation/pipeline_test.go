@@ -16,12 +16,34 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
+	"github.com/local/interactive-ai-story/backend/internal/ports/generationmetrics"
 	"github.com/local/interactive-ai-story/backend/internal/ports/generationtarget"
 )
 
-type memSink struct{ phases []Phase }
+type memSink struct {
+	phases  []Phase
+	updates []Update
+}
 
-func (s *memSink) Publish(_ context.Context, u Update) { s.phases = append(s.phases, u.Phase) }
+func (s *memSink) Publish(_ context.Context, u Update) {
+	s.phases = append(s.phases, u.Phase)
+	s.updates = append(s.updates, u)
+}
+
+type delayedLLM struct {
+	base  aiport.StoryLLM
+	delay time.Duration
+}
+
+func (d delayedLLM) Identity() aiport.ProviderIdentity { return d.base.Identity() }
+func (d delayedLLM) Generate(ctx context.Context, request aiport.StoryRequest) (aiport.StoryResponse, error) {
+	select {
+	case <-time.After(d.delay):
+	case <-ctx.Done():
+		return aiport.StoryResponse{}, ctx.Err()
+	}
+	return d.base.Generate(ctx, request)
+}
 
 type targetSource struct{}
 
@@ -35,6 +57,37 @@ type parallelBarrierLLM struct {
 	release   chan struct{}
 	mu        sync.Mutex
 	calls     []string
+}
+
+type extractorChoicesBarrierLLM struct {
+	responses map[string][]byte
+	started   chan string
+	release   chan struct{}
+	mu        sync.Mutex
+	calls     []string
+}
+
+func (p *extractorChoicesBarrierLLM) Identity() aiport.ProviderIdentity {
+	return aiport.ProviderIdentity{Kind: aiport.KindStoryLLM, Provider: "google_gemini", Model: "extractor-choices-parallel-test", Profile: "hosted"}
+}
+
+func (p *extractorChoicesBarrierLLM) Generate(ctx context.Context, request aiport.StoryRequest) (aiport.StoryResponse, error) {
+	p.mu.Lock()
+	p.calls = append(p.calls, request.Role)
+	p.mu.Unlock()
+	if request.Role == "canon_extractor" || request.Role == "choices" {
+		p.started <- request.Role
+		select {
+		case <-p.release:
+		case <-ctx.Done():
+			return aiport.StoryResponse{}, ctx.Err()
+		}
+	}
+	response, ok := p.responses[request.Role]
+	if !ok {
+		return aiport.StoryResponse{}, aiport.ErrInvalidOutput
+	}
+	return aiport.StoryResponse{Output: append([]byte(nil), response...)}, nil
 }
 
 type dependencyGraphLLM struct {
@@ -125,10 +178,203 @@ func scripted() *fakeai.ScriptedStoryLLM {
 	})
 }
 
+func TestPipelineReportsNonOverlappingStageMetrics(t *testing.T) {
+	var got generationmetrics.Metrics
+	p := Pipeline{
+		LLM: delayedLLM{base: scripted(), delay: 2 * time.Millisecond}, Canon: &appender{}, Targets: targetSource{},
+		Metrics: func(metrics generationmetrics.Metrics) { got = metrics },
+	}
+	_, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000820"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000821")), Text: "Продолжить"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.Succeeded || got.TotalMS <= 0 || got.PlannerMS <= 0 || got.WriterMS <= 0 || got.PostWriterMS <= 0 {
+		t.Fatalf("incomplete timing metrics: %#v", got)
+	}
+	accounted := got.TargetLoadMS + got.ContextBuildMS + got.PlannerMS + got.WriterMS + got.PostWriterMS + got.ValidationMS + got.CommitMS + got.UnattributedMS
+	if accounted != got.TotalMS {
+		t.Fatalf("timing accounting mismatch: accounted=%d total=%d metrics=%#v", accounted, got.TotalMS, got)
+	}
+	if got.TimeToFirstStoryTextMS <= 0 || got.TimeToFirstStoryTextMS > got.TotalMS {
+		t.Fatalf("invalid first text timing: %#v", got)
+	}
+}
+
+func TestBenchmarkTurnPlannerReplacesLegacyPlanningButKeepsGoHardLimits(t *testing.T) {
+	llm := scripted()
+	llm.Responses["turn_planner"] = []byte(`{"intent":"осторожно открыть дверь","immediateGoal":"показать сопротивление замка и новую улику","transition":"continue_scene","scene":{},"chapter":{},"riskFlags":["agency"]}`)
+	c := &appender{}
+	p := Pipeline{
+		LLM: llm, Planner: LLMTurnPlanner{LLM: llm}, Canon: c,
+		Targets: staticTarget{target: generationtarget.Target{ChapterID: id.MustParse("00000000-0000-4000-8000-000000000840"), SceneID: id.MustParse("00000000-0000-4000-8000-000000000841"), ChapterNumber: 1, SceneNumber: 1, NextBeatPosition: 13}},
+	}
+	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000842"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000843")), Text: "Открыть дверь"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, forbidden := range []string{"action_interpreter", "director", "pacing"} {
+		for _, called := range llm.Calls {
+			if called == forbidden {
+				t.Fatalf("legacy planning role %s was called: %v", forbidden, llm.Calls)
+			}
+		}
+	}
+	if len(llm.Calls) == 0 || llm.Calls[0] != "turn_planner" {
+		t.Fatalf("turn planner was not the planning call: %v", llm.Calls)
+	}
+	foundSceneStart := false
+	for _, stored := range events {
+		if stored.Type == "scene_started" {
+			foundSceneStart = true
+		}
+	}
+	if !foundSceneStart {
+		t.Fatalf("Go scene hard limit did not override planner: %v", events)
+	}
+	writerInput := string(requestForRole(t, llm.Requests, "writer").Input)
+	if !strings.Contains(writerInput, `"intent":"осторожно открыть дверь"`) || !strings.Contains(writerInput, `"goal":"показать сопротивление замка и новую улику"`) {
+		t.Fatalf("writer did not receive normalized plan: %s", writerInput)
+	}
+}
+
+func TestLegacyInterpreterAgencyDriftFallsBackToPlayerAction(t *testing.T) {
+	llm := scripted()
+	llm.Responses["action_interpreter"] = []byte(`{"intent":"Взять канаты и привязать фургон к скале"}`)
+	var metrics generationmetrics.Metrics
+	p := Pipeline{LLM: llm, Canon: &appender{}, Targets: targetSource{}, Metrics: func(value generationmetrics.Metrics) { metrics = value }}
+	action := "Спокойно расспросить ближайшего собеседника о недавних событиях"
+	if _, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000844"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000845")), Text: action}); err != nil {
+		t.Fatal(err)
+	}
+	if !metrics.ActionIntentFallbackUsed {
+		t.Fatal("agency drift fallback was not measured")
+	}
+	directorInput := string(requestForRole(t, llm.Requests, "director").Input)
+	if !strings.Contains(directorInput, `"intent":"`+action+`"`) {
+		t.Fatalf("director received substituted intent: %s", directorInput)
+	}
+}
+
+func TestBenchmarkCanonExtractorReusesEvidenceAndDomainValidators(t *testing.T) {
+	llm := scripted()
+	llm.Responses["writer"] = []byte(`{"text":"Герой поднял серебряный ключ."}`)
+	llm.Responses["canon_extractor"] = []byte(`{"worldChanges":[],"journalChanges":[{"operation":"create","category":"item","name":"Серебряный ключ","quantity":1,"status":"active","evidenceQuote":"поднял серебряный ключ"}],"objectiveChanges":[]}`)
+	c := &appender{}
+	p := Pipeline{LLM: llm, Extractor: LLMCanonExtractor{LLM: llm}, Canon: c, Targets: targetSource{}}
+	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000860"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000861")), Text: "Поднять ключ"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, forbidden := range []string{"world_evaluator", "state_evaluator", "quest_evaluator"} {
+		for _, called := range llm.Calls {
+			if called == forbidden {
+				t.Fatalf("legacy evaluator %s was called: %v", forbidden, llm.Calls)
+			}
+		}
+	}
+	foundJournal := false
+	for _, stored := range events {
+		if stored.Type == "journal_entry_created" {
+			foundJournal = true
+		}
+	}
+	if !foundJournal {
+		t.Fatalf("validated extractor mutation missing: %v", events)
+	}
+}
+
+func TestBenchmarkCanonExtractorRejectsHistoricalOnlyEvidence(t *testing.T) {
+	llm := scripted()
+	llm.Responses["writer"] = []byte(`{"text":"Герой остановился у двери."}`)
+	llm.Responses["canon_extractor"] = []byte(`{"worldChanges":[],"journalChanges":[{"operation":"create","category":"item","name":"Старый ключ","quantity":1,"status":"active","evidenceQuote":"ключ был найден вчера"}],"objectiveChanges":[]}`)
+	c := &appender{}
+	p := Pipeline{LLM: llm, Extractor: LLMCanonExtractor{LLM: llm}, Canon: c, Targets: targetSource{}}
+	_, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000862"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000863")), Text: "Осмотреть дверь"})
+	if !errors.Is(err, ErrRejectedProposal) {
+		t.Fatalf("historical extractor evidence accepted: %v", err)
+	}
+	if c.head != 0 || len(c.events) != 0 {
+		t.Fatal("rejected extractor output mutated Canon")
+	}
+}
+
+func TestCanonExtractorAndChoicesRunConcurrentlyWithoutRepeatingWriter(t *testing.T) {
+	responses := scripted().Responses
+	responses["canon_extractor"] = []byte(`{"worldChanges":[],"journalChanges":[],"objectiveChanges":[]}`)
+	llm := &extractorChoicesBarrierLLM{responses: responses, started: make(chan string, 2), release: make(chan struct{})}
+	p := Pipeline{LLM: llm, Extractor: LLMCanonExtractor{LLM: llm}, Canon: &appender{}, Targets: targetSource{}}
+	done := make(chan error, 1)
+	go func() {
+		_, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000866"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000867")), Text: "Осмотреться"})
+		done <- err
+	}()
+
+	started := map[string]bool{}
+	for len(started) < 2 {
+		select {
+		case role := <-llm.started:
+			started[role] = true
+		case <-time.After(time.Second):
+			t.Fatalf("post-writer stages did not overlap: %v", started)
+		}
+	}
+	close(llm.release)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	llm.mu.Lock()
+	defer llm.mu.Unlock()
+	writerCalls := 0
+	for _, role := range llm.calls {
+		if role == "writer" {
+			writerCalls++
+		}
+	}
+	if writerCalls != 1 {
+		t.Fatalf("parallel post-processing repeated Writer %d times: %v", writerCalls, llm.calls)
+	}
+}
+
+func TestProvisionalBeatIsPublishedBeforeFinalizingAndNeverEntersCanonSeparately(t *testing.T) {
+	llm := scripted()
+	sink := &memSink{}
+	canon := &appender{}
+	timelineID := timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000871"))
+	p := Pipeline{LLM: llm, Canon: canon, Targets: targetSource{}, Sink: sink, ProvisionalBeat: true}
+
+	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000870"), PlayerAction{TimelineID: timelineID, Text: "Осмотреться"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	draftIndex, finalizingIndex := -1, -1
+	var draft Update
+	for index, update := range sink.updates {
+		switch update.Phase {
+		case PhaseDraftReady:
+			draftIndex, draft = index, update
+		case PhaseFinalizing:
+			finalizingIndex = index
+		}
+	}
+	if draftIndex < 0 || finalizingIndex <= draftIndex || !draft.Provisional || draft.Revision != 1 || draft.TimelineID != timelineID || strings.TrimSpace(draft.TextDelta) == "" {
+		t.Fatalf("invalid provisional update ordering or payload: %+v", sink.updates)
+	}
+	beatCount := 0
+	for _, stored := range events {
+		if stored.Type == "beat_committed" {
+			beatCount++
+		}
+	}
+	if beatCount != 1 {
+		t.Fatalf("provisional update leaked into Canon: %v", events)
+	}
+}
+
 func TestObjectiveCompletionBecomesCanonBeforeChoices(t *testing.T) {
 	llm := scripted()
 	objectiveID := "00000000-0000-4000-8000-000000000099"
-	llm.Responses["quest_evaluator"] = []byte(`{"changes":[{"operation":"complete","objectiveId":"` + objectiveID + `","progress":100,"evidence":"The opened door revealed the marked room."}]}`)
+	llm.Responses["writer"] = []byte(`{"text":"The opened door revealed the marked room."}`)
+	llm.Responses["quest_evaluator"] = []byte(`{"changes":[{"operation":"complete","objectiveId":"` + objectiveID + `","progress":100,"evidenceQuote":"The opened door revealed the marked room."}]}`)
 	c := &appender{}
 	p := Pipeline{LLM: llm, Canon: c, Targets: staticTarget{target: generationtarget.Target{SceneID: id.MustParse("00000000-0000-4000-8000-000000000090"), NextBeatPosition: 2, Objectives: []generationtarget.Objective{{ID: objectiveID, Scope: "minor", Title: "Open the marked door", SuccessCriteria: "The door is opened", Status: "active", Progress: 40}}}}}
 	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000010"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000011")), Text: "I open the door"})
@@ -217,9 +463,10 @@ func TestPacingHardCapStartsNewChapter(t *testing.T) {
 
 func TestWorldEvaluatorCreatesDurableCharacterAndLocationBeforeChoices(t *testing.T) {
 	llm := scripted()
+	llm.Responses["writer"] = []byte(`{"text":"Смотритель Илья замер у входа. За ним открылось Закрытое хранилище."}`)
 	llm.Responses["world_evaluator"] = []byte(`{"changes":[
-		{"type":"upsert_character","name":"Смотритель Илья","age":43,"role":"хранитель архива","personality":"настороженный и наблюдательный","relationship":"пока не доверяет герою","visualAnchorEn":"lean middle-aged archivist with silver temples and a dark wool coat","mood":"встревожен","currentGoal":"не допустить героя в закрытое хранилище"},
-		{"type":"upsert_location","name":"Закрытое хранилище","description":"Подземный архив за тяжёлой дверью с латунным номером 17.","visualAnchorEn":"underground archive vault behind a heavy brass-numbered door"}
+		{"type":"upsert_character","name":"Смотритель Илья","age":43,"role":"хранитель архива","personality":"настороженный и наблюдательный","relationship":"пока не доверяет герою","visualAnchorEn":"lean middle-aged archivist with silver temples and a dark wool coat","mood":"встревожен","currentGoal":"не допустить героя в закрытое хранилище","evidenceQuote":"Смотритель Илья замер у входа."},
+		{"type":"upsert_location","name":"Закрытое хранилище","description":"Подземный архив за тяжёлой дверью с латунным номером 17.","visualAnchorEn":"underground archive vault behind a heavy brass-numbered door","evidenceQuote":"За ним открылось Закрытое хранилище."}
 	]}`)
 	c := &appender{}
 	p := Pipeline{LLM: llm, Canon: c, Targets: targetSource{}}
@@ -351,9 +598,10 @@ func TestHostedChoicesWaitOnlyForTheirDependencies(t *testing.T) {
 
 func TestHeroJournalCreatesAbilityAndInventoryItemBeforeChoices(t *testing.T) {
 	llm := scripted()
+	llm.Responses["writer"] = []byte(`{"text":"Герой воспроизвёл исчезнувший голос из коридора. Герой поднял ключ и положил его в карман."}`)
 	llm.Responses["state_evaluator"] = []byte(`{"changes":[
-		{"operation":"create","category":"ability","name":"Эхо-память","description":"Восстанавливает недавний звук по следу нейроимпланта","level":"нестабильно","status":"active","evidence":"Герой воспроизвёл исчезнувший голос из коридора.","tags":["нейроимплант","анализ"]},
-		{"operation":"create","category":"item","name":"Ключ архива","description":"Латунный ключ с номером 17","quantity":1,"status":"active","evidence":"Герой поднял ключ и положил его в карман.","tags":["ключ"]}
+		{"operation":"create","category":"ability","name":"Эхо-память","description":"Восстанавливает недавний звук по следу нейроимпланта","level":"нестабильно","status":"active","evidenceQuote":"Герой воспроизвёл исчезнувший голос из коридора.","tags":["нейроимплант","анализ"]},
+		{"operation":"create","category":"item","name":"Ключ архива","description":"Латунный ключ с номером 17","quantity":1,"status":"active","evidenceQuote":"Герой поднял ключ и положил его в карман.","tags":["ключ"]}
 	]}`)
 	c := &appender{}
 	p := Pipeline{LLM: llm, Canon: c, Targets: targetSource{}}
@@ -438,9 +686,10 @@ func TestHeroJournalTracksCurrencyAndRejectsNegativeBalance(t *testing.T) {
 
 func TestQuestEvaluatorCreatesMajorQuestAndFirstStageInOneTurn(t *testing.T) {
 	llm := scripted()
+	llm.Responses["writer"] = []byte(`{"text":"Из башни снова прозвучал неизвестный сигнал. Герой увидел радиобашню на перевале."}`)
 	llm.Responses["quest_evaluator"] = []byte(`{"changes":[
-		{"operation":"create","reference":"signal_quest","scope":"global","kind":"quest","title":"Раскрыть источник сигнала","successCriteria":"Источник сигнала найден и его назначение установлено","status":"active","progress":0},
-		{"operation":"create","parentObjectiveId":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","parentReference":"signal_quest","scope":"minor","kind":"task","title":"Добраться до радиобашни","successCriteria":"Герой входит в диспетчерскую радиобашни","status":"active","progress":0}
+		{"operation":"create","reference":"signal_quest","scope":"global","kind":"quest","title":"Раскрыть источник сигнала","successCriteria":"Источник сигнала найден и его назначение установлено","status":"active","progress":0,"evidenceQuote":"Из башни снова прозвучал неизвестный сигнал."},
+		{"operation":"create","parentObjectiveId":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa","parentReference":"signal_quest","scope":"minor","kind":"task","title":"Добраться до радиобашни","successCriteria":"Герой входит в диспетчерскую радиобашни","status":"active","progress":0,"evidenceQuote":"Герой увидел радиобашню на перевале."}
 	]}`)
 	c := &appender{}
 	p := Pipeline{LLM: llm, Canon: c, Targets: targetSource{}}
@@ -689,6 +938,65 @@ func TestVerticalSliceCommitsOnlyAfterAllRolesValidate(t *testing.T) {
 	}
 }
 
+func TestInvalidChoicesUseDeterministicFallbackWithoutRepeatingWriter(t *testing.T) {
+	llm := scripted()
+	llm.Responses["choices"] = []byte(`{"choices":[{"id":"one","label":"Один"},{"id":"two","label":"Два"},{"id":"three","label":"Три"}]}`)
+	var metrics generationmetrics.Metrics
+	p := Pipeline{LLM: llm, Canon: &appender{}, Targets: targetSource{}, Metrics: func(value generationmetrics.Metrics) { metrics = value }}
+	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000850"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000851")), Text: "Продолжить"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	writerCalls, choiceCalls := 0, 0
+	for _, role := range llm.Calls {
+		if role == "writer" {
+			writerCalls++
+		}
+		if role == "choices" {
+			choiceCalls++
+		}
+	}
+	if writerCalls != 1 || choiceCalls != 2 || !metrics.ChoicesFallbackUsed {
+		t.Fatalf("unexpected fallback calls or metrics: writer=%d choices=%d metrics=%#v", writerCalls, choiceCalls, metrics)
+	}
+	var labels []string
+	for _, stored := range events {
+		if stored.Type != "choices_ready" {
+			continue
+		}
+		var payload struct {
+			Choices []string `json:"choices"`
+		}
+		if json.Unmarshal(stored.Payload, &payload) != nil {
+			t.Fatal("invalid choices event")
+		}
+		labels = payload.Choices
+	}
+	if len(labels) != 4 {
+		t.Fatalf("fallback did not produce four choices: %v", labels)
+	}
+	seen := map[string]bool{}
+	for _, label := range labels {
+		if seen[label] {
+			t.Fatalf("duplicate fallback choice: %v", labels)
+		}
+		seen[label] = true
+	}
+}
+
+func TestChoicesProviderFailureDoesNotDiscardBeat(t *testing.T) {
+	llm := scripted()
+	llm.ErrByRole["choices"] = errors.New("choices provider unavailable")
+	p := Pipeline{LLM: llm, Canon: &appender{}, Targets: targetSource{}}
+	events, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000852"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000853")), Text: "Продолжить"})
+	if err != nil {
+		t.Fatalf("choices failure discarded beat: %v", err)
+	}
+	if len(events) < 2 || events[1].Type != "beat_committed" || events[len(events)-1].Type != "choices_ready" {
+		t.Fatalf("beat and fallback choices were not committed: %v", events)
+	}
+}
+
 func TestMalformedLLMJSONNeverMutatesCanon(t *testing.T) {
 	llm := scripted()
 	llm.Responses["director"] = []byte(`{broken`)
@@ -711,6 +1019,88 @@ func TestStaleHeadRejectsWholeProposal(t *testing.T) {
 	}
 	if len(c.events) != 0 || c.head != 4 {
 		t.Fatal("stale generation partially committed")
+	}
+}
+
+func TestLegacyWorldRulesAreNotSentToStoryRoles(t *testing.T) {
+	llm := scripted()
+	p := Pipeline{
+		LLM:   llm,
+		Canon: &appender{},
+		Targets: staticTarget{target: generationtarget.Target{
+			SceneID:          id.MustParse("00000000-0000-4000-8000-000000000090"),
+			NextBeatPosition: 2,
+			WorldRules: []generationtarget.WorldRule{{
+				ID: "LEGACY-RULE", Statement: "LEGACY_WORLD_RULE_MUST_NOT_REACH_LLM", Status: "established",
+			}},
+		}},
+	}
+	_, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000010"), PlayerAction{
+		TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000011")),
+		Text:       "Продолжить путь",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, request := range llm.Requests {
+		if request.Role == "lore_guard" {
+			t.Fatal("removed lore guard must not be called")
+		}
+		if strings.Contains(string(request.Input), "LEGACY_WORLD_RULE_MUST_NOT_REACH_LLM") {
+			t.Fatalf("legacy world rule leaked into %s input", request.Role)
+		}
+	}
+}
+
+func TestRoleInputsRemoveOnlyExactTopLevelContextDuplicates(t *testing.T) {
+	llm := scripted()
+	target := generationtarget.Target{
+		SceneID: id.MustParse("00000000-0000-4000-8000-000000000090"), NextBeatPosition: 2,
+		StoryBible: json.RawMessage(`{"marker":"KEEP_STORY_BIBLE"}`),
+		World:      json.RawMessage(`{"marker":"WORLD"}`), InitialCast: json.RawMessage(`[{"marker":"CAST"}]`),
+		Objectives: []generationtarget.Objective{{ID: "objective-marker", Title: "Goal", Status: "active"}},
+		Journal:    []generationtarget.JournalEntry{{ID: "journal-marker", Name: "Key", Status: "active"}},
+	}
+	p := Pipeline{LLM: llm, Canon: &appender{}, Targets: staticTarget{target: target}}
+	_, err := p.Run(context.Background(), id.MustParse("00000000-0000-4000-8000-000000000810"), PlayerAction{TimelineID: timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000811")), Text: "Продолжить"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	removed := map[string][]string{
+		"director": {"objectives", "heroJournal"}, "pacing": {"objectives"},
+		"writer": {"objectives", "heroJournal"}, "world_evaluator": {"initialCast", "world"},
+		"state_evaluator": {"heroJournal"}, "quest_evaluator": {"objectives"},
+		"choices": {"objectives", "heroJournal"},
+	}
+	checked := map[string]bool{}
+	for _, request := range llm.Requests {
+		fields, ok := removed[request.Role]
+		if !ok {
+			continue
+		}
+		var input map[string]json.RawMessage
+		if err := json.Unmarshal(request.Input, &input); err != nil {
+			t.Fatal(err)
+		}
+		var nested map[string]json.RawMessage
+		if err := json.Unmarshal(input["context"], &nested); err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := nested["storyBible"]; !ok {
+			t.Fatalf("role %s lost non-duplicate authoritative context", request.Role)
+		}
+		for _, field := range fields {
+			if _, duplicated := nested[field]; duplicated {
+				t.Fatalf("role %s still duplicates context field %s: %s", request.Role, field, request.Input)
+			}
+		}
+		checked[request.Role] = true
+	}
+	for role := range removed {
+		if !checked[role] {
+			t.Fatalf("role %s input was not checked", role)
+		}
 	}
 }
 

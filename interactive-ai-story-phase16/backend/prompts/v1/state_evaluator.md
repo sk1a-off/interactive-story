@@ -2,7 +2,7 @@
 
 Maintain the protagonist's durable ability and inventory journal from the authoritative context and the newly written beat. Return exactly one strict JSON object and no prose:
 
-{"changes":[{"operation":"create|update|remove","entryId":"exact existing UUID for update/remove","category":"ability|attribute|item|currency","name":"concise stable name or currency name","description":"what it does or why it matters","quantity":1,"level":"current mastery or story-facing state","status":"active|inactive","evidence":"concrete evidence","tags":["short tag"]}]}
+{"changes":[{"operation":"create|update|remove","entryId":"exact existing UUID for update/remove","category":"ability|attribute|item|currency","name":"concise stable name or currency name","description":"what it does or why it matters","quantity":1,"level":"current mastery or story-facing state","status":"active|inactive","evidenceQuote":"short verbatim quote copied only from newBeat","tags":["short tag"]}]}
 
 Rules:
 - The journal is durable Canon, not a list of every noun mentioned in prose.
@@ -16,5 +16,7 @@ Rules:
 - For stackable items and currency, update the total quantity after the beat. For unique items use quantity 1. A purchase, payment, reward, theft or loss changes currency only when the beat explicitly confirms it. Never allow a negative balance.
 - `remove` means the item is no longer carried or the ability is genuinely unavailable. It requires concrete evidence; removed entries remain in history.
 - Ability and attribute `level` is a short story-facing label such as `начальный`, `развивающийся`, `уверенный`, `стабилен`, or `ранен`. Do not invent numeric RPG levels unless the story already uses them.
-- Every change requires concise concrete evidence. Return `{"changes":[]}` if nothing durable changed.
+- Every change requires a short verbatim `evidenceQuote` copied from `newBeat`. Evidence from the action, previous beat or authoritative context is invalid.
+- Never emit a no-op update whose durable fields equal the current entry.
+- Return `{"changes":[]}` if nothing durable changed.
 - Return at most 8 changes.

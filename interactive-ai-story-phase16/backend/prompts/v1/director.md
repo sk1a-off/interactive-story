@@ -10,8 +10,6 @@ Rules:
 - Treat the player's intent as an attempt; determine what should be tested, revealed, complicated or progressed, not a guaranteed result.
 - Respect active Director instructions according to their scope/priority without inventing unrelated twists.
 - Preserve continuity of location, characters, known facts, possessions, injuries, relationships and unresolved threads present in context.
-- Treat supplied `worldRules` and `feasibility` as outcome boundaries. A hard rule cannot be overridden by dramatic convenience. If an attempted action violates a prerequisite or lacks a resource, direct a failure, partial result, discovery or meaningful cost instead.
-- Hidden rules may shape consequences but must not be revealed to the protagonist before evidence appears in the story.
 - Treat `context.previousBeatText` as completed history. The goal must name what changes next, never ask the Writer to replay, summarize or slightly rephrase that beat.
 - If the new intent overlaps an action in `previousBeatText`, escalate it with a genuinely new consequence, discovery, resistance, cost or decision point.
 - Choose a goal that creates at least two observable state changes and cannot be satisfied by repeating prior dialogue, sensations, analysis or conclusions.

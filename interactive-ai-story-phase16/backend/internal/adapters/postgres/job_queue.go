@@ -21,9 +21,9 @@ func (q *JobQueue) Enqueue(ctx context.Context, j generation.Job, maxAttempts in
 		maxAttempts = 3
 	}
 	_, e := q.pool.Exec(ctx, `INSERT INTO generation_jobs(
- id,story_id,timeline_id,expected_head_event_seq,config_revision_id,prompt_set_revision_id,status,provider_kind,provider_name,model_name,profile_name,request_id,max_attempts,available_at,request_payload)
- VALUES($1,$2,NULLIF($3,'')::uuid,$4,$5,NULLIF($6,'')::uuid,'queued',$7,$8,$9,$10,$11,$12,now(),$13)`,
-		j.ID, j.StoryID, j.TimelineID, j.ExpectedHeadEventSeq, j.ConfigRevisionID, j.PromptSetRevisionID, string(j.Provider.Kind), j.Provider.Provider, j.Provider.Model, j.Provider.Profile, j.RequestID, maxAttempts, []byte(j.RequestPayload))
+ id,story_id,timeline_id,expected_head_event_seq,config_revision_id,prompt_set_revision_id,status,provider_kind,provider_name,model_name,profile_name,request_id,max_attempts,available_at,request_payload,action_hash)
+ VALUES($1,$2,NULLIF($3,'')::uuid,$4,$5,NULLIF($6,'')::uuid,'queued',$7,$8,$9,$10,$11,$12,now(),$13,$14)`,
+		j.ID, j.StoryID, j.TimelineID, j.ExpectedHeadEventSeq, j.ConfigRevisionID, j.PromptSetRevisionID, string(j.Provider.Kind), j.Provider.Provider, j.Provider.Model, j.Provider.Profile, j.RequestID, maxAttempts, []byte(j.RequestPayload), j.ActionHash)
 	return e
 }
 
@@ -98,11 +98,11 @@ GROUP BY cancelled.id`, now); e != nil {
  FROM candidate c WHERE j.id=c.id
  RETURNING j.id,j.story_id,j.timeline_id,j.expected_head_event_seq,j.config_revision_id,COALESCE(j.prompt_set_revision_id::text,''),j.status,
  j.provider_kind,j.provider_name,j.model_name,j.profile_name,j.request_id,j.created_at,
- j.attempt_count,j.max_attempts,j.available_at,j.lease_expires_at,j.cancel_requested_at,j.last_error,j.request_payload`,
+ j.attempt_count,j.max_attempts,j.available_at,j.lease_expires_at,j.cancel_requested_at,j.last_error,j.request_payload,j.action_hash`,
 		now, owner, now.Add(ttl)).
 		Scan(&out.Job.ID, &out.Job.StoryID, &timeline, &out.Job.ExpectedHeadEventSeq, &out.Job.ConfigRevisionID, &out.Job.PromptSetRevisionID, &out.Job.Status,
 			&out.Job.Provider.Kind, &out.Job.Provider.Provider, &out.Job.Provider.Model, &out.Job.Provider.Profile, &out.Job.RequestID, &out.Job.CreatedAt,
-			&out.Reliability.AttemptCount, &out.Reliability.MaxAttempts, &out.Reliability.AvailableAt, &leaseExpires, &cancelAt, &lastError, &out.Job.RequestPayload)
+			&out.Reliability.AttemptCount, &out.Reliability.MaxAttempts, &out.Reliability.AvailableAt, &leaseExpires, &cancelAt, &lastError, &out.Job.RequestPayload, &out.Job.ActionHash)
 	if errors.Is(e, pgx.ErrNoRows) {
 		return jobqueue.ClaimedJob{}, jobqueue.ErrNoJob
 	}
@@ -186,34 +186,34 @@ func (q *JobQueue) RequeueExpired(ctx context.Context, now time.Time) (int64, er
 	}
 	return tag.RowsAffected(), nil
 }
-func (q *JobQueue) FindByRequest(ctx context.Context, timelineID id.ID, key string) (id.ID, bool, error) {
+func (q *JobQueue) FindByRequest(ctx context.Context, timelineID id.ID, key string) (jobqueue.ExistingJob, bool, error) {
 	if timelineID.IsZero() || key == "" {
-		return "", false, nil
+		return jobqueue.ExistingJob{}, false, nil
 	}
-	var jid id.ID
-	e := q.pool.QueryRow(ctx, `SELECT id FROM generation_jobs WHERE timeline_id=$1 AND request_id=$2 ORDER BY created_at LIMIT 1`, timelineID, key).Scan(&jid)
+	var existing jobqueue.ExistingJob
+	e := q.pool.QueryRow(ctx, `SELECT id,action_hash FROM generation_jobs WHERE timeline_id=$1 AND request_id=$2 ORDER BY created_at LIMIT 1`, timelineID, key).Scan(&existing.ID, &existing.ActionHash)
 	if errors.Is(e, pgx.ErrNoRows) {
-		return "", false, nil
+		return jobqueue.ExistingJob{}, false, nil
 	}
 	if e != nil {
-		return "", false, e
+		return jobqueue.ExistingJob{}, false, e
 	}
-	return jid, true, nil
+	return existing, true, nil
 }
 
-func (q *JobQueue) FindActiveByTimelineHead(ctx context.Context, timelineID id.ID, expectedHead int64) (id.ID, bool, error) {
+func (q *JobQueue) FindActiveByTimelineHead(ctx context.Context, timelineID id.ID, expectedHead int64) (jobqueue.ExistingJob, bool, error) {
 	if timelineID.IsZero() || expectedHead < 0 {
-		return "", false, nil
+		return jobqueue.ExistingJob{}, false, nil
 	}
-	var jid id.ID
-	e := q.pool.QueryRow(ctx, `SELECT id FROM generation_jobs
+	var existing jobqueue.ExistingJob
+	e := q.pool.QueryRow(ctx, `SELECT id,action_hash FROM generation_jobs
 WHERE timeline_id=$1 AND expected_head_event_seq=$2 AND status IN ('queued','running')
-ORDER BY created_at,id LIMIT 1`, timelineID, expectedHead).Scan(&jid)
+ORDER BY created_at,id LIMIT 1`, timelineID, expectedHead).Scan(&existing.ID, &existing.ActionHash)
 	if errors.Is(e, pgx.ErrNoRows) {
-		return "", false, nil
+		return jobqueue.ExistingJob{}, false, nil
 	}
 	if e != nil {
-		return "", false, e
+		return jobqueue.ExistingJob{}, false, e
 	}
-	return jid, true, nil
+	return existing, true, nil
 }

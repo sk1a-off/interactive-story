@@ -24,7 +24,10 @@ const (
 	OpeningSituation ComponentKey = "opening_situation"
 )
 
-var AllKeys = []ComponentKey{StoryBible, Player, World, WorldRules, InitialCast, VisualBible, InitialQuests, OpeningSituation}
+// AllKeys contains the active setup flow. Legacy world_rules rows may remain
+// stored for replay compatibility, but they are no longer editable, generated
+// or required to start a story.
+var AllKeys = []ComponentKey{StoryBible, Player, World, InitialCast, VisualBible, InitialQuests, OpeningSituation}
 var (
 	ErrInvalidComponent = errors.New("invalid story setup component")
 	ErrLocked           = errors.New("story setup component is locked")

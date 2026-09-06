@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	localembeddings "github.com/local/interactive-ai-story/backend/internal/adapters/embedding/local_sentence_transformers"
 	localimages "github.com/local/interactive-ai-story/backend/internal/adapters/imagestorage/local"
 	pgadapter "github.com/local/interactive-ai-story/backend/internal/adapters/postgres"
 	secretfile "github.com/local/interactive-ai-story/backend/internal/adapters/secrets/file"
@@ -19,6 +20,7 @@ import (
 	storyrouter "github.com/local/interactive-ai-story/backend/internal/adapters/storyllm/role_router"
 	appaiconfig "github.com/local/interactive-ai-story/backend/internal/application/aiconfig"
 	"github.com/local/interactive-ai-story/backend/internal/application/canon"
+	"github.com/local/interactive-ai-story/backend/internal/application/contextbuilder"
 	appdir "github.com/local/interactive-ai-story/backend/internal/application/director"
 	appgen "github.com/local/interactive-ai-story/backend/internal/application/generation"
 	appimagegen "github.com/local/interactive-ai-story/backend/internal/application/imagegeneration"
@@ -116,11 +118,11 @@ func main() {
 				return nil, errors.New("Google AI API key is not configured for the active AI revision")
 			}
 			if public.StoryLLMSafeHybrid {
-				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 120 * time.Second, PromptSet: promptRev}, nil)
+				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 1200 * time.Second, PromptSet: promptRev}, nil)
 				if err != nil {
 					return nil, err
 				}
-				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 5 * time.Minute, PromptSet: promptRev}, nil)
+				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 12 * time.Minute, PromptSet: promptRev}, nil)
 				if err != nil {
 					return nil, err
 				}
@@ -167,7 +169,19 @@ func main() {
 		jobQueue := pgadapter.NewJobQueue(pool)
 		metadata := pgadapter.NewGenerationMetadata(pool)
 		generationTarget := pgadapter.NewGenerationTarget(pool)
+		var contextShadow appgen.ShadowContext
+		if cfg.GenerationContextShadow {
+			embeddings, embeddingErr := localembeddings.New(cfg.EmbeddingBaseURL, cfg.EmbeddingModel, nil)
+			if embeddingErr != nil {
+				logger.Error("context shadow embedding config invalid", "error", embeddingErr)
+				os.Exit(1)
+			}
+			contextShadow = appgen.ContextShadowBuilder{Builder: contextbuilder.Builder{Embeddings: embeddings, Memory: pgadapter.NewMemoryRetriever(pool)}, TokenBudget: 64000, RetrievalLimit: 8}
+			logger.Info("generation context shadow enabled", "embedding_model", cfg.EmbeddingModel)
+		}
 		updateStore := pgadapter.NewGenerationUpdates(pool)
+		attemptStore := pgadapter.NewGenerationAttempts(pool)
+		generationMetricsStore := pgadapter.NewGenerationMetrics(pool)
 		gameRunner := &appgen.DurableRunner{Queue: jobQueue, Config: configRepo, Metadata: metadata, PromptSets: promptRepo, Hub: hub, Updates: updateStore, MaxAttempts: 3}
 		resolvePipeline := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (appgen.Pipeline, error) {
 			if promptRev == nil {
@@ -181,11 +195,9 @@ func main() {
 			if err != nil {
 				return appgen.Pipeline{}, err
 			}
-			var public domainconfig.PublicSettings
-			_ = json.Unmarshal(rev.Settings, &public)
-			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, RuleAudits: generationTarget, WorldRulesSafeMode: public.WorldRulesSafeMode}, nil
+			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, ProvisionalBeat: cfg.GenerationProvisionalBeat}, nil
 		}
-		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}}
+		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}
 		imageStorage, storageErr := localimages.New(cfg.MediaRoot, cfg.MediaBaseURL)
 		if storageErr != nil {
 			logger.Error("image storage unavailable", "error", storageErr)
@@ -200,9 +212,9 @@ func main() {
 		}
 		workers := make([]appjobs.Worker, 3)
 		for index := range workers {
-			workers[index] = appjobs.Worker{Queue: jobQueue, Executor: executor, Owner: fmt.Sprintf("backend-worker-%d", index+1), LeaseTTL: 30 * time.Second, HeartbeatEvery: 10 * time.Second, ExecutionTimeout: 3 * time.Minute, Backoff: appjobs.DefaultBackoff, Now: time.Now}
+			workers[index] = appjobs.Worker{Queue: jobQueue, Executor: executor, Owner: fmt.Sprintf("backend-worker-%d", index+1), LeaseTTL: 30 * time.Second, HeartbeatEvery: 10 * time.Second, ExecutionTimeout: 10 * time.Minute, Backoff: appjobs.DefaultBackoff, Now: time.Now}
 		}
-		promptWorker := appimagegen.PromptJobWorker{Repo: imageGenerationRepo, Images: imageService, Owner: "image-prompt-worker-1", LocalOwnerID: ownerID, LeaseTTL: 3 * time.Minute, ExecutionTimeout: 2 * time.Minute, Now: time.Now, Logger: logger}
+		promptWorker := appimagegen.PromptJobWorker{Repo: imageGenerationRepo, Images: imageService, Owner: "image-prompt-worker-1", LocalOwnerID: ownerID, LeaseTTL: 10 * time.Minute, ExecutionTimeout: 2 * time.Minute, Now: time.Now, Logger: logger}
 		startWorker = func(ctx context.Context) {
 			logger.Info("generation workers starting", "story_workers", len(workers), "local_provider_parallelism", 1, "image_prompt_workers", 1)
 			startRestarting := func(name string, run func(context.Context) error) {

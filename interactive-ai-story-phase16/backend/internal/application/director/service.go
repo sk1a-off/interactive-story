@@ -102,7 +102,7 @@ func (s Service) Assist(ctx context.Context, c AssistCommand) (AssistResult, err
 	if llm == nil {
 		return AssistResult{}, errors.New("director assistant provider unavailable")
 	}
-	input := map[string]any{"instruction": c.Instruction, "section": c.Section, "selectedId": c.SelectedID, "characters": view.Characters, "locations": view.Locations, "objectives": view.Objectives, "relationships": view.Relationships, "worldCanon": map[string]any{"systems": view.WorldSystems, "rules": view.WorldRules, "resources": view.WorldResources}, "heroJournal": map[string]any{"abilities": view.Abilities, "attributes": view.Attributes, "inventory": view.Inventory}}
+	input := map[string]any{"instruction": c.Instruction, "section": c.Section, "selectedId": c.SelectedID, "characters": view.Characters, "locations": view.Locations, "objectives": view.Objectives, "relationships": view.Relationships, "heroJournal": map[string]any{"abilities": view.Abilities, "attributes": view.Attributes, "inventory": view.Inventory}}
 	var last error
 	for attempt := 0; attempt < 2; attempt++ {
 		if last != nil {
@@ -146,7 +146,7 @@ func (s Service) Assist(ctx context.Context, c AssistCommand) (AssistResult, err
 
 func validAssistSection(v string) bool {
 	switch v {
-	case "overview", "characters", "locations", "objectives", "world_rules":
+	case "overview", "characters", "locations", "objectives":
 		return true
 	}
 	return false
@@ -223,8 +223,6 @@ func operationMatchesSection(t domaindir.ExactCommandType, section string) bool 
 		return t == domaindir.UpsertLocation || t == domaindir.ArchiveLocation
 	case "objectives":
 		return t == domaindir.UpsertObjective || t == domaindir.ArchiveObjective
-	case "world_rules":
-		return t == domaindir.UpsertWorldSystem || t == domaindir.UpsertWorldRule || t == domaindir.ArchiveWorldRule || t == domaindir.UpdateWorldResource
 	}
 	return false
 }

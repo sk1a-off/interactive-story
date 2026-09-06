@@ -40,6 +40,33 @@ test('shows nested quest and stage controls for the initial quest section', () =
   expect(screen.getByRole('button', { name: 'Restart the beacon' })).toBeInTheDocument()
 })
 
+test('main hero AI editor targets one field and exposes individual goal controls', async () => {
+  const payload = { name: 'Алекс', age: 24, description: 'Молодой исследователь.', goals: ['Найти наставника', 'Понять природу дара'], visualAnchorEn: 'young man with dark hair' }
+  const components: SetupComponent[] = [{ storyId: 'story-1', key: 'player', revision: 2, source: 'ai', locked: false, status: 'ready', payload }]
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    void input
+    void init
+    return new Response(JSON.stringify({ generationId: 'generation-player', summary: 'Описание стало конкретнее', changes: [{ key: 'player', before: payload, after: { ...payload, description: 'Наблюдательный исследователь, который боится потерять контроль над даром.' }, changedPaths: ['description'], operations: [{ component: 'player', operation: 'set_field', path: 'description', value: 'Наблюдательный исследователь, который боится потерять контроль над даром.' }] }] }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+  render(<QueryClientProvider client={client}><SetupAssistant storyId="story-1" components={components} selectedKey="player" onSelectComponent={() => undefined} onDraftsApplied={() => undefined} /></QueryClientProvider>)
+
+  expect(screen.getByRole('button', { name: '✨ Углубить героя' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: '🧭 Согласовать мотивацию' })).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /Описание характер и прошлое/ }))
+
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+  const body = JSON.parse(String((fetchMock.mock.calls[0][1] as RequestInit).body)) as { action: string; target: Record<string, string>; components: string[] }
+  expect(body).toMatchObject({ action: 'set_field', target: { path: 'description' }, components: ['player'] })
+  expect(await screen.findByText('Изменить поле: description')).toBeInTheDocument()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Найти наставника' }))
+  expect(screen.getByRole('button', { name: 'Уточнить цель' })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Удалить цель' })).toBeInTheDocument()
+  vi.unstubAllGlobals()
+})
+
 test('clears the previous section instruction and stale error when switching sections', async () => {
   const components: SetupComponent[] = [
     { storyId: 'story-1', key: 'visual_bible', revision: 1, source: 'ai', locked: false, status: 'ready', payload: { style: 'manga', continuityRules: [] } },

@@ -5,9 +5,9 @@ package contextbuilder
 // it is returned intact and lower-priority material is omitted.
 func ApplyBudget(in Result, budget int) Result {
 	if budget <= 0 {
-		return Result{Authoritative: append([]byte(nil), in.Authoritative...)}
+		return Result{Authoritative: append([]byte(nil), in.Authoritative...), RetrievalError: in.RetrievalError}
 	}
-	out := Result{Authoritative: append([]byte(nil), in.Authoritative...)}
+	out := Result{Authoritative: append([]byte(nil), in.Authoritative...), RetrievalError: in.RetrievalError}
 	used := estimate(string(out.Authoritative))
 	if used >= budget {
 		return out

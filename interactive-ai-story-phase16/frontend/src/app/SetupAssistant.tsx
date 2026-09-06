@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { assistSetup, type SetupAssistChange, type SetupAssistOperation, type SetupAssistResult, type SetupAssistTarget, type SetupComponent } from '../lib/api'
-import { readSetupDraftPayload, setupComponentTitle, writeSetupDraftPayload } from './setupEditorModel'
+import { readSetupDraftPayload, SETUP_COMPONENT_ORDER, setupComponentTitle, writeSetupDraftPayload } from './setupEditorModel'
 
 type Scope = 'current' | 'all'
 type RunRequest = { instruction: string; scope: Scope; action?: string; target?: SetupAssistTarget }
@@ -13,16 +13,13 @@ const SECTION_ACTIONS: Record<string, Array<{ label: string; instruction: string
     { label: '🎭 Усилить темы', instruction: 'Проверь темы и тон. Добавь только недостающую смысловую глубину, не переписывая уже удачные поля.' },
   ],
   player: [
-    { label: '🧭 Уточнить мотивацию', instruction: 'Сделай мотивацию героя конкретной и пригодной для решений игрока. Не меняй имя, возраст и установленные факты.' },
-    { label: '🖼 Проверить внешность', instruction: 'Проверь visualAnchorEn героя на устойчивость между иллюстрациями. Измени только этот якорь, если это действительно нужно.' },
+    { label: '✨ Углубить героя', instruction: 'Углуби личность, прошлое, сильные стороны и внутреннее противоречие героя. Сохрани имя, возраст, цели и установленные факты.', action: 'improve_player_profile' },
+    { label: '🧭 Согласовать мотивацию', instruction: 'Согласуй описание героя и его цели: желания должны быть конкретными, допускать разные решения игрока и вытекать из прошлого героя. Не меняй имя, возраст и внешность.', action: 'improve_player_motivation' },
+    { label: '🖼 Улучшить внешность', instruction: 'Улучши только visualAnchorEn героя: дай на английском устойчивые черты лица, телосложения, волос, одежды и заметные детали без действия, эмоции и фона.', action: 'improve_player_visual' },
   ],
   world: [
     { label: '🌍 Уточнить состояние мира', instruction: 'Уточни текущее состояние мира и только те детали, которые влияют на начало и дальнейший сюжет.' },
     { label: '🧩 Проверить связность мест', instruction: 'Проверь, согласованы ли важные локации с замыслом и начальной сценой. Предложи только адресные исправления.' },
-  ],
-  world_rules: [
-    { label: '⚖ Проверить законы', instruction: 'Проверь системы мира и адресные правила. Найди противоречия, неявные цены, пределы и запрещённые результаты. Предлагай только точечные изменения существующих правил.' },
-    { label: '🧠 Связать нейросеть и магию', instruction: 'Проверь границу между нейросетью, магией и технологиями: для каждой силы должны быть понятны источник, возможности, цена, пределы, сбои и развитие. Не меняй уже установленные законы без необходимости.' },
   ],
   initial_cast: [
     { label: '🎭 Углубить роли', instruction: 'Сделай роли и отношения стартовых персонажей различимыми, не меняя их имена и установленные факты.', action: 'improve_cast_roles' },
@@ -97,8 +94,9 @@ export function SetupAssistant({ storyId, components, selectedKey, onSelectCompo
   const [appliedKeys, setAppliedKeys] = useState<string[]>([])
   const [selectedItem, setSelectedItem] = useState<NamedItem | null>(null)
   const [selectedStage, setSelectedStage] = useState<NamedItem | null>(null)
-  const selected = components.find(component => component.key === selectedKey) ?? components[0]
-  const editable = useMemo(() => components.filter(component => !component.locked), [components])
+  const activeComponents = useMemo(() => components.filter(component => SETUP_COMPONENT_ORDER.includes(component.key as typeof SETUP_COMPONENT_ORDER[number])), [components])
+  const selected = activeComponents.find(component => component.key === selectedKey) ?? activeComponents[0]
+  const editable = useMemo(() => activeComponents.filter(component => !component.locked), [activeComponents])
   const draft = selected ? readSetupDraftPayload(storyId, selected) : {}
   const quickActions = SECTION_ACTIONS[selected?.key] ?? []
 
@@ -106,7 +104,7 @@ export function SetupAssistant({ storyId, components, selectedKey, onSelectCompo
     mutationFn: ({ instruction: nextInstruction, scope, action, target }: RunRequest) => {
       const requestKeys = scope === 'current' ? (selected && !selected.locked ? [selected.key] : []) : editable.map(component => component.key)
       if (requestKeys.length === 0) throw new Error('В выбранной области нет разделов, доступных для AI.')
-      const drafts = Object.fromEntries(components.map(component => [component.key, readSetupDraftPayload(storyId, component)]))
+      const drafts = Object.fromEntries(activeComponents.map(component => [component.key, readSetupDraftPayload(storyId, component)]))
       return assistSetup(storyId, { instruction: nextInstruction, components: requestKeys, drafts, action, target })
     },
     onSuccess: result => { setProposal(result); setAppliedKeys([]) },
@@ -148,13 +146,12 @@ export function SetupAssistant({ storyId, components, selectedKey, onSelectCompo
   }
 
   const collection = selected?.key === 'world' ? { path: 'locations', title: 'Локации', add: 'Добавить локацию', items: namedItems(draft.locations, 'name') }
-    : selected?.key === 'world_rules' ? { path: 'rules', title: 'Законы мира', add: 'Добавить закон', items: namedItems(draft.rules, 'title') }
     : selected?.key === 'initial_cast' ? { path: 'characters', title: 'Персонажи', add: 'Добавить персонажа', items: namedItems(draft.characters, 'name') }
     : selected?.key === 'story_bible' ? { path: 'themes', title: 'Темы', add: 'Добавить тему', items: namedItems(draft.themes, '') }
-    : selected?.key === 'player' ? { path: 'goals', title: 'Цели героя', add: 'Добавить цель', items: namedItems(draft.goals, '') }
     : selected?.key === 'visual_bible' ? { path: 'continuityRules', title: 'Правила непрерывности', add: 'Добавить правило', items: namedItems(draft.continuityRules, '') }
     : selected?.key === 'opening_situation' ? { path: 'choices', title: 'Стартовые действия', add: '', items: namedItems(draft.choices, '') }
     : null
+  const playerGoals = selected?.key === 'player' ? namedItems(draft.goals, '') : []
   const quests = selected?.key === 'initial_quests' ? namedItems(draft.quests, 'title') : []
   const selectedQuest = rows(draft.quests).find(quest => String(quest.title ?? '') === selectedItem?.matchValue)
   const stages = selectedQuest ? namedItems(selectedQuest.stages, 'title') : []
@@ -167,6 +164,24 @@ export function SetupAssistant({ storyId, components, selectedKey, onSelectCompo
     {locked && <p className="setup-assistant-lock-note">🔒 Раздел зафиксирован. Разблокируйте его, чтобы AI мог предложить изменения.</p>}
 
     <div className="setup-assistant-quick">{quickActions.map(action => <button type="button" className="ghost compact" key={action.label} disabled={busy || locked} onClick={() => run(action.instruction, 'current', action.action ?? 'improve')}>{action.label}</button>)}</div>
+
+    {selected?.key === 'player' && <>
+      <section className="assistant-entities assistant-player-fields">
+        <div className="assistant-entities-head"><div><strong>Что изменить у героя</strong><small>Выберите поле — AI не затронет остальные.</small></div></div>
+        <div className="assistant-player-field-grid">
+          <button type="button" disabled={busy || locked} onClick={() => address('set_field', { path: 'name' }, 'Предложи подходящее имя главного героя с учётом замысла и мира. Верни только имя.')}>Имя <small>{String(draft.name ?? 'не задано')}</small></button>
+          <button type="button" disabled={busy || locked} onClick={() => address('set_field', { path: 'age' }, 'Подбери уместный совершеннолетний возраст главного героя с учётом его прошлого, положения и задач. Верни только число.')}>Возраст <small>{String(draft.age ?? 'не задан')}</small></button>
+          <button type="button" disabled={busy || locked} onClick={() => address('set_field', { path: 'description' }, 'Улучши только описание главного героя: личность, прошлое, положение в начале, сильные стороны, слабость и внутреннее противоречие. Не меняй известные факты.')}>Описание <small>характер и прошлое</small></button>
+          <button type="button" disabled={busy || locked} onClick={() => address('set_field', { path: 'visualAnchorEn' }, 'Улучши только визуальный якорь главного героя. Напиши его на английском: устойчивые черты лица, телосложения, волос, одежды и отличительные детали; без действия, эмоции, позы и фона.')}>Внешность <small>English visual anchor</small></button>
+        </div>
+      </section>
+      <section className="assistant-entities">
+        <div className="assistant-entities-head"><div><strong>Цели героя</strong><small>Каждая цель меняется отдельно.</small></div><button type="button" className="ghost compact" disabled={busy || locked} onClick={() => address('add_item', { path: 'goals' }, 'Добавь одну новую личную цель главного героя, которая следует из его прошлого и создаёт решения для игрока. Не повторяй существующие цели.')}>＋ Добавить цель</button></div>
+        <div className="assistant-entity-tags">{playerGoals.map(goal => <button type="button" className={selectedItem?.matchValue === goal.matchValue ? 'active' : ''} key={goal.matchValue} onClick={() => setSelectedItem(goal)}>{goal.label}</button>)}</div>
+        {selectedItem && <div className="assistant-entity-actions"><button type="button" className="ghost compact" disabled={busy || locked} onClick={() => address('update_item', { path: 'goals', matchField: '', matchValue: selectedItem.matchValue }, `Сделай только цель «${selectedItem.label}» конкретнее и пригодной для решений игрока. Сохрани её исходный смысл.`)}>Уточнить цель</button><button type="button" className="ghost compact danger" disabled={busy || locked} onClick={() => address('remove_item', { path: 'goals', matchField: '', matchValue: selectedItem.matchValue }, `Удали только цель «${selectedItem.label}».`)}>Удалить цель</button></div>}
+        {playerGoals.length === 0 && <p className="muted tiny">Целей пока нет — AI может предложить первую, не переписывая профиль героя.</p>}
+      </section>
+    </>}
 
     {collection && <section className="assistant-entities"><div className="assistant-entities-head"><strong>{collection.title}</strong>{collection.add && <button type="button" className="ghost compact" disabled={busy || locked} onClick={() => address('add_item', { path: collection.path }, `Добавь одну новую уместную сущность в «${collection.title}». Не изменяй существующие элементы.`)}>＋ {collection.add}</button>}</div>
       <div className="assistant-entity-tags">{collection.items.map(item => <button type="button" className={selectedItem?.matchValue === item.matchValue ? 'active' : ''} key={item.matchValue} onClick={() => setSelectedItem(item)}>{item.label}</button>)}</div>

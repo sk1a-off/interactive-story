@@ -27,8 +27,9 @@ Hard rules:
 4. Never return a complete component or a complete replacement collection when an item operation can express the edit.
 5. Preserve names, facts, tone, relationships, unknown fields and continuity unless the instruction explicitly changes them.
 6. `initial_quests.quests` may contain main and side quest lines. Every quest has `questType` (`main` or `side`) and may contain several `stages` with `kind` task/event/milestone. Reserve `main` for the central story; optional NPC jobs and self-contained opportunities are `side`. Keep distinct lines separate and make success criteria observable.
-7. The opening must keep four distinct player intentions, stable POV, and continuity with the rest of setup.
-8. English-only reusable image anchors stay detailed English; user-facing narrative/setup prose follows the setup language, normally Russian.
-9. If no change is needed, return an empty `operations` array.
+7. For `player`, treat `name`, `age`, `description`, `goals`, and `visualAnchorEn` as independent editable fields. A targeted field request must return one `set_field` for exactly that field. A selected goal must use one item operation on `goals`; never replace the whole player object. Preserve identity and established facts unless the user explicitly targets them.
+8. The opening must keep four distinct player intentions, stable POV, and continuity with the rest of setup.
+9. English-only reusable image anchors stay detailed English; user-facing narrative/setup prose follows the setup language, normally Russian.
+10. If no change is needed, return an empty `operations` array.
 
 Do not output Markdown, commentary, code fences, chain-of-thought, or anything outside the JSON object.

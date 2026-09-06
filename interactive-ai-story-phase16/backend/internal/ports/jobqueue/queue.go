@@ -11,6 +11,11 @@ import (
 
 var ErrNoJob = errors.New("no generation job available")
 
+type ExistingJob struct {
+	ID         id.ID
+	ActionHash string
+}
+
 type ClaimedJob struct {
 	Job         generation.Job
 	Reliability generation.Reliability
@@ -18,8 +23,8 @@ type ClaimedJob struct {
 
 type Queue interface {
 	Enqueue(context.Context, generation.Job, int) error
-	FindByRequest(context.Context, id.ID, string) (id.ID, bool, error)
-	FindActiveByTimelineHead(context.Context, id.ID, int64) (id.ID, bool, error)
+	FindByRequest(context.Context, id.ID, string) (ExistingJob, bool, error)
+	FindActiveByTimelineHead(context.Context, id.ID, int64) (ExistingJob, bool, error)
 	ClaimNext(context.Context, string, time.Time, time.Duration) (ClaimedJob, error)
 	Heartbeat(context.Context, id.ID, string, time.Time, time.Duration) error
 	Complete(context.Context, id.ID, string, time.Time) error

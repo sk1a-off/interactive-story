@@ -242,7 +242,7 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: finish_reason=%s content_chars=%d", aiport.ErrInvalidOutput, decoded.Choices[0].FinishReason, len([]rune(decoded.Choices[0].Message.Content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity()}, nil
 }
 
 func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte) (aiport.StoryResponse, error) {
@@ -272,7 +272,7 @@ func (c *Client) generateAntigravity(ctx context.Context, system string, input [
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: interaction_content_chars=%d", aiport.ErrInvalidOutput, len([]rune(content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens, Provider: c.Identity()}, nil
 }
 
 func lastModelOutputText(response interactionResponse) string {

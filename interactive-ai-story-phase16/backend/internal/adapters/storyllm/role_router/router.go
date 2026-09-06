@@ -36,9 +36,24 @@ func (r *Router) Generate(ctx context.Context, request aiport.StoryRequest) (aip
 	if _, ok := safeHybridFastRoles[request.Role]; ok {
 		response, err := r.fast.Generate(ctx, request)
 		if err == nil {
+			if response.Provider.Model == "" {
+				response.Provider = r.fast.Identity()
+			}
 			return response, nil
 		}
-		return r.quality.Generate(ctx, request)
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return response, err
+		}
+		response, err = r.quality.Generate(ctx, request)
+		if response.Provider.Model == "" {
+			response.Provider = r.quality.Identity()
+		}
+		response.EscalatedFrom = r.fast.Identity().Model
+		return response, err
 	}
-	return r.quality.Generate(ctx, request)
+	response, err := r.quality.Generate(ctx, request)
+	if response.Provider.Model == "" {
+		response.Provider = r.quality.Identity()
+	}
+	return response, err
 }

@@ -3,7 +3,7 @@ import { flushSync } from 'react-dom'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDirectorInstruction, applyDirectorExact, createActionRequestId, createStory, generateSetup, generationEventsUrl, getCurrent, getDirector, getDirectorHistory, getSaveLibrary, getSetup, startStory, submitAction, createSave, forkSave, previewSave, updateSaveCard, listAISettings, createAIRevision, activateAIRevision, getPromptStudio, createPromptRevision, activatePromptRevision, generateSceneImages, generateParagraphImage, listStories, deleteStory, type PromptRoleSettings, type StoryListItem } from '../lib/api'
-import { pendingTurnIsVisible, readPendingReaderGeneration, readerHasCoherentChoices, writePendingReaderGeneration, type PendingReaderGeneration } from '../lib/readerFlow'
+import { applyGenerationUpdate, pendingTurnIsVisible, readPendingReaderGeneration, readerHasCoherentChoices, writePendingReaderGeneration, type GenerationUpdate, type PendingReaderGeneration } from '../lib/readerFlow'
 import { paragraphCanBeIllustrated } from '../lib/illustrationPlacement'
 import { SetupComponentEditor } from './SetupEditor'
 import { SETUP_COMPONENT_ORDER, setupComponentDescription, setupComponentOrderIndex, setupComponentTitle } from './setupEditorModel'
@@ -95,7 +95,7 @@ function SetupReview(){
  </main>
 }
 function generationPhaseLabel(phase:string|null){
- return ({submitting:'Отправляю действие',queued:'Ожидаю ответа модели',interpreting:'Понимаю действие',directing:'Определяю развитие сцены',pacing:'Проверяю переход сцены и главы',writing:'Пишу продолжение',lore:'Проверяю законы мира',evaluating:'Параллельно обновляю мир, героя и квесты',world:'Обновляю персонажей и места',journal:'Обновляю способности и инвентарь',objectives:'Проверяю цели и достижения',choices:'Готовлю новые варианты действий',validating:'Проверяю результат',committing:'Сохраняю продолжение',syncing:'Обновляю сцену',retrying:'Ответ модели некорректен — повторяю попытку',reconnecting:'Восстанавливаю связь с генерацией',completed:'Обновляю сцену',failed:'Генерация завершилась ошибкой'} as Record<string,string>)[phase??'']??'Продолжаю историю'
+ return ({submitting:'Отправляю действие',queued:'Ожидаю ответа модели',interpreting:'Понимаю действие',directing:'Определяю развитие сцены',pacing:'Проверяю переход сцены и главы',writing:'Пишу продолжение',draft_ready:'Черновик готов',draft_replaced:'Черновик уточнён',finalizing:'Проверяю изменения мира и варианты действий',evaluating:'Параллельно обновляю мир, героя и квесты',world:'Обновляю персонажей и места',journal:'Обновляю способности и инвентарь',objectives:'Проверяю цели и достижения',choices:'Готовлю новые варианты действий',validating:'Проверяю результат',committing:'Сохраняю продолжение',syncing:'Обновляю сцену',retrying:'Ответ модели некорректен — повторяю попытку',reconnecting:'Восстанавливаю связь с генерацией',completed:'Обновляю сцену',failed:'Генерация завершилась ошибкой'} as Record<string,string>)[phase??'']??'Продолжаю историю'
 }
 function sentenceChunks(text:string){
  const matches=text.match(/[^.!?…]+(?:[.!?…]+[»”"'’)]*|$)/g)
@@ -165,7 +165,9 @@ function Reader(){
  const [narrationStart,setNarrationStart]=useState<NarrationStartRequest|null>(null)
  const [narrationCurrent,setNarrationCurrent]=useState<string|null>(null)
  const generationSubmissionLocked=useRef(false)
- const q=useQuery({queryKey:['current',timelineId],queryFn:()=>getCurrent(timelineId),refetchInterval:1000})
+ // SSE drives active generation. Snapshot polling is only a bounded recovery
+ // net: faster while reconciling a turn, rare while the Reader is idle.
+ const q=useQuery({queryKey:['current',timelineId],queryFn:()=>getCurrent(timelineId),refetchInterval:pendingGeneration?5000:60000})
  const action=useMutation({
   mutationFn:(submission:{text:string;expectedHead:number;requestId:string})=>submitAction(timelineId,submission.expectedHead,submission.text,submission.requestId),
   onError:(error)=>{setGenerationError(error.message);setPendingGeneration(null)},
@@ -195,7 +197,7 @@ function Reader(){
   if(!generationId)return
   const stream=new EventSource(generationEventsUrl(generationId))
   stream.addEventListener('generation',(e)=>{
-   const u=JSON.parse((e as MessageEvent).data) as {phase:string;error?:string}
+   const u=JSON.parse((e as MessageEvent).data) as GenerationUpdate
    if(u.phase==='failed'){
     stream.close();setGenerationError(u.error?.trim()||'Генерация завершилась ошибкой. Можно повторить действие.');setPendingGeneration(null);void q.refetch();return
    }
@@ -204,7 +206,7 @@ function Reader(){
     // Reader returns one coherent snapshot: new beat + matching choice set.
     stream.close();setPendingGeneration(current=>current?{...current,phase:'syncing'}:current);void q.refetch();return
    }
-   setPendingGeneration(current=>current?{...current,phase:u.phase}:current)
+   setPendingGeneration(current=>applyGenerationUpdate(timelineId,current,u))
   })
   stream.onerror=()=>{setPendingGeneration(current=>current?{...current,phase:'reconnecting'}:current);void q.refetch()}
   return ()=>stream.close()
@@ -272,6 +274,7 @@ function Reader(){
     </article>
    })}
   </section>
+  {pendingGeneration?.provisionalText&&<section className="provisional-beat" aria-label="Предварительный текст продолжения"><span>Черновик · ещё не сохранён в истории</span>{splitParagraphs(pendingGeneration.provisionalText).map((paragraph,index)=><p key={`provisional-${pendingGeneration.provisionalRevision??0}-${index}`}>{paragraph}</p>)}</section>}
   {generations.length===0&&<div className="scene-image-empty"><p>{regenerate.isPending?'Ставлю иллюстрацию сцены в очередь…':'Иллюстрация подготавливается в фоновой очереди.'}</p></div>}
   <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации · 2 варианта'}</button></div>
   {regenerate.error&&<p className="error scene-image-error">{regenerate.error.message}</p>}
@@ -333,9 +336,9 @@ const googleStoryModels=[
 function AISettings(){
  const nav=useNavigate();const qc=useQueryClient();const q=useQuery({queryKey:['ai-settings'],queryFn:listAISettings})
  const active=q.data?.revisions.find(x=>x.active)
- const [storyProvider,setStoryProvider]=useState('openai_compatible');const [storyModel,setStoryModel]=useState('');const [storyEndpoint,setStoryEndpoint]=useState('');const [safeHybrid,setSafeHybrid]=useState(false);const [worldRulesSafeMode,setWorldRulesSafeMode]=useState(false);const [apiKeysText,setApiKeysText]=useState('');const [showApiKey,setShowApiKey]=useState(false)
+ const [storyProvider,setStoryProvider]=useState('openai_compatible');const [storyModel,setStoryModel]=useState('');const [storyEndpoint,setStoryEndpoint]=useState('');const [safeHybrid,setSafeHybrid]=useState(false);const [apiKeysText,setApiKeysText]=useState('');const [showApiKey,setShowApiKey]=useState(false)
  const [imageProvider,setImageProvider]=useState('manual');const [imageModel,setImageModel]=useState('manual-v1')
- useEffect(()=>{if(!active)return;setStoryProvider(active.storyLlm.provider);setStoryModel(active.storyLlm.model);setStoryEndpoint(active.public.storyLlmEndpoint);setSafeHybrid(Boolean(active.public.storyLlmSafeHybrid));setWorldRulesSafeMode(Boolean(active.public.worldRulesSafeMode));setImageProvider(active.image.provider);setImageModel(active.image.model)},[active])
+ useEffect(()=>{if(!active)return;setStoryProvider(active.storyLlm.provider);setStoryModel(active.storyLlm.model);setStoryEndpoint(active.public.storyLlmEndpoint);setSafeHybrid(Boolean(active.public.storyLlmSafeHybrid));setImageProvider(active.image.provider);setImageModel(active.image.model)},[active])
  const googleAI=storyProvider==='google_gemini'
  const selectedGoogleModel=googleStoryModels.find(model=>model.id===storyModel)??googleStoryModels[3]
  const chooseProvider=(provider:string)=>{setStoryProvider(provider);setSafeHybrid(false);setApiKeysText('');setShowApiKey(false);if(provider==='google_gemini'){setStoryModel('gemini-3.5-flash-lite');setStoryEndpoint('https://generativelanguage.googleapis.com/v1beta/openai')}else{setStoryModel(active?.storyLlm.provider==='openai_compatible'?active.storyLlm.model:'');setStoryEndpoint(active?.storyLlm.provider==='openai_compatible'?active.public.storyLlmEndpoint:'http://127.0.0.1:8081')}}
@@ -346,7 +349,7 @@ function AISettings(){
    storyLlm:{kind:'story_llm',provider:storyProvider,model:storyModel,profile:safeHybrid?'google-ai-safe-hybrid':googleAI?'google-ai-rotating':active?.storyLlm.provider==='openai_compatible'?active.storyLlm.profile:'llamacpp-local'},
    embedding:active?.embedding??{kind:'embedding',provider:'local_sentence_transformers',model:'deepvk/USER2-small',profile:'cpu'},
    image:{kind:'image',provider:imageProvider,model:imageModel,profile:active?.image.profile||''},
-   public:{storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,worldRulesSafeMode,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||''}
+   public:{storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,worldRulesSafeMode:false,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||''}
  },storyLlmApiKeys:enteredKeys.length?enteredKeys:undefined,activate:true}),onSuccess:()=>{setApiKeysText('');qc.invalidateQueries({queryKey:['ai-settings']})}})
  const activate=useMutation({mutationFn:activateAIRevision,onSuccess:()=>qc.invalidateQueries({queryKey:['ai-settings']})})
  return <main className="settings-screen"><header className="director-header"><button className="ghost" onClick={()=>nav(-1)}>← Назад</button><strong>AI Providers</strong></header><section className="settings-content">
@@ -365,7 +368,6 @@ function AISettings(){
      {safeHybrid&&<p className="provider-notice hybrid-notice"><strong>Канон остаётся под контролем Antigravity.</strong> Flash-Lite не изменяет состояние мира, инвентарь или прогресс квестов. По тестам этот режим примерно в 1,7 раза быстрее чистого Antigravity.</p>}
      <p className="provider-notice"><strong>Бесплатный tier имеет квоты.</strong> Доступность и лимиты различаются по моделям; при исчерпании квоты backend последовательно пробует следующий сохранённый ключ.</p><a className="provider-key-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Получить API key в Google AI Studio ↗</a>
     </div>:<><label>Story LLM model<input value={storyModel} onChange={e=>setStoryModel(e.target.value)} placeholder="Имя модели llama.cpp"/></label><label>Story LLM endpoint<input value={storyEndpoint} onChange={e=>setStoryEndpoint(e.target.value)} placeholder="http://127.0.0.1:8081"/></label></>}
-    <div className={`safe-hybrid-card ${worldRulesSafeMode?'enabled':''}`}><div><strong>Строгий канон мира</strong><small>Перед публикацией проверяет не только жёсткие законы, но и мягкие правила. Новые законы и исключения остаются предложениями до вашего одобрения.</small></div><button className="settings-switch" type="button" role="switch" aria-label="Строгий канон мира" aria-checked={worldRulesSafeMode} onClick={()=>setWorldRulesSafeMode(value=>!value)}><span/></button></div>
     <label>{googleAI?'Google AI API keys':'API keys'} <span className="muted tiny">{active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?`сохранено ключей: ${active.storyLlmSecretCount||1} · значения скрыты`:keyRequired?'нужно указать для включения Google AI':googleAI?'не настроены':'необязательно'}</span><span className="secret-input"><textarea rows={googleAI?5:2} className={showApiKey?'secret-multiline':'secret-multiline masked'} value={apiKeysText} onChange={e=>setApiKeysText(e.target.value)} autoComplete="off" spellCheck={false} placeholder={active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?'оставьте пустым, чтобы сохранить текущий набор':googleAI?'по одному ключу на строку':'необязательно'}/><button className="ghost" type="button" onClick={()=>setShowApiKey(value=>!value)} aria-label={showApiKey?'Скрыть API keys':'Показать API keys'}>{showApiKey?'Скрыть':'Показать'}</button></span><small className="muted">Ключи хранятся только на компьютере с backend и используются по очереди. В PostgreSQL и обратно в браузер они не возвращаются.</small></label>
     <label>Image provider<input value={imageProvider} onChange={e=>setImageProvider(e.target.value)}/></label>
     <label>Image model<input value={imageModel} onChange={e=>setImageModel(e.target.value)}/></label>
@@ -380,7 +382,7 @@ function AISettings(){
 
 
 const promptRoles=[
- ['story_setup','Legacy Story Setup'],['setup_architect','Setup Architect'],['setup_assistant','Legacy Setup Assistant'],['setup_editor','Context Setup Editor'],['director_editor','Live Director Editor'],['action_interpreter','Action Interpreter'],['director','Director'],['pacing','Scene and Chapter Pacing'],['writer','Writer'],['lore_guard','World Lore Guard'],['world_evaluator','Live World Evaluator'],['state_evaluator','Hero Journal Evaluator'],['objectives','Legacy Objectives'],['quest_evaluator','Quest Evaluator'],['choices','Choices'],['image_prompt','Image Prompt'],['image_moments','Image Moments'],['image_next_moment','Next Illustration'],['image_paragraph','Paragraph Illustration'],['structured_repair','Structured Repair']
+ ['story_setup','Legacy Story Setup'],['setup_architect','Setup Architect'],['setup_assistant','Legacy Setup Assistant'],['setup_editor','Context Setup Editor'],['director_editor','Live Director Editor'],['action_interpreter','Action Interpreter'],['director','Director'],['pacing','Scene and Chapter Pacing'],['writer','Writer'],['world_evaluator','Live World Evaluator'],['state_evaluator','Hero Journal Evaluator'],['objectives','Legacy Objectives'],['quest_evaluator','Quest Evaluator'],['choices','Choices'],['image_prompt','Image Prompt'],['image_moments','Image Moments'],['image_next_moment','Next Illustration'],['image_paragraph','Paragraph Illustration'],['structured_repair','Structured Repair']
 ] as const
 
 function clonePromptSettings(value:Record<string,PromptRoleSettings>):Record<string,PromptRoleSettings>{return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,{...v}]))}

@@ -65,32 +65,6 @@ func (l *onlineAssistBarrierLLM) Generate(ctx context.Context, request aiport.St
 	return aiport.StoryResponse{Output: []byte(`{"summary":"checked","operations":[]}`)}, nil
 }
 
-func TestParseWorldRulesPreservesEmptyResourceArray(t *testing.T) {
-	raw := json.RawMessage(`{
-		"systems":[{"id":"devourer","name":"Пожиратель","kind":"magic","description":"Глубинная способность Алекса.","resources":[]}],
-		"rules":[{"id":"DEV-001","systemId":"devourer","title":"Поглощение","category":"mechanism","severity":"hard","statement":"Пожиратель способен поглощать только доступную энергию.","preconditions":[],"costs":[],"forbiddenResults":[],"exceptions":[],"tags":[],"visibility":"known_to_hero","status":"established"}],
-		"glossary":[]
-	}`)
-
-	systems, rules, err := parseWorldRules(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(systems) != 1 || len(rules) != 1 {
-		t.Fatalf("unexpected world rules shape: systems=%d rules=%d", len(systems), len(rules))
-	}
-	if systems[0].Resources == nil {
-		t.Fatal("empty resources must remain a non-nil slice")
-	}
-	encoded, err := json.Marshal(systems[0].Resources)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(encoded) != `[]` {
-		t.Fatalf("empty resources encoded as %s, want []", encoded)
-	}
-}
-
 func (l *setupDAGLLM) Identity() aiport.ProviderIdentity {
 	return aiport.ProviderIdentity{Kind: aiport.KindStoryLLM, Provider: "google_gemini", Model: "dag-setup-test", Profile: "hosted"}
 }
@@ -192,7 +166,6 @@ func allResponse() []byte {
  "story_bible":{"premise":"A visitor arrives","tone":"mystery","themes":["trust"]},
  "player":{"name":"Alex","age":25,"description":"curious","goals":["understand"]},
  "world":{"name":"City","summary":"night","locations":[{"name":"apartment","description":"A quiet room"}]},
- "world_rules":{"systems":[{"id":"magic","name":"Magic","kind":"magic","description":"Magic converts focus into bounded effects.","resources":[{"id":"focus","name":"Focus","unit":"points","ownerScope":"hero","initialValue":5,"minValue":0,"maxValue":10}]}],"rules":[{"id":"MAGIC-001","systemId":"magic","title":"Focus cost","category":"cost","severity":"hard","statement":"Every spell consumes focus before producing an effect.","preconditions":["The caster can concentrate"],"costs":["At least one focus point"],"forbiddenResults":["A spell without a focus cost"],"exceptions":[],"tags":["magic","focus"],"visibility":"known_to_hero","status":"established"}],"glossary":[{"term":"Focus","definition":"A finite reserve used for magic."}]},
  "initial_cast":{"characters":[{"name":"Mira","age":27}]},
  "visual_bible":{"style":"manga","palette":"night"},
  "initial_quests":{"quests":[{"title":"Unmask the visitor","description":"Discover why the visitor came.","successCriteria":"The visitor's purpose is established.","stages":[{"kind":"task","title":"Speak to the visitor","description":"Open a cautious conversation.","successCriteria":"The visitor answers."},{"kind":"milestone","title":"Verify the visitor's story","description":"Find independent evidence.","successCriteria":"The story is confirmed or disproved."}]},{"title":"Protect the apartment","description":"Keep the home safe while the mystery unfolds.","successCriteria":"The immediate threat is neutralized.","stages":[{"kind":"event","title":"Identify the watcher","description":"Notice who is observing the building.","successCriteria":"The watcher is identified."},{"kind":"task","title":"Secure the entrance","description":"Reduce the immediate risk at the apartment.","successCriteria":"The entrance is secured."}]}]},
@@ -379,6 +352,69 @@ func TestVisualAndOpeningQuickImprovementsAreSplitIntoFieldPlans(t *testing.T) {
 	}
 }
 
+func TestPlayerAssistantBindsQuickActionsToIndividualFields(t *testing.T) {
+	profile := assistPlans(setup.Player, "improve_player_profile", AssistTarget{}, "Углуби героя", json.RawMessage(`{}`))
+	if len(profile) != 1 || profile[0].Action != "set_field" || profile[0].Target.Path != "description" {
+		t.Fatalf("player profile action escaped description: %#v", profile)
+	}
+	motivation := assistPlans(setup.Player, "improve_player_motivation", AssistTarget{}, "Согласуй мотивацию", json.RawMessage(`{}`))
+	if len(motivation) != 2 || motivation[0].Target.Path != "description" || motivation[1].Target.Path != "goals" {
+		t.Fatalf("player motivation was not split into addressable fields: %#v", motivation)
+	}
+	visual := assistPlans(setup.Player, "improve_player_visual", AssistTarget{}, "Улучши внешность", json.RawMessage(`{}`))
+	if len(visual) != 1 || visual[0].Target.Path != "visualAnchorEn" {
+		t.Fatalf("player visual action escaped visualAnchorEn: %#v", visual)
+	}
+}
+
+func TestPlayerGoalFieldKeepsArrayAndSelectsMatchingModelOperation(t *testing.T) {
+	operations := []AssistOperation{
+		{Component: setup.Player, Operation: "set_field", Path: "description", Value: json.RawMessage(`"осторожный"`)},
+		{Component: setup.Player, Operation: "set_field", Path: "goals", Value: json.RawMessage(`{"goals":["найти наставника"]}`)},
+	}
+	normalized := normalizeAssistOperations(operations, setup.Player, "set_field", AssistTarget{Path: "goals"})
+	if len(normalized) != 1 || normalized[0].Path != "goals" || string(normalized[0].Value) != `["найти наставника"]` {
+		t.Fatalf("targeted player goals were flattened or taken from another field: %#v", normalized)
+	}
+	if !strings.Contains(assistOutputConstraints(setup.Player, "set_field", AssistTarget{Path: "goals"}), "JSON array") {
+		t.Fatal("player goals constraint must require an array")
+	}
+	if validPlayerAssistValue("goals", json.RawMessage(`"одна строка вместо массива"`)) || validPlayerAssistValue("age", json.RawMessage(`17`)) {
+		t.Fatal("invalid player field types must be rejected before a proposal is shown")
+	}
+}
+
+func TestPlayerMotivationAssistantAppliesDescriptionAndGoalsWithoutReplacingPlayer(t *testing.T) {
+	repo := &memRepo{components: map[setup.ComponentKey]setup.Component{}}
+	s := svc(repo)
+	st, _ := s.Create(context.Background(), CreateCommand{Title: "Story"})
+	if _, err := s.Generate(context.Background(), GenerateCommand{StoryID: st.ID}); err != nil {
+		t.Fatal(err)
+	}
+	canonical := append([]byte(nil), repo.components[setup.Player].Payload...)
+	llm := fakeai.NewScriptedStoryLLM(map[string][]byte{
+		"setup_editor": []byte(`{"summary":"Согласовать мотивацию","operations":[{"component":"player","operation":"set_field","path":"description","value":"осторожный исследователь с внутренним страхом ошибки"},{"component":"player","operation":"set_field","path":"goals","value":["понять природу дара","не потерять контроль"]}]}`),
+	})
+	s.LLM = llm
+	result, err := s.Assist(context.Background(), AssistCommand{StoryID: st.ID, Keys: []setup.ComponentKey{setup.Player}, Instruction: "Согласуй мотивацию", Action: "improve_player_motivation"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(llm.Requests) != 2 || len(result.Changes) != 1 || len(result.Changes[0].Operations) != 2 {
+		t.Fatalf("player motivation must use two bounded field requests: requests=%d result=%#v", len(llm.Requests), result)
+	}
+	var after map[string]any
+	if err = json.Unmarshal(result.Changes[0].After, &after); err != nil {
+		t.Fatal(err)
+	}
+	if after["name"] != "Alex" || after["description"] != "осторожный исследователь с внутренним страхом ошибки" || len(after["goals"].([]any)) != 2 {
+		t.Fatalf("player identity or motivation fields were damaged: %#v", after)
+	}
+	if string(repo.components[setup.Player].Payload) != string(canonical) {
+		t.Fatal("AI proposal must not save the player before user approval")
+	}
+}
+
 func TestAssistReviewAllRunsOneBoundedRequestPerComponent(t *testing.T) {
 	repo := &memRepo{components: map[setup.ComponentKey]setup.Component{}}
 	s := svc(repo)
@@ -504,10 +540,10 @@ func TestGenerateRequestsSetupOneComponentAtATime(t *testing.T) {
 	if _, err = s.Generate(context.Background(), GenerateCommand{StoryID: st.ID}); err != nil {
 		t.Fatal(err)
 	}
-	expectedKeys := []setup.ComponentKey{setup.StoryBible, setup.Player, setup.World, setup.WorldRules, setup.WorldRules, setup.InitialCast, setup.VisualBible, setup.InitialQuests, setup.InitialQuests, setup.OpeningSituation, setup.OpeningSituation, setup.OpeningSituation}
-	expectedPhases := []string{"component", "component", "component", "systems", "laws", "component", "component", "quest_outlines", "quest_stages", "blueprint", "prose_first", "prose_second"}
-	expectedContextSizes := []int{0, 1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9}
-	expectedTokenLimits := []int{1024, 1024, 1600, 1800, 3200, 1600, 1600, 1400, 2200, 1400, 1400, 1400}
+	expectedKeys := []setup.ComponentKey{setup.StoryBible, setup.Player, setup.World, setup.InitialCast, setup.VisualBible, setup.InitialQuests, setup.InitialQuests, setup.OpeningSituation, setup.OpeningSituation, setup.OpeningSituation}
+	expectedPhases := []string{"component", "component", "component", "component", "component", "quest_outlines", "quest_stages", "blueprint", "prose_first", "prose_second"}
+	expectedContextSizes := []int{0, 1, 2, 3, 4, 5, 6, 6, 7, 8}
+	expectedTokenLimits := []int{1024, 1024, 1600, 1600, 1600, 1400, 2200, 1400, 1400, 1400}
 	if len(llm.Requests) != len(expectedKeys) {
 		t.Fatalf("expected %d component requests, got %d", len(expectedKeys), len(llm.Requests))
 	}
@@ -680,7 +716,7 @@ func TestGenerateRetriesOneInvalidProviderResponse(t *testing.T) {
 	if _, err = s.Generate(context.Background(), GenerateCommand{StoryID: st.ID}); err != nil {
 		t.Fatal(err)
 	}
-	if llm.calls != 13 {
+	if llm.calls != 11 {
 		t.Fatalf("expected exactly one retry, got %d calls", llm.calls)
 	}
 }
@@ -715,7 +751,7 @@ func TestGeneratePersistsCompletedComponentsAndResumesOnlyMissingPhase(t *testin
 	if _, err = s.Generate(context.Background(), GenerateCommand{StoryID: st.ID}); !errors.Is(err, ErrIncompleteDraft) {
 		t.Fatalf("expected opening failure, got %v", err)
 	}
-	if len(repo.components) != 7 {
+	if len(repo.components) != 6 {
 		t.Fatalf("completed phases were not durable: got %d components", len(repo.components))
 	}
 	if _, exists := repo.components[setup.OpeningSituation]; exists {

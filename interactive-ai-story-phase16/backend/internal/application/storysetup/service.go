@@ -311,11 +311,10 @@ func (s Service) generateSetupDAG(ctx context.Context, llm aiport.StoryLLM, st s
 		setup.StoryBible:       {},
 		setup.Player:           {setup.StoryBible},
 		setup.World:            {setup.StoryBible},
-		setup.WorldRules:       {setup.StoryBible, setup.Player, setup.World},
-		setup.InitialCast:      {setup.StoryBible, setup.Player, setup.World, setup.WorldRules},
-		setup.VisualBible:      {setup.StoryBible, setup.Player, setup.World, setup.WorldRules, setup.InitialCast},
-		setup.InitialQuests:    {setup.StoryBible, setup.Player, setup.World, setup.WorldRules, setup.InitialCast},
-		setup.OpeningSituation: {setup.StoryBible, setup.Player, setup.World, setup.WorldRules, setup.InitialCast, setup.InitialQuests},
+		setup.InitialCast:      {setup.StoryBible, setup.Player, setup.World},
+		setup.VisualBible:      {setup.StoryBible, setup.Player, setup.World, setup.InitialCast},
+		setup.InitialQuests:    {setup.StoryBible, setup.Player, setup.World, setup.InitialCast},
+		setup.OpeningSituation: {setup.StoryBible, setup.Player, setup.World, setup.InitialCast, setup.InitialQuests},
 	}
 	type result struct {
 		key setup.ComponentKey
@@ -1552,6 +1551,12 @@ func assistPlans(key setup.ComponentKey, action string, target AssistTarget, ins
 		return plans
 	}
 	switch action {
+	case "improve_player_profile":
+		return fieldPlan("description")
+	case "improve_player_motivation":
+		return fieldPlan("description", "goals")
+	case "improve_player_visual":
+		return fieldPlan("visualAnchorEn")
 	case "improve_visual_style":
 		return fieldPlan("style", "palette", "cinematography")
 	case "improve_visual_camera":
@@ -1718,7 +1723,7 @@ func normalizeAssistOperations(operations []AssistOperation, key setup.Component
 	if isAddressableAction(action) && len(operations) > 1 {
 		selected := operations[0]
 		for _, operation := range operations {
-			if strings.TrimSpace(operation.Operation) == action {
+			if normalizeAssistOperationName(operation.Operation) == action && normalizeAssistPath(operation.Path, key) == target.Path {
 				selected = operation
 				break
 			}
@@ -1794,7 +1799,7 @@ func unwrapAddressableValue(raw json.RawMessage, path, operation string) json.Ra
 		}
 	}
 	var items []json.RawMessage
-	if json.Unmarshal(wrapped, &items) == nil && len(items) == 1 {
+	if operation != "set_field" && json.Unmarshal(wrapped, &items) == nil && len(items) == 1 {
 		return items[0]
 	}
 	return wrapped
@@ -1813,6 +1818,9 @@ func assistOperationAllowed(operation AssistOperation, key setup.ComponentKey, r
 	if operation.Component != key || !safeTopLevelPath(operation.Path) {
 		return false
 	}
+	if key == setup.Player && operation.Operation == "set_field" && !validPlayerAssistValue(operation.Path, operation.Value) {
+		return false
+	}
 	switch operation.Operation {
 	case "set_field", "remove_field":
 		return requestedAction == operation.Operation || !assistCollectionPath(key, operation.Path)
@@ -1824,6 +1832,37 @@ func assistOperationAllowed(operation AssistOperation, key setup.ComponentKey, r
 	default:
 		return false
 	}
+}
+
+func validPlayerAssistValue(path string, raw json.RawMessage) bool {
+	var value any
+	if json.Unmarshal(raw, &value) != nil {
+		return false
+	}
+	switch path {
+	case "name", "description", "visualAnchorEn":
+		text, ok := value.(string)
+		return ok && strings.TrimSpace(text) != ""
+	case "age":
+		age, ok := value.(float64)
+		return ok && age >= 18 && age <= 150 && age == float64(int(age))
+	case "goals":
+		goals, ok := value.([]any)
+		if !ok || len(goals) < 1 || len(goals) > 5 {
+			return false
+		}
+		seen := map[string]bool{}
+		for _, rawGoal := range goals {
+			goal, ok := rawGoal.(string)
+			goal = strings.TrimSpace(goal)
+			key := strings.ToLower(goal)
+			if !ok || goal == "" || seen[key] {
+				return false
+			}
+			seen[key] = true
+		}
+	}
+	return true
 }
 
 func assistCollectionPath(key setup.ComponentKey, path string) bool {
@@ -1935,6 +1974,10 @@ func assistOutputConstraints(key setup.ComponentKey, action string, target Assis
 		detail := " Return exactly one operation matching action and target. Put only the new or changed item data in value."
 		if action == "set_field" && target.Path == "choices" {
 			detail += " The value must be one JSON array containing exactly four strings."
+		} else if action == "set_field" && key == setup.Player && target.Path == "goals" {
+			detail += " The value must be one JSON array containing 1-5 distinct concise goals in the setup language."
+		} else if action == "set_field" && key == setup.Player && target.Path == "age" {
+			detail += " The value must be one JSON integer from 18 to 150."
 		} else if action == "set_field" {
 			detail += " The value must be one JSON string for target.path, never an object."
 		}
@@ -1947,6 +1990,8 @@ func assistOutputConstraints(key setup.ComponentKey, action string, target Assis
 		return base + " Change choices separately from text. Rewrite text only when the instruction explicitly concerns prose; preserve 4-6 paragraph boundaries and exactly four choices."
 	case setup.InitialCast:
 		return base + " Use update_item on characters rather than replacing characters. Preserve names unless explicitly asked otherwise."
+	case setup.Player:
+		return base + " Preserve the protagonist's name, age and established facts unless the instruction explicitly targets them. Keep description, goals and visualAnchorEn mutually consistent; visualAnchorEn must be reusable detailed English."
 	case setup.WorldRules:
 		return base + " Edit systems, rules and glossary as individual items. Preserve stable ids. A new hard law or exception must be explicit and testable; never silently replace existing laws."
 	default:
@@ -2380,11 +2425,7 @@ func (s Service) Start(ctx context.Context, storyID story.ID) (StartResult, erro
 	if e != nil {
 		return StartResult{}, setup.ErrNotReady
 	}
-	worldSystems, worldRules, e := parseWorldRules(m[setup.WorldRules].Payload)
-	if e != nil {
-		return StartResult{}, setup.ErrNotReady
-	}
-	mat := setuprepo.StartMaterialization{ChapterID: chapterID, SceneID: sceneID, BeatID: beatID, ChapterTitle: open.ChapterTitle, ChapterGoal: open.ChapterGoal, SceneGoal: open.SceneGoal, OpeningText: open.Text, Choices: open.Choices, Quests: quests, Characters: characters, Locations: locations, WorldSystems: worldSystems, WorldRules: worldRules}
+	mat := setuprepo.StartMaterialization{ChapterID: chapterID, SceneID: sceneID, BeatID: beatID, ChapterTitle: open.ChapterTitle, ChapterGoal: open.ChapterGoal, SceneGoal: open.SceneGoal, OpeningText: open.Text, Choices: open.Choices, Quests: quests, Characters: characters, Locations: locations}
 	if e = s.Repo.StartStory(ctx, storyID, tl, mat); e != nil {
 		return StartResult{}, e
 	}

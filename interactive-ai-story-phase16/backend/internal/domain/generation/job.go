@@ -30,6 +30,7 @@ type Job struct {
 	Status                  Status
 	Provider                aiport.ProviderIdentity
 	RequestID               string
+	ActionHash              string
 	CreatedAt               time.Time
 	RequestPayload          json.RawMessage
 }

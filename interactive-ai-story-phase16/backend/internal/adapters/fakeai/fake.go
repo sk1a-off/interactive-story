@@ -3,6 +3,7 @@ package fakeai
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
@@ -93,6 +94,7 @@ func (f *ImageProvider) Generate(ctx context.Context, req aiport.ImageRequest) (
 }
 
 type ScriptedStoryLLM struct {
+	mu        sync.Mutex
 	ID        ProviderIdentityAlias
 	Responses map[string][]byte
 	ErrByRole map[string]error
@@ -111,12 +113,15 @@ func (f *ScriptedStoryLLM) Generate(ctx context.Context, req aiport.StoryRequest
 		return aiport.StoryResponse{}, ctx.Err()
 	default:
 	}
+	f.mu.Lock()
 	f.Calls = append(f.Calls, req.Role)
 	f.Requests = append(f.Requests, req)
-	if err := f.ErrByRole[req.Role]; err != nil {
+	err := f.ErrByRole[req.Role]
+	out, ok := f.Responses[req.Role]
+	f.mu.Unlock()
+	if err != nil {
 		return aiport.StoryResponse{}, err
 	}
-	out, ok := f.Responses[req.Role]
 	if !ok {
 		return aiport.StoryResponse{}, aiport.ErrInvalidOutput
 	}

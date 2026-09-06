@@ -17,10 +17,18 @@ var promptUpgradeAddenda = map[string]string{
 - Treat context.recentBeats as read-only story history and continue after context.previousBeatText without recapping or replaying completed prose.
 - Follow pacing.transition exactly. For new_scene or new_chapter, begin at the first changed moment in the new time, place, participants or dramatic situation; make the transition clear in prose without printing structural labels or metadata.
 - A structural transition never guarantees that the player's attempted action succeeded.`,
-	"quest_evaluator": `# Focused quest journal compatibility v1
+	"quest_evaluator": `# Focused quest journal and evidence compatibility v2
 - A newly created quest or stage must be active and unresolved. Never create an already completed or failed historical objective.
 - Never maintain more than 5 active quest lines total, more than 3 active main or side quest lines of one type, or more than 3 active stages inside one quest.
-- Prefer progressing, completing or extending an existing matching quest over creating a near-duplicate.`,
+- Prefer progressing, completing or extending an existing matching quest over creating a near-duplicate.
+- Every change must include evidenceQuote copied verbatim from newBeat. Action text, previous beats and older context are not evidence.
+- Complete or fail only when that quote directly demonstrates the current observable success or failure criterion; otherwise keep the objective active.`,
+	"state_evaluator": `# New-beat evidence compatibility v1
+- Every change must include evidenceQuote copied verbatim from newBeat. Action text, previous beats and older context are not evidence.
+- Never emit a no-op update whose durable fields equal the current journal entry.`,
+	"world_evaluator": `# New-beat evidence compatibility v1
+- Every character or location change must include evidenceQuote copied verbatim from newBeat. Action text, previous beats and older context are not evidence.
+- Avoid no-op updates and entities introduced only as incidental decoration.`,
 }
 
 func builtinPromptSet() (map[string]string, map[string]promptset.RoleSettings, error) {
@@ -104,7 +112,7 @@ VALUES(true,$1,now()) ON CONFLICT(singleton) DO UPDATE SET prompt_set_revision_i
 }
 
 func applyPromptUpgrades(prompts map[string]string) bool {
-	changed := false
+	changed := removeDeprecatedWorldRuleInstructions(prompts)
 	for role, addendum := range promptUpgradeAddenda {
 		marker := strings.SplitN(addendum, "\n", 2)[0]
 		if strings.Contains(prompts[role], marker) {
@@ -112,6 +120,51 @@ func applyPromptUpgrades(prompts map[string]string) bool {
 		}
 		prompts[role] = strings.TrimSpace(prompts[role]) + "\n\n" + addendum
 		changed = true
+	}
+	return changed
+}
+
+// removeDeprecatedWorldRuleInstructions migrates immutable prompt revisions
+// created while the separate world-rules subsystem was active. Only the exact
+// feature-owned fragments are removed, so unrelated Prompt Studio edits stay
+// intact. The unused lore_guard role remains in stored revisions for schema
+// compatibility, but the generation pipeline no longer calls it.
+func removeDeprecatedWorldRuleInstructions(prompts map[string]string) bool {
+	fragments := map[string][]string{
+		"director": {
+			"- Treat supplied `worldRules` and `feasibility` as outcome boundaries. A hard rule cannot be overridden by dramatic convenience. If an attempted action violates a prerequisite or lacks a resource, direct a failure, partial result, discovery or meaningful cost instead.\n- Hidden rules may shape consequences but must not be revealed to the protagonist before evidence appears in the story.",
+		},
+		"writer": {
+			"- Obey every supplied established `worldRules` card. Apply its prerequisites, energy source, costs, limits, progression and exceptions exactly; never let the neural interface create energy or grant an unlearned ability unless an explicit rule permits it.\n- `feasibility` is authoritative for possible outcomes. Player intent is an attempt, so failure and partial success are preferable to breaking a hard law.\n- Hidden or mystery rules may affect events but must not be explained to the protagonist without observable discovery.\n- When `loreViolations` and `rejectedDraft` are supplied, replace the whole draft once and repair every cited violation without recapping the previous beat.",
+		},
+		"setup_architect": {
+			"- `systems`: only the world systems and their resource definitions; do not write rules yet.\n- `laws`: rules referring to system IDs from `canon.worldSystems`, plus a concise glossary; do not redefine systems.\n",
+			"- `world_rules`: `systems`, `rules`, and `glossary`. Systems have stable lowercase `id`, `name`, `kind`, `description`, and `resources`. Rules have stable addressable `id`, `systemId`, `title`, `category`, `severity` (`hard`, `soft`, `mystery`, or `belief`), testable `statement`, arrays `preconditions`, `costs`, `forbiddenResults`, `exceptions`, `tags`, `visibility`, and `status`. A neural interface must distinguish computation/control from energy capacity. Every power system must state its source, capabilities, limits, costs, failure modes and progression.\n",
+		},
+		"world_evaluator": {
+			`,"ruleChanges":[
+  {"operation":"reveal","ruleId":"exact existing rule id","evidence":"new beat evidence"},
+  {"operation":"propose_rule","systemId":"exact system id","title":"...","category":"mechanism","severity":"soft","statement":"...","preconditions":[],"costs":[],"forbiddenResults":[],"exceptions":[],"tags":[],"visibility":"canon_only","evidence":"new beat evidence"},
+  {"operation":"add_exception","systemId":"exact system id","exceptionOf":"exact base rule id","title":"...","severity":"soft","statement":"...","preconditions":[],"costs":[],"tags":[],"visibility":"canon_only","evidence":"new beat evidence"}
+],"resourceChanges":[{"resourceId":"exact existing resource id","delta":-1,"evidence":"observable use in the new beat"}]`,
+			"- Established rules are axioms. Never rewrite, delete, weaken or supersede them automatically.\n- `reveal` changes only what the hero knows about an existing hidden rule and requires explicit discovery in the new beat.\n- A genuinely new inferred law or exception is only a proposal. In safe mode it remains pending for Director approval; a new hard law is always pending.\n- Resource deltas must be directly caused by the new beat. Never exceed supplied min/max bounds and never manufacture energy to make an action succeed.\n- Return empty `ruleChanges` and `resourceChanges` arrays when the beat establishes no durable rule discovery or resource change.",
+		},
+		"director_editor": {
+			", `worldCanon` (systems, addressable rules, resource state)",
+			"- `upsert_world_system`: create or update one system with `systemId`, `name`, `kind`, `description`, `resources`, `status`. Preserve a stable textual `systemId`.\n- `upsert_world_rule`: create, edit or approve one rule. Use `status: pending` when the user asked for an idea, and `status: established` only when the user explicitly accepts it as canon.\n- `archive_world_rule`: payload contains only `ruleId`. Never silently delete a law that existing prose may depend on.\n- `update_world_resource`: update one existing bounded resource with its complete current payload and a new `currentValue`.\n",
+			"World rule payload:\n`ruleId`, `systemId`, `title`, `category` (`axiom`, `law`, `mechanism`, `limit`, `cost`, `progression`, `exception`, `social`, `terminology`), `severity` (`hard`, `soft`, `mystery`, `belief`), `statement`, arrays `preconditions`, `costs`, `forbiddenResults`, `exceptions`, `tags`, `visibility` (`canon_only`, `known_to_hero`, `public`, `hidden`), `status` (`established`, `pending`, `superseded`, `archived`), optional `exceptionOf`, and concrete `evidence`.\n\n",
+			"9. A new hard law, exception, or retroactive change must remain pending unless the user's instruction explicitly says to approve/fix it as canon. Never rewrite unrelated rules.\n",
+		},
+	}
+	changed := false
+	for role, roleFragments := range fragments {
+		for _, fragment := range roleFragments {
+			if strings.Contains(prompts[role], fragment) {
+				prompts[role] = strings.ReplaceAll(prompts[role], fragment, "")
+				changed = true
+			}
+		}
+		prompts[role] = strings.TrimSpace(prompts[role])
 	}
 	return changed
 }

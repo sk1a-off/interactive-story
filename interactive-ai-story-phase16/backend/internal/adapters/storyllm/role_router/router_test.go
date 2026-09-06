@@ -70,8 +70,8 @@ func TestSafeHybridRequiresBothClients(t *testing.T) {
 }
 
 func TestSafeHybridFallsBackToQualityWhenFastModelFails(t *testing.T) {
-	fast := &recordingLLM{err: errors.New("fast model unavailable")}
-	quality := &recordingLLM{}
+	fast := &recordingLLM{identity: aiport.ProviderIdentity{Model: "fast"}, err: errors.New("fast model unavailable")}
+	quality := &recordingLLM{identity: aiport.ProviderIdentity{Model: "quality"}}
 	router, err := NewSafeHybrid(fast, quality)
 	if err != nil {
 		t.Fatal(err)
@@ -82,5 +82,23 @@ func TestSafeHybridFallsBackToQualityWhenFastModelFails(t *testing.T) {
 	}
 	if string(response.Output) != `{"ok":true}` || len(fast.roles) != 1 || len(quality.roles) != 1 || quality.roles[0] != "choices" {
 		t.Fatalf("fallback was not used: fast=%v quality=%v response=%s", fast.roles, quality.roles, response.Output)
+	}
+	if response.Provider.Model != "quality" || response.EscalatedFrom != "fast" {
+		t.Fatalf("fallback provenance was not preserved: %#v", response)
+	}
+}
+
+func TestSafeHybridDoesNotFallbackAfterCancellation(t *testing.T) {
+	fast := &recordingLLM{err: context.Canceled}
+	quality := &recordingLLM{}
+	router, err := NewSafeHybrid(fast, quality)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = router.Generate(context.Background(), aiport.StoryRequest{Role: "choices"}); !errors.Is(err, context.Canceled) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(quality.roles) != 0 {
+		t.Fatalf("quality fallback ran after cancellation: %v", quality.roles)
 	}
 }

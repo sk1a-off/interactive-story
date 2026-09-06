@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/local/interactive-ai-story/backend/internal/application/llmpolicy"
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
@@ -13,13 +14,13 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
+	"github.com/local/interactive-ai-story/backend/internal/ports/generationmetrics"
 	"github.com/local/interactive-ai-story/backend/internal/ports/generationtarget"
 )
 
 var (
-	ErrMalformedProposal  = errors.New("malformed generation proposal")
-	ErrRejectedProposal   = errors.New("generation proposal rejected by policy")
-	ErrWorldRuleViolation = errors.New("generated beat violates established world rules")
+	ErrMalformedProposal = errors.New("malformed generation proposal")
+	ErrRejectedProposal  = errors.New("generation proposal rejected by policy")
 )
 
 type CanonAppender interface {
@@ -34,7 +35,8 @@ const (
 	PhaseDirecting    Phase = "directing"
 	PhasePacing       Phase = "pacing"
 	PhaseWriting      Phase = "writing"
-	PhaseLore         Phase = "lore"
+	PhaseDraftReady   Phase = "draft_ready"
+	PhaseFinalizing   Phase = "finalizing"
 	PhaseEvaluating   Phase = "evaluating"
 	PhaseWorld        Phase = "world"
 	PhaseJournal      Phase = "journal"
@@ -48,11 +50,14 @@ const (
 )
 
 type Update struct {
-	Sequence     int64  `json:"sequence"`
-	GenerationID id.ID  `json:"generationId"`
-	Phase        Phase  `json:"phase"`
-	TextDelta    string `json:"textDelta,omitempty"`
-	Error        string `json:"error,omitempty"`
+	Sequence     int64       `json:"sequence"`
+	GenerationID id.ID       `json:"generationId"`
+	TimelineID   timeline.ID `json:"timelineId,omitempty"`
+	Phase        Phase       `json:"phase"`
+	Revision     int64       `json:"revision,omitempty"`
+	Provisional  bool        `json:"provisional,omitempty"`
+	TextDelta    string      `json:"textDelta,omitempty"`
+	Error        string      `json:"error,omitempty"`
 }
 type Sink interface{ Publish(context.Context, Update) }
 
@@ -93,18 +98,20 @@ type objectiveChange struct {
 	Status            string `json:"status,omitempty"`
 	Progress          int    `json:"progress,omitempty"`
 	Evidence          string `json:"evidence,omitempty"`
+	EvidenceQuote     string `json:"evidenceQuote,omitempty"`
 }
 type journalChange struct {
-	Operation   string   `json:"operation"`
-	EntryID     string   `json:"entryId,omitempty"`
-	Category    string   `json:"category,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Quantity    *int     `json:"quantity,omitempty"`
-	Level       string   `json:"level,omitempty"`
-	Status      string   `json:"status,omitempty"`
-	Evidence    string   `json:"evidence,omitempty"`
-	Tags        []string `json:"tags,omitempty"`
+	Operation     string   `json:"operation"`
+	EntryID       string   `json:"entryId,omitempty"`
+	Category      string   `json:"category,omitempty"`
+	Name          string   `json:"name,omitempty"`
+	Description   string   `json:"description,omitempty"`
+	Quantity      *int     `json:"quantity,omitempty"`
+	Level         string   `json:"level,omitempty"`
+	Status        string   `json:"status,omitempty"`
+	Evidence      string   `json:"evidence,omitempty"`
+	EvidenceQuote string   `json:"evidenceQuote,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
 }
 type worldChange struct {
 	Type           string `json:"type"`
@@ -120,6 +127,7 @@ type worldChange struct {
 	Mood           string `json:"mood,omitempty"`
 	CurrentGoal    string `json:"currentGoal,omitempty"`
 	Description    string `json:"description,omitempty"`
+	EvidenceQuote  string `json:"evidenceQuote,omitempty"`
 }
 type choice struct {
 	ID    string `json:"id"`
@@ -140,20 +148,39 @@ type InstructionSource interface {
 }
 
 type Pipeline struct {
-	LLM                aiport.StoryLLM
-	MaxRepairs         int
-	Canon              CanonAppender
-	Instructions       InstructionSource
-	Targets            generationtarget.Source
-	RuleAudits         generationtarget.RuleAuditStore
-	WorldRulesSafeMode bool
-	Sink               Sink
+	LLM             aiport.StoryLLM
+	MaxRepairs      int
+	Canon           CanonAppender
+	Instructions    InstructionSource
+	Targets         generationtarget.Source
+	Sink            Sink
+	Metrics         func(generationmetrics.Metrics)
+	ContextShadow   ShadowContext
+	Planner         TurnPlanner
+	Extractor       CanonExtractor
+	ProvisionalBeat bool
 }
 
-func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) ([]event.StoredEvent, error) {
+func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (result []event.StoredEvent, runErr error) {
+	runStarted := time.Now()
+	metrics := generationmetrics.Metrics{}
+	defer func() {
+		metrics.TotalMS = time.Since(runStarted).Milliseconds()
+		accounted := metrics.TargetLoadMS + metrics.ContextBuildMS + metrics.ContextShadowMS + metrics.PlannerMS + metrics.WriterMS + metrics.PostWriterMS + metrics.ValidationMS + metrics.CommitMS
+		if metrics.TotalMS > accounted {
+			metrics.UnattributedMS = metrics.TotalMS - accounted
+		}
+		metrics.Succeeded = runErr == nil
+		if runErr != nil {
+			metrics.ErrorText = runErr.Error()
+		}
+		if p.Metrics != nil {
+			p.Metrics(metrics)
+		}
+	}()
 	pub := func(ph Phase, delta, errText string) {
 		if p.Sink != nil {
-			p.Sink.Publish(ctx, Update{GenerationID: generationID, Phase: ph, TextDelta: delta, Error: errText})
+			p.Sink.Publish(ctx, Update{GenerationID: generationID, TimelineID: a.TimelineID, Phase: ph, TextDelta: delta, Error: errText})
 		}
 	}
 	pub(PhaseQueued, "", "")
@@ -165,23 +192,37 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	if p.Targets == nil {
 		return fail(ErrRejectedProposal)
 	}
+	targetLoadStarted := time.Now()
 	target, err := p.Targets.CurrentWriteTarget(ctx, a.TimelineID)
+	metrics.TargetLoadMS = time.Since(targetLoadStarted).Milliseconds()
 	if err != nil {
 		return fail(err)
 	}
-
-	pub(PhaseInterpreting, "", "")
-	var in interpretation
-	if err := p.role(ctx, "action_interpreter", "v1", map[string]any{"action": a.Text, "context": target}, &in); err != nil {
-		return fail(err)
+	// World-rule data may still exist on timelines created by the removed
+	// feature. Keep it out of every model context so legacy rows cannot affect
+	// new prose or decisions.
+	target.WorldSystems = nil
+	target.WorldRules = nil
+	target.WorldResources = nil
+	contextBuildStarted := time.Now()
+	contextNoObjectives := contextWithout(target, "objectives")
+	contextNoObjectivesJournal := contextWithout(target, "objectives", "heroJournal")
+	contextNoWorld := contextWithout(target, "initialCast", "world")
+	contextNoJournal := contextWithout(target, "heroJournal")
+	quests := questHierarchy(target.Objectives)
+	metrics.ContextBuildMS = time.Since(contextBuildStarted).Milliseconds()
+	if p.ContextShadow != nil {
+		shadowStarted := time.Now()
+		shadowResult, shadowErr := p.ContextShadow.Build(ctx, a, target)
+		metrics.ContextShadowMS = time.Since(shadowStarted).Milliseconds()
+		metrics.ShadowRetrievedCount = shadowResult.RetrievedCount
+		metrics.ShadowRetrievalError = shadowResult.RetrievalError
+		if shadowErr != nil {
+			metrics.ShadowRetrievalError = shadowErr.Error()
+		}
 	}
-	if in.Intent == "" {
-		return fail(ErrMalformedProposal)
-	}
-	relevantRules := relevantWorldRules(target, a.Text, in.Intent, target.SceneGoal, target.ChapterGoal, target.PreviousBeatText)
-	feasibility := worldFeasibility(relevantRules, target.WorldResources)
 
-	pub(PhaseDirecting, "", "")
+	plannerStarted := time.Now()
 	var activeInstructions []narrative.DirectorInstruction
 	if p.Instructions != nil {
 		var err error
@@ -190,32 +231,55 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 			return fail(err)
 		}
 	}
+	pub(PhaseInterpreting, "", "")
+	var in interpretation
 	var dir direction
-	quests := questHierarchy(target.Objectives)
-	if err := p.role(ctx, "director", "v1", map[string]any{"intent": in.Intent, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "worldRules": relevantRules, "worldSystems": target.WorldSystems, "feasibility": feasibility, "context": target}, &dir); err != nil {
-		return fail(err)
-	}
-	if dir.Goal == "" {
-		return fail(ErrMalformedProposal)
-	}
-
-	pub(PhasePacing, "", "")
 	var pacing pacingDecision
-	if err := p.role(ctx, "pacing", "v1", map[string]any{"intent": in.Intent, "directorGoal": dir.Goal, "directorInstructions": activeInstructions, "quests": quests, "worldRules": relevantRules, "feasibility": feasibility, "context": target}, &pacing); err != nil {
-		if !errors.Is(err, ErrMalformedProposal) {
+	if p.Planner != nil {
+		plan, planErr := p.Planner.Plan(ctx, a, target, activeInstructions)
+		if planErr != nil {
+			return fail(planErr)
+		}
+		in.Intent, dir.Goal, pacing = plan.Intent, plan.ImmediateGoal, pacingFromTurnPlan(plan)
+		pub(PhaseDirecting, "", "")
+		pub(PhasePacing, "", "")
+	} else {
+		if err := p.role(ctx, "action_interpreter", "v1", map[string]any{"action": a.Text, "context": target}, &in); err != nil {
 			return fail(err)
 		}
-		// Structural hard limits below are authoritative. A malformed advisory
-		// pacing response must not discard an otherwise valid player turn.
-		pacing = pacingDecision{}
+		if in.Intent == "" {
+			return fail(ErrMalformedProposal)
+		}
+		if !intentPreservesAction(a.Text, in.Intent) {
+			in.Intent = a.Text
+			metrics.ActionIntentFallbackUsed = true
+		}
+		pub(PhaseDirecting, "", "")
+		if err := p.role(ctx, "director", "v1", map[string]any{"intent": in.Intent, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}, &dir); err != nil {
+			return fail(err)
+		}
+		if dir.Goal == "" {
+			return fail(ErrMalformedProposal)
+		}
+		pub(PhasePacing, "", "")
+		if err := p.role(ctx, "pacing", "v1", map[string]any{"intent": in.Intent, "directorGoal": dir.Goal, "directorInstructions": activeInstructions, "quests": quests, "context": contextNoObjectives}, &pacing); err != nil {
+			if !errors.Is(err, ErrMalformedProposal) {
+				return fail(err)
+			}
+			// Structural hard limits below are authoritative. A malformed advisory
+			// pacing response must not discard an otherwise valid player turn.
+			pacing = pacingDecision{}
+		}
 	}
 	pacing = normalizePacingDecision(target, dir.Goal, pacing)
+	metrics.PlannerMS = time.Since(plannerStarted).Milliseconds()
 
+	writerStarted := time.Now()
 	pub(PhaseWriting, "", "")
 	var draft struct {
 		Text string `json:"text"`
 	}
-	writerInput := map[string]any{"intent": in.Intent, "goal": dir.Goal, "pacing": pacing, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "worldRules": relevantRules, "worldSystems": target.WorldSystems, "worldResources": target.WorldResources, "feasibility": feasibility, "context": target}
+	writerInput := map[string]any{"intent": in.Intent, "goal": dir.Goal, "pacing": pacing, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}
 	if err := p.role(ctx, "writer", "v1", writerInput, &draft); err != nil {
 		return fail(err)
 	}
@@ -240,93 +304,37 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		}
 		draft.Text = revised.Text
 	}
-	ruleUses := []string{}
-	if len(relevantRules) > 0 {
-		pub(PhaseLore, "", "")
-		var initialCheck loreCheck
-		if err := p.role(ctx, "lore_guard", "v1", map[string]any{"draft": draft.Text, "intent": in.Intent, "directorGoal": dir.Goal, "worldRules": relevantRules, "worldSystems": target.WorldSystems, "worldResources": target.WorldResources, "heroJournal": target.Journal, "safeMode": p.WorldRulesSafeMode}, &initialCheck); err != nil {
-			return fail(err)
-		}
-		initialCheck, _ = validateLoreCheck(initialCheck, relevantRules)
-		ruleUses = initialCheck.RuleUses
-		finalCheck := initialCheck
-		if loreRequiresRewrite(initialCheck, p.WorldRulesSafeMode) {
-			writerInput["rejectedDraft"] = draft.Text
-			writerInput["loreViolations"] = initialCheck.Violations
-			writerInput["revisionInstruction"] = "Rewrite the rejected draft once. Preserve its new plot progress, but repair every listed world-rule violation. Pay all required costs, respect prerequisites and never reveal hidden rules to the protagonist without story evidence. Return only a complete replacement beat."
-			var revised struct {
-				Text string `json:"text"`
-			}
-			if err := p.role(ctx, "writer", "v1", writerInput, &revised); err != nil {
-				return fail(err)
-			}
-			if strings.TrimSpace(revised.Text) == "" {
-				return fail(ErrMalformedProposal)
-			}
-			if err := narrativeNoveltyError(target.PreviousBeatText, revised.Text); err != nil {
-				return fail(err)
-			}
-			draft.Text = revised.Text
-			if err := p.role(ctx, "lore_guard", "v1", map[string]any{"draft": draft.Text, "intent": in.Intent, "directorGoal": dir.Goal, "worldRules": relevantRules, "worldSystems": target.WorldSystems, "worldResources": target.WorldResources, "heroJournal": target.Journal, "safeMode": p.WorldRulesSafeMode}, &finalCheck); err != nil {
-				return fail(err)
-			}
-			finalCheck, _ = validateLoreCheck(finalCheck, relevantRules)
-			ruleUses = finalCheck.RuleUses
-			if p.RuleAudits != nil && len(initialCheck.Violations) > 0 && len(finalCheck.Violations) == 0 {
-				if err := p.RuleAudits.RecordRuleAudit(ctx, a.TimelineID, generationID, ruleAuditRecords(initialCheck, "repaired")); err != nil {
-					return fail(err)
-				}
-			}
-		}
-		if len(finalCheck.Violations) > 0 {
-			status := "waived"
-			if loreRequiresRewrite(finalCheck, p.WorldRulesSafeMode) {
-				status = "blocking"
-			}
-			if p.RuleAudits != nil {
-				if err := p.RuleAudits.RecordRuleAudit(ctx, a.TimelineID, generationID, ruleAuditRecords(finalCheck, status)); err != nil {
-					return fail(err)
-				}
-			}
-			if status == "blocking" {
-				ids := make([]string, 0, len(finalCheck.Violations))
-				for _, violation := range finalCheck.Violations {
-					ids = append(ids, violation.RuleID)
-				}
-				return fail(fmt.Errorf("%w: %s", ErrWorldRuleViolation, strings.Join(ids, ", ")))
-			}
-		}
-	}
 	pub(PhaseWriting, draft.Text, "")
+	metrics.WriterMS = time.Since(writerStarted).Milliseconds()
+	metrics.TimeToFirstStoryTextMS = time.Since(runStarted).Milliseconds()
+	if p.ProvisionalBeat && p.Sink != nil {
+		p.Sink.Publish(ctx, Update{GenerationID: generationID, TimelineID: a.TimelineID, Phase: PhaseDraftReady, Revision: 1, Provisional: true, TextDelta: draft.Text})
+	}
 
 	var worldResult struct {
-		Changes         []worldChange         `json:"changes"`
-		RuleChanges     []worldRuleChange     `json:"ruleChanges"`
-		ResourceChanges []worldResourceChange `json:"resourceChanges"`
+		Changes []worldChange `json:"changes"`
 	}
 	var worldEvents []proposedEvent
 	evaluateWorld := func() error {
-		if err := p.role(ctx, "world_evaluator", "v1", map[string]any{"action": a.Text, "intent": in.Intent, "newBeat": draft.Text, "pacing": pacing, "currentCharacters": target.InitialCast, "currentWorld": target.World, "worldSystems": target.WorldSystems, "worldRules": target.WorldRules, "relevantRules": relevantRules, "worldResources": target.WorldResources, "safeMode": p.WorldRulesSafeMode, "context": target}, &worldResult); err != nil {
+		if err := p.role(ctx, "world_evaluator", "v1", map[string]any{"action": a.Text, "intent": in.Intent, "newBeat": draft.Text, "pacing": pacing, "currentCharacters": target.InitialCast, "currentWorld": target.World, "context": contextNoWorld}, &worldResult); err != nil {
 			if !errors.Is(err, ErrMalformedProposal) {
 				return err
 			}
 			worldResult.Changes = nil
 		}
-		var err error
-		worldEvents, _, err = validateWorldChanges(target, worldResult.Changes)
-		if err != nil {
-			if !errors.Is(err, ErrRejectedProposal) {
-				return err
+		preparedChanges, prepareErr := prepareWorldEvidence(draft.Text, worldResult.Changes)
+		if prepareErr != nil {
+			worldResult.Changes = nil
+		} else {
+			worldResult.Changes = preparedChanges
+		}
+		var validationErr error
+		worldEvents, _, validationErr = validateWorldChanges(target, worldResult.Changes)
+		if validationErr != nil {
+			if !errors.Is(validationErr, ErrRejectedProposal) {
+				return validationErr
 			}
 			worldEvents = nil
-		}
-		ruleEvents, ruleErr := validateWorldRuleChanges(target, worldResult.RuleChanges, worldResult.ResourceChanges, p.WorldRulesSafeMode)
-		if ruleErr != nil {
-			if !errors.Is(ruleErr, ErrRejectedProposal) {
-				return ruleErr
-			}
-		} else {
-			worldEvents = append(worldEvents, ruleEvents...)
 		}
 		return nil
 	}
@@ -339,18 +347,24 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	evaluateJournal := func() error {
 		if err := p.role(ctx, "state_evaluator", "v1", map[string]any{
 			"action": a.Text, "intent": in.Intent, "newBeat": draft.Text,
-			"currentJournal": target.Journal, "bootstrapJournal": len(target.Journal) == 0, "context": target,
+			"currentJournal": target.Journal, "bootstrapJournal": len(target.Journal) == 0, "context": contextNoJournal,
 		}, &journalResult); err != nil {
 			if !errors.Is(err, ErrMalformedProposal) {
 				return err
 			}
 			journalResult.Changes = nil
 		}
-		var err error
-		journalEvents, normalizedJournalChanges, err = validateJournalChanges(target.Journal, journalResult.Changes)
-		if err != nil {
-			if !errors.Is(err, ErrRejectedProposal) {
-				return err
+		preparedChanges, prepareErr := prepareJournalEvidence(draft.Text, target.Journal, journalResult.Changes)
+		if prepareErr != nil {
+			journalResult.Changes = nil
+		} else {
+			journalResult.Changes = preparedChanges
+		}
+		var validationErr error
+		journalEvents, normalizedJournalChanges, validationErr = validateJournalChanges(target.Journal, journalResult.Changes)
+		if validationErr != nil {
+			if !errors.Is(validationErr, ErrRejectedProposal) {
+				return validationErr
 			}
 			journalEvents, normalizedJournalChanges = nil, nil
 		}
@@ -365,30 +379,80 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	evaluateObjectives := func() error {
 		if err := p.role(ctx, "quest_evaluator", "v1", map[string]any{
 			"action": a.Text, "intent": in.Intent, "directorGoal": dir.Goal,
-			"newBeat": draft.Text, "currentObjectives": target.Objectives, "quests": quests, "context": target,
+			"newBeat": draft.Text, "currentObjectives": target.Objectives, "quests": quests, "context": contextNoObjectives,
 		}, &objectiveResult); err != nil {
 			if !errors.Is(err, ErrMalformedProposal) {
 				return err
 			}
 			objectiveResult.Changes = nil
 		}
-		var err error
-		objectiveEvents, normalizedChanges, err = validateObjectiveChanges(target.Objectives, objectiveResult.Changes)
-		if err != nil {
-			if !errors.Is(err, ErrRejectedProposal) {
-				return err
+		preparedChanges, prepareErr := prepareObjectiveEvidence(draft.Text, target.Objectives, objectiveResult.Changes)
+		if prepareErr != nil {
+			objectiveResult.Changes = nil
+		} else {
+			objectiveResult.Changes = preparedChanges
+		}
+		var validationErr error
+		objectiveEvents, normalizedChanges, validationErr = validateObjectiveChanges(target.Objectives, objectiveResult.Changes)
+		if validationErr != nil {
+			if !errors.Is(validationErr, ErrRejectedProposal) {
+				return validationErr
 			}
 			objectiveEvents, normalizedChanges = nil, nil
 		}
 		return nil
 	}
+	evaluateExtraction := func() error {
+		extraction, extractErr := p.Extractor.Extract(ctx, a, target, in.Intent, draft.Text, dir, pacing)
+		if extractErr != nil {
+			return extractErr
+		}
+		worldResult.Changes, extractErr = prepareWorldEvidence(draft.Text, extraction.WorldChanges)
+		if extractErr != nil {
+			return extractErr
+		}
+		worldEvents, _, extractErr = validateWorldChanges(target, worldResult.Changes)
+		if extractErr != nil {
+			return extractErr
+		}
+		journalResult.Changes, extractErr = prepareJournalEvidence(draft.Text, target.Journal, extraction.JournalChanges)
+		if extractErr != nil {
+			return extractErr
+		}
+		journalEvents, normalizedJournalChanges, extractErr = validateJournalChanges(target.Journal, journalResult.Changes)
+		if extractErr != nil {
+			return extractErr
+		}
+		objectiveResult.Changes, extractErr = prepareObjectiveEvidence(draft.Text, target.Objectives, extraction.ObjectiveChanges)
+		if extractErr != nil {
+			return extractErr
+		}
+		objectiveEvents, normalizedChanges, extractErr = validateObjectiveChanges(target.Objectives, objectiveResult.Changes)
+		return extractErr
+	}
 	var choices struct {
 		Choices []choice `json:"choices"`
 	}
 	var choiceLabels []string
-	evaluateChoices := func() error {
-		if err := p.role(ctx, "choices", "v1", map[string]any{"text": draft.Text, "requiredCount": 4, "objectives": target.Objectives, "quests": quests, "objectiveChanges": normalizedChanges, "heroJournal": target.Journal, "journalChanges": normalizedJournalChanges, "context": target}, &choices); err != nil {
-			return err
+	choicesFallbackUsed := false
+	useChoiceFallback := func() {
+		choices.Choices = deterministicChoiceFallback()
+		choiceLabels, _ = fourChoiceLabels(choices.Choices)
+		choicesFallbackUsed = true
+	}
+	evaluateChoices := func(includePendingChanges bool) error {
+		var objectiveChanges []objectiveChange
+		var journalChanges []journalChange
+		if includePendingChanges {
+			objectiveChanges = normalizedChanges
+			journalChanges = normalizedJournalChanges
+		}
+		if err := p.role(ctx, "choices", "v1", map[string]any{"text": draft.Text, "requiredCount": 4, "objectives": target.Objectives, "quests": quests, "objectiveChanges": objectiveChanges, "heroJournal": target.Journal, "journalChanges": journalChanges, "context": contextNoObjectivesJournal}, &choices); err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			useChoiceFallback()
+			return nil
 		}
 		var ok bool
 		choiceLabels, ok = fourChoiceLabels(choices.Choices)
@@ -400,18 +464,44 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		var retried struct {
 			Choices []choice `json:"choices"`
 		}
-		if err := p.role(ctx, "choices", "v1", map[string]any{"text": draft.Text, "requiredCount": 4, "objectives": target.Objectives, "quests": quests, "objectiveChanges": normalizedChanges, "heroJournal": target.Journal, "journalChanges": normalizedJournalChanges, "context": target, "previousChoices": choices.Choices, "instruction": "Return exactly four distinct actionable choices."}, &retried); err != nil {
-			return err
+		if err := p.role(ctx, "choices", "v1", map[string]any{"text": draft.Text, "requiredCount": 4, "objectives": target.Objectives, "quests": quests, "objectiveChanges": objectiveChanges, "heroJournal": target.Journal, "journalChanges": journalChanges, "context": contextNoObjectivesJournal, "previousChoices": choices.Choices, "instruction": "Return exactly four distinct actionable choices."}, &retried); err != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			useChoiceFallback()
+			return nil
 		}
 		choiceLabels, ok = fourChoiceLabels(retried.Choices)
 		if !ok {
-			return ErrMalformedProposal
+			useChoiceFallback()
+			return nil
 		}
 		choices.Choices = retried.Choices
 		return nil
 	}
 
-	if llmpolicy.SupportsParallelRequests(p.LLM.Identity()) {
+	postWriterStarted := time.Now()
+	if p.ProvisionalBeat {
+		pub(PhaseFinalizing, "", "")
+	}
+	if p.Extractor != nil {
+		pub(PhaseEvaluating, "", "")
+		pub(PhaseChoices, "", "")
+		extractorDone, choicesDone := make(chan error, 1), make(chan error, 1)
+		go func() { extractorDone <- evaluateExtraction() }()
+		// Extracted mutations are deliberately excluded here: they are not Canon
+		// yet, and Choices can derive the immediate next actions from the final
+		// Beat plus authoritative state. This removes the false dependency and
+		// lets both bounded post-Writer stages run concurrently.
+		go func() { choicesDone <- evaluateChoices(false) }()
+		extractorErr, choicesErr := <-extractorDone, <-choicesDone
+		if extractorErr != nil {
+			return fail(extractorErr)
+		}
+		if choicesErr != nil {
+			return fail(choicesErr)
+		}
+	} else if llmpolicy.SupportsParallelRequests(p.LLM.Identity()) {
 		pub(PhaseEvaluating, "", "")
 		worldDone, journalDone, objectivesDone := make(chan error, 1), make(chan error, 1), make(chan error, 1)
 		go func() { worldDone <- evaluateWorld() }()
@@ -433,7 +523,7 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		// Choices depend on journal and quest changes, but not on world entity
 		// extraction, so they may overlap the still-running world branch.
 		pub(PhaseChoices, "", "")
-		if err := evaluateChoices(); err != nil {
+		if err := evaluateChoices(true); err != nil {
 			<-worldDone
 			return fail(err)
 		}
@@ -454,11 +544,14 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 			return fail(err)
 		}
 		pub(PhaseChoices, "", "")
-		if err := evaluateChoices(); err != nil {
+		if err := evaluateChoices(true); err != nil {
 			return fail(err)
 		}
 	}
+	metrics.PostWriterMS = time.Since(postWriterStarted).Milliseconds()
+	metrics.ChoicesFallbackUsed = choicesFallbackUsed
 
+	validationStarted := time.Now()
 	beatID, err := id.New()
 	if err != nil {
 		return fail(err)
@@ -487,7 +580,7 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	}
 	prop := proposal{Text: draft.Text, Choices: choices.Choices, Events: []proposedEvent{{Type: "player_action_attempted", Payload: mustJSON(map[string]any{"text": a.Text, "intent": in.Intent})}}}
 	prop.Events = append(prop.Events, lifecycleEvents...)
-	prop.Events = append(prop.Events, proposedEvent{Type: "beat_committed", Payload: mustJSON(map[string]any{"beatId": beatID, "sceneId": writeSceneID, "position": beatPosition, "kind": beatKindForPacing(pacing), "text": draft.Text, "status": "committed", "directorGoal": dir.Goal, "worldRuleIds": ruleUses})})
+	prop.Events = append(prop.Events, proposedEvent{Type: "beat_committed", Payload: mustJSON(map[string]any{"beatId": beatID, "sceneId": writeSceneID, "position": beatPosition, "kind": beatKindForPacing(pacing), "text": draft.Text, "status": "committed", "directorGoal": dir.Goal})})
 	prop.Events = append(prop.Events, worldEvents...)
 	prop.Events = append(prop.Events, journalEvents...)
 	prop.Events = append(prop.Events, objectiveEvents...)
@@ -505,8 +598,11 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		}
 		pending = append(pending, event.PendingEvent{Type: e.Type, SchemaVersion: 1, Payload: e.Payload, GenerationID: &gid})
 	}
+	metrics.ValidationMS = time.Since(validationStarted).Milliseconds()
 	pub(PhaseCommitting, "", "")
+	commitStarted := time.Now()
 	committed, err := p.Canon.AppendSemantic(ctx, a.TimelineID, a.ExpectedHead, pending)
+	metrics.CommitMS = time.Since(commitStarted).Milliseconds()
 	if err != nil {
 		return fail(err)
 	}
@@ -1220,6 +1316,15 @@ func fourChoiceLabels(choices []choice) ([]string, bool) {
 	return out, true
 }
 
+func deterministicChoiceFallback() []choice {
+	return []choice{
+		{ID: "continue_carefully", Label: "Осторожно продолжить начатое действие"},
+		{ID: "observe", Label: "Внимательнее осмотреться вокруг"},
+		{ID: "ask", Label: "Обратиться к ближайшему собеседнику"},
+		{ID: "reconsider", Label: "Отступить и выбрать другой подход"},
+	}
+}
+
 func (p Pipeline) role(ctx context.Context, role, version string, input any, out any) error {
 	raw, err := json.Marshal(input)
 	if err != nil {
@@ -1235,7 +1340,7 @@ func (p Pipeline) role(ctx context.Context, role, version string, input any, out
 	// Controlled repair is bounded and never sees or writes Canon directly.
 	for attempt := 0; attempt < p.MaxRepairs; attempt++ {
 		repairInput, _ := json.Marshal(map[string]any{"role": role, "invalidOutput": string(resp.Output), "contract": "return valid JSON only"})
-		resp, err = p.LLM.Generate(ctx, aiport.StoryRequest{Role: "structured_repair", PromptVersion: "v1", Input: repairInput})
+		resp, err = p.LLM.Generate(ctx, aiport.StoryRequest{Role: "structured_repair", PromptVersion: "v1", Input: repairInput, Repair: true})
 		if err != nil {
 			return err
 		}

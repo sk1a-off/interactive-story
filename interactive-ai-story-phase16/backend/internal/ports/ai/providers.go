@@ -32,11 +32,14 @@ type StoryRequest struct {
 	// MaxTokens optionally narrows the role-level completion budget for a
 	// particular request. Zero keeps the configured role default.
 	MaxTokens int
+	Repair    bool
 }
 type StoryResponse struct {
-	Output       []byte
-	InputTokens  int64
-	OutputTokens int64
+	Output        []byte
+	InputTokens   int64
+	OutputTokens  int64
+	Provider      ProviderIdentity
+	EscalatedFrom string
 }
 type StoryLLM interface {
 	Identity() ProviderIdentity

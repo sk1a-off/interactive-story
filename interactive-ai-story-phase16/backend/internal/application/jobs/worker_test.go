@@ -20,11 +20,11 @@ type memQueue struct {
 }
 
 func (q *memQueue) Enqueue(context.Context, generation.Job, int) error { return nil }
-func (q *memQueue) FindByRequest(context.Context, id.ID, string) (id.ID, bool, error) {
-	return "", false, nil
+func (q *memQueue) FindByRequest(context.Context, id.ID, string) (jobqueue.ExistingJob, bool, error) {
+	return jobqueue.ExistingJob{}, false, nil
 }
-func (q *memQueue) FindActiveByTimelineHead(context.Context, id.ID, int64) (id.ID, bool, error) {
-	return "", false, nil
+func (q *memQueue) FindActiveByTimelineHead(context.Context, id.ID, int64) (jobqueue.ExistingJob, bool, error) {
+	return jobqueue.ExistingJob{}, false, nil
 }
 func (q *memQueue) ClaimNext(context.Context, string, time.Time, time.Duration) (jobqueue.ClaimedJob, error) {
 	q.mu.Lock()

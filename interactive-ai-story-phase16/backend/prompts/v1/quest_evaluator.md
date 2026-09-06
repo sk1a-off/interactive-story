@@ -8,7 +8,7 @@ The model is hierarchical:
 
 Return exactly one JSON object:
 
-{"changes":[{"operation":"create|progress|complete|fail","objectiveId":"existing UUID when updating","reference":"local reference for a new quest","parentObjectiveId":"existing quest UUID","parentReference":"reference of a quest created earlier in this response","scope":"global|minor","kind":"quest|task|event|milestone","questType":"main|side","title":"...","description":"...","successCriteria":"observable condition","status":"active|completed|failed","progress":0,"evidence":"concrete evidence from the new beat"}]}
+{"changes":[{"operation":"create|progress|complete|fail","objectiveId":"existing UUID when updating","reference":"local reference for a new quest","parentObjectiveId":"existing quest UUID","parentReference":"reference of a quest created earlier in this response","scope":"global|minor","kind":"quest|task|event|milestone","questType":"main|side","title":"...","description":"...","successCriteria":"observable condition","status":"active|completed|failed","progress":0,"evidenceQuote":"short verbatim quote copied only from newBeat"}]}
 
 Rules:
 - The new beat is the evidence boundary. Never award success merely because the player selected an intention.
@@ -24,7 +24,8 @@ Rules:
 - Keep the journal focused: never maintain more than 5 active quest lines total, more than 3 active main or side quest lines of one type, or more than 3 active stages inside one quest.
 - A beat may complete one stage and create the next stage of the same quest. This is the normal way a quest develops over time.
 - Progress is monotonic from 0 to 99 while active. Use 100 only for completion. The server derives major-quest progress from linked stages when needed.
-- `complete` and `fail` require concise concrete evidence from the new beat.
+- Every change requires a short verbatim `evidenceQuote` copied from `newBeat`; the action, previous beat and older context are not evidence.
+- `complete` and `fail` require a quote that directly demonstrates the observable success/failure criterion, not merely effort, danger or intention.
 - Never complete or fail a major quest while any linked stage remains active; close its active stages in the same response first.
 - Never create a task whose success criterion is already satisfied by the new beat. Complete a matching existing task or create the next genuinely unresolved stage instead.
 - A newly created quest or stage must always be `active` and unresolved. Never create an already completed or failed historical objective.

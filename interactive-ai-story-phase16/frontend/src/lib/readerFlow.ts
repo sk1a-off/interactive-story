@@ -8,6 +8,18 @@ export type PendingReaderGeneration = {
   fromHeadEventSeq: number
   phase: string
   createdAt: number
+  provisionalText?: string
+  provisionalRevision?: number
+}
+
+export type GenerationUpdate = {
+  generationId?: string
+  timelineId?: string
+  phase: string
+  revision?: number
+  provisional?: boolean
+  textDelta?: string
+  error?: string
 }
 
 const maxPendingAgeMs = 30 * 60 * 1000
@@ -23,6 +35,22 @@ export function pendingTurnIsVisible(
   return current.beatId !== pending.fromBeatId
     && current.headEventSeq > pending.fromHeadEventSeq
     && readerHasCoherentChoices(current)
+}
+
+export function applyGenerationUpdate(
+  timelineId: string,
+  pending: PendingReaderGeneration | null,
+  update: GenerationUpdate,
+): PendingReaderGeneration | null {
+  if (!pending || !pending.generationId) return pending
+  if (update.generationId && update.generationId !== pending.generationId) return pending
+  if (update.timelineId && update.timelineId !== timelineId) return pending
+  if (update.phase === 'draft_ready' || update.phase === 'draft_replaced') {
+    const revision = update.revision ?? 0
+    if (!update.provisional || !update.textDelta?.trim() || revision < (pending.provisionalRevision ?? 0)) return pending
+    return { ...pending, phase: update.phase, provisionalText: update.textDelta, provisionalRevision: revision }
+  }
+  return { ...pending, phase: update.phase }
 }
 
 export function readPendingReaderGeneration(timelineId: string): PendingReaderGeneration | null {

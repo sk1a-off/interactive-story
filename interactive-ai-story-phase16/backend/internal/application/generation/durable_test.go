@@ -2,6 +2,10 @@ package generation
 
 import (
 	"context"
+	"errors"
+	"testing"
+	"time"
+
 	domaincfg "github.com/local/interactive-ai-story/backend/internal/domain/aiconfig"
 	domainjob "github.com/local/interactive-ai-story/backend/internal/domain/generation"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
@@ -9,8 +13,6 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 	"github.com/local/interactive-ai-story/backend/internal/ports/jobqueue"
-	"testing"
-	"time"
 )
 
 type dq struct{ jobs map[string]domainjob.Job }
@@ -28,17 +30,65 @@ func (q *dq) Enqueue(_ context.Context, j domainjob.Job, _ int) error {
 	q.jobs[j.RequestID] = j
 	return nil
 }
-func (q *dq) FindByRequest(_ context.Context, _ id.ID, k string) (id.ID, bool, error) {
+func (q *dq) FindByRequest(_ context.Context, _ id.ID, k string) (jobqueue.ExistingJob, bool, error) {
 	j, ok := q.jobs[k]
-	return j.ID, ok, nil
+	return jobqueue.ExistingJob{ID: j.ID, ActionHash: j.ActionHash}, ok, nil
 }
-func (q *dq) FindActiveByTimelineHead(_ context.Context, timelineID id.ID, expectedHead int64) (id.ID, bool, error) {
+func (q *dq) FindActiveByTimelineHead(_ context.Context, timelineID id.ID, expectedHead int64) (jobqueue.ExistingJob, bool, error) {
 	for _, j := range q.jobs {
 		if j.TimelineID == timelineID && j.ExpectedHeadEventSeq == expectedHead {
-			return j.ID, true, nil
+			return jobqueue.ExistingJob{ID: j.ID, ActionHash: j.ActionHash}, true, nil
 		}
 	}
-	return "", false, nil
+	return jobqueue.ExistingJob{}, false, nil
+}
+
+func TestDurableRunnerRejectsDifferentActionAtSameHead(t *testing.T) {
+	runner, q, tid := durableRunnerFixture(t)
+	if _, err := runner.Submit(context.Background(), "request-a", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Открыть дверь"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runner.Submit(context.Background(), "request-b", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Уйти назад"}); !errors.Is(err, ErrActiveHeadConflict) {
+		t.Fatalf("different same-head action was not rejected: %v", err)
+	}
+	if len(q.jobs) != 1 {
+		t.Fatalf("conflicting action was enqueued: %d jobs", len(q.jobs))
+	}
+}
+
+func TestDurableRunnerRejectsIdempotencyKeyReuseWithDifferentPayload(t *testing.T) {
+	runner, _, tid := durableRunnerFixture(t)
+	if _, err := runner.Submit(context.Background(), "same-key", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Открыть дверь"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := runner.Submit(context.Background(), "same-key", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Уйти назад"}); !errors.Is(err, ErrIdempotencyConflict) {
+		t.Fatalf("idempotency conflict was not rejected: %v", err)
+	}
+}
+
+func TestActionHashNormalizesCaseAndWhitespace(t *testing.T) {
+	if hashPlayerAction("  Открыть   ДВЕРЬ ") != hashPlayerAction("открыть дверь") {
+		t.Fatal("equivalent action text produced different hash")
+	}
+	if hashPlayerAction("и\u0306") != hashPlayerAction("й") {
+		t.Fatal("canonically equivalent Unicode produced different hash")
+	}
+}
+
+func durableRunnerFixture(t *testing.T) (*DurableRunner, *dq, timeline.ID) {
+	t.Helper()
+	cfg, err := domaincfg.NewRevision(id.MustParse("00000000-0000-4000-8000-000000000711"), 1,
+		ai.ProviderIdentity{Kind: ai.KindStoryLLM, Provider: "fake", Model: "story"},
+		ai.ProviderIdentity{Kind: ai.KindEmbedding, Provider: "fake", Model: "embed"},
+		ai.ProviderIdentity{Kind: ai.KindImage, Provider: "fake", Model: "image"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := &dq{}
+	tid := timeline.ID(id.MustParse("00000000-0000-4000-8000-000000000712"))
+	sid := story.ID(id.MustParse("00000000-0000-4000-8000-000000000713"))
+	runner := &DurableRunner{Queue: q, Config: cfgRepo{cfg}, Metadata: meta{sid: sid}, Hub: NewHub()}
+	return runner, q, tid
 }
 func (q *dq) ClaimNext(context.Context, string, time.Time, time.Duration) (jobqueue.ClaimedJob, error) {
 	return jobqueue.ClaimedJob{}, jobqueue.ErrNoJob
