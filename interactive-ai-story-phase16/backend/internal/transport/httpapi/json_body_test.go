@@ -107,6 +107,7 @@ func TestImageWorkerFailureRejectsMalformedJSON(t *testing.T) {
 type imageApplicationStub struct {
 	failCalls int
 	claimed   imagedomain.Generation
+	status    imagerepo.WorkerStatus
 }
 
 func (*imageApplicationStub) CreateForScene(context.Context, imageapp.CreateCommand) (imagedomain.View, error) {
@@ -132,8 +133,8 @@ func (s *imageApplicationStub) Fail(context.Context, id.ID, string, imageapp.Wor
 	return imagedomain.Generation{}, nil
 }
 func (*imageApplicationStub) Heartbeat(context.Context, string, *id.ID) error { return nil }
-func (*imageApplicationStub) WorkerStatus(context.Context) (imagerepo.WorkerStatus, error) {
-	return imagerepo.WorkerStatus{}, nil
+func (s *imageApplicationStub) WorkerStatus(context.Context) (imagerepo.WorkerStatus, error) {
+	return s.status, nil
 }
 func (*imageApplicationStub) SelectImage(context.Context, id.ID, id.ID) error { return nil }
 
@@ -155,5 +156,29 @@ func TestImageWorkerClaimReturnsPinnedOutputParameters(t *testing.T) {
 	}
 	if res.Code != http.StatusOK || payload.Resolution != "512x768" || payload.Width != 512 || payload.Height != 768 || payload.Count != 4 {
 		t.Fatalf("status=%d payload=%+v", res.Code, payload)
+	}
+}
+
+func TestWorkerStatusForUIRequiresNoWorkerTokenAndHidesStaleJob(t *testing.T) {
+	jobID := id.MustParse("00000000-0000-4000-8000-000000000001")
+	for _, connected := range []bool{false, true} {
+		app := &imageApplicationStub{status: imagerepo.WorkerStatus{Connected: connected, ActiveGenerationID: &jobID}}
+		router := chi.NewRouter()
+		registerImageRoutes(router, app)
+		secured := RequireImageWorkerToken(router, "worker-secret")
+		res := httptest.NewRecorder()
+		secured.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/api/v1/images/worker-status", nil))
+		var status imagerepo.WorkerStatus
+		if err := json.Unmarshal(res.Body.Bytes(), &status); err != nil {
+			t.Fatal(err)
+		}
+		if res.Code != http.StatusOK || status.Connected != connected || (status.ActiveGenerationID != nil) != connected {
+			t.Fatalf("connected=%v status=%d body=%s", connected, res.Code, res.Body.String())
+		}
+		res = httptest.NewRecorder()
+		secured.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/internal/image-worker/status", nil))
+		if res.Code != http.StatusUnauthorized {
+			t.Fatal("internal worker endpoints must remain protected")
+		}
 	}
 }

@@ -11,6 +11,7 @@ import { SetupAssistant } from './SetupAssistant'
 import { DirectorWorkspace } from './DirectorWorkspace'
 import { Narrator, SpeakerIcon, type NarrationStartRequest } from './Narrator'
 import { IllustrationMoment } from './IllustrationMoment'
+import { PerchanceWorkerStatus } from './PerchanceWorkerStatus'
 import '../styles/app.css'
 
 function NewStory() {
@@ -267,6 +268,7 @@ function Reader(){
   </section>
   {pendingGeneration?.provisionalText&&<section className="provisional-beat" aria-label="Предварительный текст продолжения"><span>Черновик · ещё не сохранён в истории</span>{splitParagraphs(pendingGeneration.provisionalText).map((paragraph,index)=><p key={`provisional-${pendingGeneration.provisionalRevision??0}-${index}`}>{paragraph}</p>)}</section>}
   {generations.length===0&&<div className="scene-image-empty"><p>{regenerate.isPending?'Ставлю иллюстрацию сцены в очередь…':'Иллюстрация подготавливается в фоновой очереди.'}</p></div>}
+  <PerchanceWorkerStatus/>
   <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации'}</button></div>
   {regenerate.error&&<p className="error scene-image-error">{regenerate.error.message}</p>}
   {paragraphImage.error&&<p className="error scene-image-error">{paragraphImage.error.message}</p>}
@@ -363,6 +365,7 @@ function AISettings(){
     </div>:<><label>Story LLM model<input value={storyModel} onChange={e=>setStoryModel(e.target.value)} placeholder="Имя модели llama.cpp"/></label><label>Story LLM endpoint<input value={storyEndpoint} onChange={e=>setStoryEndpoint(e.target.value)} placeholder="http://127.0.0.1:8081"/></label></>}
     <label>{googleAI?'Google AI API keys':'API keys'} <span className="muted tiny">{active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?`сохранено ключей: ${active.storyLlmSecretCount||1} · значения скрыты`:keyRequired?'нужно указать для включения Google AI':googleAI?'не настроены':'необязательно'}</span><span className="secret-input"><textarea rows={googleAI?5:2} className={showApiKey?'secret-multiline':'secret-multiline masked'} value={apiKeysText} onChange={e=>setApiKeysText(e.target.value)} autoComplete="off" spellCheck={false} placeholder={active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?'оставьте пустым, чтобы сохранить текущий набор':googleAI?'по одному ключу на строку':'необязательно'}/><button className="ghost" type="button" onClick={()=>setShowApiKey(value=>!value)} aria-label={showApiKey?'Скрыть API keys':'Показать API keys'}>{showApiKey?'Скрыть':'Показать'}</button></span><small className="muted">Ключи хранятся только на компьютере с backend и используются по очереди. В PostgreSQL и обратно в браузер они не возвращаются.</small></label>
     <fieldset className="image-output-settings"><legend>Изображения</legend>
+     <PerchanceWorkerStatus/>
      <label>Image provider<input value={imageProvider} onChange={e=>setImageProvider(e.target.value)}/></label>
      <label>Image model<input value={imageModel} onChange={e=>setImageModel(e.target.value)}/></label>
      <label>Разрешение изображений<select value={imageResolution} onChange={e=>setImageResolution(e.target.value)}><option value="768x768">768 × 768 — квадрат</option><option value="512x768">512 × 768 — вертикальный кадр</option><option value="768x512">768 × 512 — горизонтальный кадр</option></select></label>

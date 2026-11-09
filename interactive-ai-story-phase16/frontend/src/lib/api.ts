@@ -127,7 +127,9 @@ export const createAIRevision=(body:{config:{storyLlm:ProviderIdentity;embedding
 export const activateAIRevision=(id:string)=>json<AIConfigView>(`/api/v1/settings/ai/revisions/${id}/activate`,{method:'POST',body:'{}'})
 
 
-export type ImageGenerationView={id:string;sceneId:string;status:'pending'|'running'|'done'|'failed';attempts:number;errorCode?:string;images:SceneImage[];selectedImageId?:string}
+export type ImageGenerationView={id:string;sceneId:string;status:'pending'|'running'|'done'|'failed';attempts:number;errorCode?:string;images:SceneImage[];selectedImageId?:string;width?:number;height?:number;imageCount?:number}
+export type ImageWorkerStatus={connected:boolean;workerId?:string;lastSeenAt?:string;activeGenerationId?:string}
+export const getImageWorkerStatus=()=>json<ImageWorkerStatus>('/api/v1/images/worker-status')
 export const generateSceneImages=(storyId:string,sceneId:string)=>json<ImageGenerationView>(`/api/v1/stories/${storyId}/scenes/${sceneId}/images`,{method:'POST',body:'{}'})
 export const generateParagraphImage=(storyId:string,sceneId:string,beatId:string,paragraph:number)=>json<ImageGenerationView>(`/api/v1/stories/${storyId}/scenes/${sceneId}/images/paragraph`,{method:'POST',body:JSON.stringify({beatId,paragraph})})
 export const getImageGeneration=(generationId:string)=>json<ImageGenerationView>(`/api/v1/image-generations/${generationId}`)

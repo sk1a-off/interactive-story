@@ -35,16 +35,31 @@ type publicGeneration struct {
 	SceneID         id.ID          `json:"sceneId"`
 	Status          domain.Status  `json:"status"`
 	Attempts        int            `json:"attempts"`
+	Width           int            `json:"width"`
+	Height          int            `json:"height"`
+	ImageCount      int            `json:"imageCount"`
 	ErrorCode       string         `json:"errorCode,omitempty"`
 	Images          []domain.Image `json:"images"`
 	SelectedImageID *id.ID         `json:"selectedImageId,omitempty"`
 }
 
 func publicView(v domain.View) publicGeneration {
-	return publicGeneration{ID: v.Generation.ID, SceneID: v.Generation.SceneID, Status: v.Generation.Status, Attempts: v.Generation.Attempts, ErrorCode: v.Generation.ErrorCode, Images: v.Images, SelectedImageID: v.SelectedImageID}
+	return publicGeneration{ID: v.Generation.ID, SceneID: v.Generation.SceneID, Status: v.Generation.Status, Attempts: v.Generation.Attempts, Width: v.Generation.Width, Height: v.Generation.Height, ImageCount: v.Generation.ImageCount, ErrorCode: v.Generation.ErrorCode, Images: v.Images, SelectedImageID: v.SelectedImageID}
 }
 
 func registerImageRoutes(r chi.Router, a ImageApplication) {
+	// The UI reads status without receiving the browser worker's write token.
+	r.Get("/api/v1/images/worker-status", func(w http.ResponseWriter, req *http.Request) {
+		status, err := a.WorkerStatus(req.Context())
+		if err != nil {
+			writeError(w, http.StatusServiceUnavailable, "worker_status_failed", "Worker status unavailable.")
+			return
+		}
+		if !status.Connected {
+			status.ActiveGenerationID = nil
+		}
+		writeJSON(w, http.StatusOK, status)
+	})
 	r.Post("/api/v1/stories/{storyId}/scenes/{sceneId}/images", func(w http.ResponseWriter, req *http.Request) {
 		sid, e := id.Parse(chi.URLParam(req, "storyId"))
 		if e != nil {

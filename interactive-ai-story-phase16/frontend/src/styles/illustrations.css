@@ -4,3 +4,8 @@
 .illustration-moment .scene-image-skeleton { min-height: 0; }
 .image-output-settings { display: grid; gap: 16px; min-width: 0; margin: 0; border: 1px solid #3a414d; border-radius: 14px; padding: 18px; }
 .image-output-settings select { width: 100%; min-height: 44px; }
+.perchance-worker-status { display: grid; gap: 7px; margin: 12px 0; border: 1px solid #3a414d; border-radius: 12px; padding: 12px 14px; font-size: .85rem; color: #aeb3bc; }
+.perchance-worker-status.online { border-color: #496a53; }
+.perchance-worker-status.online strong { color: #bcd3b6; }
+.perchance-worker-status small { line-height: 1.5; }
+.perchance-worker-status a { color: #9ec5ff; width: fit-content; padding: 6px 0; }

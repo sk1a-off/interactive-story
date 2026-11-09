@@ -74,11 +74,18 @@ If the backend uses another hostname, add that hostname to the userscript's
 
 ## Public endpoints
 
+- `GET /api/v1/images/worker-status` — read-only status for Reader and AI settings;
 - `POST /api/v1/stories/{storyID}/scenes/{sceneID}/images`
 - `GET /api/v1/image-generations/{generationID}`
 - `PUT /api/v1/scenes/{sceneID}/selected-image`
 
 A new generation never overwrites an older generation.
+
+Reader and AI settings show whether the worker is online and the dimensions and
+variant count of its current running generation. A stale heartbeat never shows
+an active generation as still drawing. The UI status route does not require the
+worker token; internal claim, result, failure, heartbeat, and status routes
+remain protected when `IMAGE_WORKER_TOKEN` is configured.
 
 ## Storage
 
