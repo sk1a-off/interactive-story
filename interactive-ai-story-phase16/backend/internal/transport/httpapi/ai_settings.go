@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -37,10 +36,7 @@ func registerAISettingsRoutes(r chi.Router, a AISettingsApplication) {
 	})
 	r.Post("/api/v1/settings/ai/revisions", func(w http.ResponseWriter, req *http.Request) {
 		var body app.UpdateRequest
-		dec := json.NewDecoder(req.Body)
-		dec.DisallowUnknownFields()
-		if e := dec.Decode(&body); e != nil {
-			writeError(w, 400, "invalid_json", e.Error())
+		if !decodeStrictJSONRequest(w, req, &body) {
 			return
 		}
 		v, e := a.Create(req.Context(), body)

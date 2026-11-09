@@ -32,9 +32,7 @@ func registerNarrationRoutes(r interface {
 		var body struct {
 			Text string `json:"text"`
 		}
-		decoder := json.NewDecoder(http.MaxBytesReader(w, req.Body, 32<<10))
-		if err := decoder.Decode(&body); err != nil {
-			writeNarrationError(w, http.StatusBadRequest, "invalid_request", err)
+		if !decodeJSONRequestWithLimit(w, req, &body, 32<<10) {
 			return
 		}
 		audio, contentType, err := app.Speech(req.Context(), body.Text)
@@ -55,7 +53,11 @@ func registerNarrationRoutes(r interface {
 }
 
 func writeNarrationError(w http.ResponseWriter, status int, code string, err error) {
+	message := err.Error()
+	if status >= http.StatusInternalServerError {
+		message = http.StatusText(status)
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"code": code, "message": err.Error()})
+	_ = json.NewEncoder(w).Encode(map[string]string{"code": code, "message": message})
 }

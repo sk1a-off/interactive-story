@@ -3,7 +3,6 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"strings"
 
@@ -131,8 +130,7 @@ func createSaveHandler(app SaveApplication) http.HandlerFunc {
 			return
 		}
 		var req createSaveRequest
-		if err := decodeJSON(r, &req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid_json", err.Error())
+		if !decodeStrictJSONRequest(w, r, &req) {
 			return
 		}
 		created, err := app.Create(r.Context(), saves.CreateCommand{TimelineID: timeline.ID(tid), Name: req.Name, Note: req.Note, Kind: savepoint.KindManual, Pinned: req.Pinned})
@@ -152,8 +150,7 @@ func forkHandler(app SaveApplication) http.HandlerFunc {
 			return
 		}
 		var req forkRequest
-		if err := decodeJSON(r, &req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid_json", err.Error())
+		if !decodeStrictJSONRequest(w, r, &req) {
 			return
 		}
 		saveRaw, err := id.Parse(strings.TrimSpace(req.SavePointID))
@@ -183,8 +180,7 @@ func restoreHandler(app SaveApplication) http.HandlerFunc {
 			return
 		}
 		var req restoreRequest
-		if err := decodeJSON(r, &req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid_json", err.Error())
+		if !decodeStrictJSONRequest(w, r, &req) {
 			return
 		}
 		switch strings.ToLower(strings.TrimSpace(req.Mode)) {
@@ -218,17 +214,15 @@ func restoreHandler(app SaveApplication) http.HandlerFunc {
 func parseIDParam(r *http.Request, name string) (id.ID, error) {
 	return id.Parse(chi.URLParam(r, name))
 }
-func decodeJSON(r *http.Request, dst any) error {
-	dec := json.NewDecoder(io.LimitReader(r.Body, 1<<20))
-	dec.DisallowUnknownFields()
-	return dec.Decode(dst)
-}
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
 }
 func writeError(w http.ResponseWriter, status int, code, message string) {
+	if status >= http.StatusInternalServerError {
+		message = http.StatusText(status)
+	}
 	writeJSON(w, status, apiError{Code: code, Message: message})
 }
 
@@ -303,8 +297,7 @@ func updateSavePresentationHandler(app SaveApplication) http.HandlerFunc {
 			DisplaySlot *int `json:"displaySlot"`
 			Pinned      bool `json:"pinned"`
 		}
-		if e = decodeJSON(r, &req); e != nil {
-			writeError(w, 400, "invalid_json", e.Error())
+		if !decodeStrictJSONRequest(w, r, &req) {
 			return
 		}
 		if e = app.UpdatePresentation(r.Context(), saves.PresentationCommand{SaveID: savepoint.ID(raw), DisplaySlot: req.DisplaySlot, Pinned: req.Pinned}); e != nil {

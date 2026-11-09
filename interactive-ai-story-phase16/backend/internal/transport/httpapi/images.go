@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -86,8 +85,7 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 			BeatID    string `json:"beatId"`
 			Paragraph int    `json:"paragraph"`
 		}
-		if json.NewDecoder(req.Body).Decode(&body) != nil {
-			writeError(w, 400, "invalid_json", "invalid json")
+		if !decodeJSONRequest(w, req, &body) {
 			return
 		}
 		beatID, e := id.Parse(body.BeatID)
@@ -135,8 +133,7 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 		var b struct {
 			ImageID string `json:"imageId"`
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil {
-			writeError(w, 400, "invalid_json", "invalid json")
+		if !decodeJSONRequest(w, req, &b) {
 			return
 		}
 		imageID, e := id.Parse(b.ImageID)
@@ -183,13 +180,10 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 			writeError(w, 400, "invalid_generation_id", "invalid generation id")
 			return
 		}
-		req.Body = http.MaxBytesReader(w, req.Body, maxWorkerResultBody)
 		var b struct {
 			Images []string `json:"images"`
 		}
-		dec := json.NewDecoder(req.Body)
-		if e = dec.Decode(&b); e != nil {
-			writeError(w, 413, "invalid_worker_result", "worker result is invalid or too large")
+		if !decodeJSONRequestWithLimit(w, req, &b, maxWorkerResultBody) {
 			return
 		}
 		v, e := a.Complete(req.Context(), gid, worker, app.WorkerResult{Images: b.Images})
@@ -213,7 +207,9 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 		var b struct {
 			Error string `json:"error"`
 		}
-		_ = json.NewDecoder(req.Body).Decode(&b)
+		if !decodeJSONRequest(w, req, &b) {
+			return
+		}
 		detail := strings.TrimSpace(b.Error)
 		if len(detail) > 1000 {
 			detail = detail[:1000]
@@ -230,7 +226,10 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 			WorkerID           string  `json:"workerId"`
 			ActiveGenerationID *string `json:"activeGenerationId"`
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil || strings.TrimSpace(b.WorkerID) == "" {
+		if !decodeJSONRequest(w, req, &b) {
+			return
+		}
+		if strings.TrimSpace(b.WorkerID) == "" {
 			writeError(w, 400, "invalid_heartbeat", "invalid heartbeat")
 			return
 		}

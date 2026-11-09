@@ -32,8 +32,7 @@ func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
 			ExpectedHead int64  `json:"expectedHead"`
 			Text         string `json:"text"`
 		}
-		if err = json.NewDecoder(req.Body).Decode(&body); err != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &body) {
 			return
 		}
 		gid, err := app.Submit(req.Context(), req.Header.Get("Idempotency-Key"), appgen.PlayerAction{TimelineID: timeline.ID(tid), ExpectedHead: body.ExpectedHead, Text: body.Text})
@@ -68,7 +67,7 @@ func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
 		last := after
 		history, err := app.Replay(req.Context(), gid, after)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		for _, u := range history {

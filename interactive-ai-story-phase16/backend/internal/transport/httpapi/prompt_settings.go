@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -28,10 +27,7 @@ func registerPromptSettingsRoutes(r chi.Router, a PromptSettingsApplication) {
 	})
 	r.Post("/api/v1/settings/prompts/revisions", func(w http.ResponseWriter, req *http.Request) {
 		var body app.CreateRequest
-		dec := json.NewDecoder(req.Body)
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&body); err != nil {
-			writeError(w, 400, "invalid_json", err.Error())
+		if !decodeStrictJSONRequest(w, req, &body) {
 			return
 		}
 		view, err := a.Create(req.Context(), body)

@@ -36,7 +36,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 	r.Get("/api/v1/stories", func(w http.ResponseWriter, req *http.Request) {
 		items, e := a.List(req.Context())
 		if e != nil {
-			http.Error(w, e.Error(), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"stories": items})
@@ -52,7 +52,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 				http.Error(w, e.Error(), http.StatusNotFound)
 				return
 			}
-			http.Error(w, e.Error(), http.StatusInternalServerError)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -63,8 +63,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 			Tags        []string
 			Config      map[string]any
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &b) {
 			return
 		}
 		v, e := a.Create(req.Context(), app.CreateCommand{Title: b.Title, Idea: b.Idea, Tags: b.Tags})
@@ -82,7 +81,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 		}
 		v, e := repo.ListComponents(req.Context(), sid)
 		if e != nil {
-			http.Error(w, e.Error(), 500)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"components": v})
@@ -102,8 +101,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 			Action      string                     `json:"action"`
 			Target      app.AssistTarget           `json:"target"`
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &b) {
 			return
 		}
 		keys := make([]setup.ComponentKey, 0, len(b.Components))
@@ -142,8 +140,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 			Payload      json.RawMessage `json:"payload"`
 			Locked       *bool           `json:"locked"`
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &b) {
 			return
 		}
 		key, e := setup.ParseKey(b.ComponentKey)
@@ -172,8 +169,7 @@ func registerStorySetupRoutes(r chi.Router, a StorySetupApplication, repo SetupR
 		var b struct {
 			Locked bool `json:"locked"`
 		}
-		if json.NewDecoder(req.Body).Decode(&b) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &b) {
 			return
 		}
 		v, e := a.SetLock(req.Context(), sid, key, b.Locked)
@@ -220,7 +216,9 @@ func generateSetup(a StorySetupApplication, _ bool) http.HandlerFunc {
 		var b struct {
 			Components []string `json:"components"`
 		}
-		_ = json.NewDecoder(req.Body).Decode(&b)
+		if !decodeJSONRequest(w, req, &b) {
+			return
+		}
 		keys := []setup.ComponentKey{}
 		for _, x := range b.Components {
 			k, e := setup.ParseKey(strings.TrimSpace(x))

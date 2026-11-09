@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -45,8 +44,7 @@ func registerDirectorRoutes(r chi.Router, a DirectorApplication) {
 			return
 		}
 		var c domaindir.ExactCommand
-		if json.NewDecoder(req.Body).Decode(&c) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &c) {
 			return
 		}
 		c.TimelineID = tid
@@ -68,8 +66,7 @@ func registerDirectorRoutes(r chi.Router, a DirectorApplication) {
 			return
 		}
 		var c domaindir.InstructionCommand
-		if json.NewDecoder(req.Body).Decode(&c) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &c) {
 			return
 		}
 		c.TimelineID = tid
@@ -87,8 +84,7 @@ func registerDirectorRoutes(r chi.Router, a DirectorApplication) {
 			return
 		}
 		var c appdir.AssistCommand
-		if json.NewDecoder(req.Body).Decode(&c) != nil {
-			http.Error(w, "invalid json", 400)
+		if !decodeJSONRequest(w, req, &c) {
 			return
 		}
 		c.TimelineID = tid
@@ -108,7 +104,7 @@ func registerDirectorRoutes(r chi.Router, a DirectorApplication) {
 		limit, _ := strconv.Atoi(req.URL.Query().Get("limit"))
 		v, e := a.History(req.Context(), tid, limit)
 		if e != nil {
-			http.Error(w, e.Error(), 500)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"entries": v})
