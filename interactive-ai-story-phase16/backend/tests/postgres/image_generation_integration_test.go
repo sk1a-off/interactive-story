@@ -27,6 +27,9 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	if err = bootstrap.EnsureAIConfig(ctx, pool, ai.ProviderIdentity{Kind: ai.KindStoryLLM, Provider: "openai_compatible", Model: "integration-test", Profile: "test"}); err != nil {
+		t.Fatal(err)
+	}
 
 	ownerID, _ := id.New()
 	storyID, _ := id.New()

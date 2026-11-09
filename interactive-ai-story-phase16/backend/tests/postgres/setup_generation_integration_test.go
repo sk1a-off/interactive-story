@@ -13,6 +13,7 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/story"
+	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
 
 func TestSetupGenerationPopulatesActionHash(t *testing.T) {
@@ -27,6 +28,12 @@ func TestSetupGenerationPopulatesActionHash(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
+	if err = bootstrap.EnsureAIConfig(ctx, pool, ai.ProviderIdentity{Kind: ai.KindStoryLLM, Provider: "openai_compatible", Model: "integration-test", Profile: "test"}); err != nil {
+		t.Fatal(err)
+	}
+	if err = bootstrap.EnsurePromptSet(ctx, pool); err != nil {
+		t.Fatal(err)
+	}
 	owner, _ := id.New()
 	sid, _ := id.New()
 	gid, _ := id.New()
