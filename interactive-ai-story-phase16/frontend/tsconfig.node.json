@@ -12,6 +12,7 @@
   },
   "include": [
     "vite.config.ts",
+    "src/lib/viteBackendTarget.ts",
     "eslint.config.js"
   ]
 }

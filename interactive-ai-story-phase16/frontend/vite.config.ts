@@ -1,9 +1,8 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import { resolveBackendTarget } from './src/lib/viteBackendTarget'
 
-const backend = ['http:', '', '127.0.0.1:8787'].join('/')
-
-console.log('VITE PROXY TARGET =', backend)
+const backend = resolveBackendTarget(process.env.VITE_DEV_BACKEND_TARGET)
 
 export default defineConfig({
   plugins: [react()],
