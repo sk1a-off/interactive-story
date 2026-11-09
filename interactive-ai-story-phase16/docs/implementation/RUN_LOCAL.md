@@ -131,7 +131,7 @@ First time:
 
 ```bash
 cd frontend
-npm install
+npm ci
 cd ..
 ```
 
@@ -148,11 +148,17 @@ cd frontend
 npm run dev
 ```
 
-For WireGuard/mobile access:
+The Makefile binds Vite to all interfaces by default. To restrict it to the
+local machine:
 
 ```bash
-cd frontend
-npm run dev -- --host 0.0.0.0
+HOST_FRONTEND_HOST='127.0.0.1' make frontend-dev
+```
+
+For WireGuard/mobile access, keep the default or set it explicitly:
+
+```bash
+HOST_FRONTEND_HOST='0.0.0.0' make frontend-dev
 ```
 
 Then open `http://10.10.10.2:5173/` on the phone.

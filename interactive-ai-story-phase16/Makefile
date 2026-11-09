@@ -28,10 +28,10 @@ backend-dev:
 	cd backend && DATABASE_URL="$${HOST_DATABASE_URL:-postgres://story:story@127.0.0.1:5432/story?sslmode=disable}" STORY_LLM_BASE_URL="$${HOST_STORY_LLM_BASE_URL:-http://127.0.0.1:8081}" HTTP_ADDR="$${HOST_HTTP_ADDR:-127.0.0.1:8787}" MEDIA_ROOT="$${HOST_MEDIA_ROOT:-../data/generated}" MEDIA_BASE_URL=/media SECRET_STORE_PATH="$${HOST_SECRET_STORE_PATH:-../data/secrets/provider-keys.json}" go run ./cmd/server
 
 frontend-dev:
-	cd frontend && npm run dev -- --host 0.0.0.0
+	cd frontend && npm run dev -- --host "$${HOST_FRONTEND_HOST:-0.0.0.0}"
 
 migrate-down:
-	cd backend && go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres "$$DATABASE_URL" down
+	cd backend && go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres "$${HOST_DATABASE_URL:-postgres://story:story@127.0.0.1:5432/story?sslmode=disable}" down
 
 sqlc-generate:
 	cd backend && go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.29.0 generate
