@@ -2,9 +2,12 @@
 
 Implementation repository for the v1.12 architecture specification.
 
-The current local-MVP path includes the work through the Perchance browser image worker, semantic multi-moment illustration placement, runtime Prompt Studio (`00001..00021`), and replayable global/minor objectives. The foundation includes append-only Timeline Canon, expected-head concurrency, snapshots, Facts/Knowledge/Beliefs separation, durable generation jobs, safe SavePoint forks, Director mode, real OpenAI-compatible Story LLM wiring, and immutable provider/prompt provenance. Objective lifecycle and generation rules are documented in [`docs/implementation/OBJECTIVES.md`](docs/implementation/OBJECTIVES.md).
+The current local-MVP path includes the work through the Perchance browser image worker, semantic multi-moment illustration placement, runtime Prompt Studio (`00001..00035`), and replayable global/minor objectives. The foundation includes append-only Timeline Canon, expected-head concurrency, snapshots, Facts/Knowledge/Beliefs separation, durable generation jobs, safe SavePoint forks, Director mode, real OpenAI-compatible Story LLM wiring, and immutable provider/prompt provenance. Objective lifecycle and generation rules are documented in [`docs/implementation/OBJECTIVES.md`](docs/implementation/OBJECTIVES.md).
 
 See `docs/implementation/IMPLEMENTATION_STATUS.md` for the phase history and `docs/implementation/PROJECT_READINESS.md` for the current verified gates.
+
+Development commands, environment variables, migrations, and CI checks are
+documented in [`docs/implementation/DEVELOPMENT.md`](docs/implementation/DEVELOPMENT.md).
 
 
 ## Current local MVP status

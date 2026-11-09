@@ -54,7 +54,8 @@ go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres
 cd ..
 ```
 
-Migrations currently run through `00021_perchance_prompt_profile_v2.sql`.
+Migrations currently run through `00035_provisional_generation_updates.sql`.
+See `DEVELOPMENT.md` for the complete ordered list.
 
 ## 4. Start the Story LLM
 
@@ -286,4 +287,4 @@ also includes a one-shot migration service and persists generated images in a na
 
 ## Current readiness meaning
 
-The project is ready for a real local MVP launch attempt, not for production deployment. The 2026-08-23 audit verified Docker/PostgreSQL migrations through `00021`, PostgreSQL integration tests, complete Go tests/vet/build, frontend tests/lint/typecheck/build, and read-only inspection of the live Perchance generator. A real GGUF story run and an end-to-end Perchance image result through Violentmonkey remain target-machine acceptance gates.
+The project is ready for a real local MVP launch attempt, not for production deployment. The local verification suite covers Docker/PostgreSQL migrations through `00035`, PostgreSQL integration tests, complete Go tests/vet/race checks, frontend tests/lint/typecheck/build, and the production nginx image. A real Story LLM run and an end-to-end Perchance image result through Violentmonkey remain target-machine acceptance gates.
