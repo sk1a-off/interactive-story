@@ -78,6 +78,13 @@ for setup, scope, and verification limitations.
 
 ### Standard checks
 
+Memory retrieval has a dedicated `cmd/hybridbench -memory-bench` mode. It requires
+an explicit `-memory-database-url` for isolated rolled-back fixtures and supports
+real USER2 or an explicitly labeled fake smoke. Frozen labels, recall@k,
+search/embedding timing, context-budget replay, and reproduction commands are in
+[`MEMORY_BENCHMARK_2026-11-09.md`](MEMORY_BENCHMARK_2026-11-09.md). It does not
+measure text LLM latency or modify runtime settings.
+
 Backend:
 
 ```bash

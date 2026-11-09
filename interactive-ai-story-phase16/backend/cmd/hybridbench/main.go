@@ -228,6 +228,7 @@ type benchmarkReport struct {
 }
 
 func main() {
+	memoryOptions := registerMemoryBenchmarkFlags(flag.CommandLine)
 	var databaseURL, secretPath, timelineText, endpoint, fastModel, qualityModel, output, actionList, fastRoleList string
 	var profile, caseSetPath, plannerMode, extractorMode, contextMode string
 	var caseFilter string
@@ -306,6 +307,10 @@ func main() {
 	flag.BoolVar(&compareSafeLegacy, "compare-safe-legacy", false, "compare with Safe Hybrid legacy planner and evaluators on the same fixtures and prompt revision")
 	flag.BoolVar(&saveRoleInputSizes, "save-role-input-sizes", true, "persist aggregate per-role input sizes (never input content)")
 	flag.Parse()
+	if memoryOptions.Enabled {
+		check(runMemoryBenchmark(*memoryOptions, output))
+		return
+	}
 	if questLedgerAudit {
 		check(auditQuestLedger(databaseURL, timelineText, output))
 		return

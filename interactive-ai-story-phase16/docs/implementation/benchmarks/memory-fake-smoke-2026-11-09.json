@@ -1,0 +1,3265 @@
+{
+  "mode": "memory-retrieval-v1",
+  "status": "smoke_only",
+  "semanticEvaluation": false,
+  "provider": {
+    "kind": "embedding",
+    "provider": "fake",
+    "model": "deterministic-embedding-v1",
+    "profile": "test"
+  },
+  "startedAt": "2026-11-09T17:48:42.187234625Z",
+  "finishedAt": "2026-11-09T17:48:44.26093794Z",
+  "corpusSha256": "79feecb67b064cd62ab8fae4a37c1dfc981f4c7bb22cde245c34ef59629689bf",
+  "corpusRevision": 1,
+  "documents": 34,
+  "uniqueQuestions": 39,
+  "repeats": 20,
+  "seed": 20261109,
+  "postgresVersion": "16.15 (Debian 16.15-1.pgdg12+2)",
+  "pgvectorVersion": "0.8.6",
+  "goVersion": "go1.27.3-X:nodwarf5",
+  "os": "linux",
+  "arch": "amd64",
+  "visibleCpus": 16,
+  "documentEmbeddingBatches": {
+    "count": 1,
+    "medianMs": 0.02065,
+    "p95Ms": 0.02065,
+    "maxMs": 0.02065
+  },
+  "queryEmbedding": {
+    "count": 39,
+    "medianMs": 0.00042,
+    "p95Ms": 0.0007,
+    "maxMs": 0.00072
+  },
+  "search": {
+    "count": 2960,
+    "medianMs": 0.552151,
+    "p95Ms": 0.834514,
+    "maxMs": 3.964254
+  },
+  "searchByK": [
+    {
+      "k": 1,
+      "search": {
+        "count": 740,
+        "medianMs": 0.531972,
+        "p95Ms": 0.780195,
+        "maxMs": 1.61977
+      }
+    },
+    {
+      "k": 3,
+      "search": {
+        "count": 740,
+        "medianMs": 0.556716,
+        "p95Ms": 0.842695,
+        "maxMs": 3.964254
+      }
+    },
+    {
+      "k": 5,
+      "search": {
+        "count": 740,
+        "medianMs": 0.556766,
+        "p95Ms": 0.837804,
+        "maxMs": 2.268895
+      }
+    },
+    {
+      "k": 8,
+      "search": {
+        "count": 740,
+        "medianMs": 0.565071,
+        "p95Ms": 0.854244,
+        "maxMs": 1.758468
+      }
+    }
+  ],
+  "contextBudgets": [
+    {
+      "tokens": 512,
+      "questions": 33,
+      "macroRecall": 0.36363636363636365,
+      "meanRetainedDocuments": 2.9696969696969697,
+      "rows": [
+        {
+          "question": "key-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "storm",
+            "archive",
+            "stars"
+          ]
+        },
+        {
+          "question": "key-original",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "gate-old",
+            "key"
+          ]
+        },
+        {
+          "question": "rope-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "river-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "storm",
+            "archive",
+            "stars"
+          ]
+        },
+        {
+          "question": "burn-treatment",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "scout-signal",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "archive-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "archive",
+            "food",
+            "key"
+          ]
+        },
+        {
+          "question": "messenger-mark",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "summary",
+            "raven",
+            "parent-future"
+          ]
+        },
+        {
+          "question": "lighthouse-storm",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "parent-future",
+            "summary",
+            "raven"
+          ]
+        },
+        {
+          "question": "current-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-open",
+            "stars",
+            "storm"
+          ]
+        },
+        {
+          "question": "first-chapter-recap",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "key"
+          ]
+        },
+        {
+          "question": "bakery",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "storm"
+          ]
+        },
+        {
+          "question": "eclipse-time",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "archive",
+            "storm",
+            "herb"
+          ]
+        },
+        {
+          "question": "coat-repair",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "coat",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "gate-before-invalidation",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-old",
+            "herb",
+            "bridge"
+          ]
+        },
+        {
+          "question": "past-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "gate-at-replacement",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "child-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "amulet",
+            "key",
+            "child-summary"
+          ]
+        },
+        {
+          "question": "market-exchange",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "market",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "broken-protection",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "food"
+          ]
+        },
+        {
+          "question": "child-gate-now",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "child-gate"
+          ]
+        },
+        {
+          "question": "inherited-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "child-plan-summary",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "child-gate",
+            "raven",
+            "stars"
+          ]
+        },
+        {
+          "question": "nested-dry-route",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge"
+          ]
+        },
+        {
+          "question": "nested-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge"
+          ]
+        },
+        {
+          "question": "nested-amulet",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "market"
+          ]
+        },
+        {
+          "question": "nested-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "food"
+          ]
+        },
+        {
+          "question": "restore-archive",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "bridge",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "restore-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "food"
+          ]
+        },
+        {
+          "question": "restore-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "lag-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet"
+          ]
+        },
+        {
+          "question": "lag-parent-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "key",
+            "herb",
+            "archive"
+          ]
+        },
+        {
+          "question": "two-evidence-route",
+          "k": 8,
+          "relevant": 2,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet"
+          ]
+        }
+      ]
+    },
+    {
+      "tokens": 1024,
+      "questions": 33,
+      "macroRecall": 0.6060606060606061,
+      "meanRetainedDocuments": 5.909090909090909,
+      "rows": [
+        {
+          "question": "key-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "storm",
+            "archive",
+            "stars",
+            "herb",
+            "parent-future",
+            "summary"
+          ]
+        },
+        {
+          "question": "key-original",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "gate-old",
+            "key",
+            "rope",
+            "bridge"
+          ]
+        },
+        {
+          "question": "rope-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge"
+          ]
+        },
+        {
+          "question": "river-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "storm",
+            "archive",
+            "stars",
+            "herb",
+            "parent-future",
+            "summary"
+          ]
+        },
+        {
+          "question": "burn-treatment",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge"
+          ]
+        },
+        {
+          "question": "scout-signal",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge"
+          ]
+        },
+        {
+          "question": "archive-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "archive",
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "messenger-mark",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "summary",
+            "raven",
+            "parent-future",
+            "bridge",
+            "sigil",
+            "key"
+          ]
+        },
+        {
+          "question": "lighthouse-storm",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "parent-future",
+            "summary",
+            "raven",
+            "stars",
+            "bridge",
+            "sigil"
+          ]
+        },
+        {
+          "question": "current-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-open",
+            "stars",
+            "storm",
+            "parent-future",
+            "archive",
+            "summary"
+          ]
+        },
+        {
+          "question": "first-chapter-recap",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "archive"
+          ]
+        },
+        {
+          "question": "bakery",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "storm",
+            "stars",
+            "food",
+            "key"
+          ]
+        },
+        {
+          "question": "eclipse-time",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "archive",
+            "storm",
+            "herb",
+            "stars",
+            "food",
+            "parent-future"
+          ]
+        },
+        {
+          "question": "coat-repair",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "coat",
+            "key",
+            "gate-open",
+            "rope",
+            "bridge",
+            "sigil"
+          ]
+        },
+        {
+          "question": "gate-before-invalidation",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-old",
+            "herb",
+            "bridge",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "past-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "rope",
+            "herb",
+            "gate-old"
+          ]
+        },
+        {
+          "question": "gate-at-replacement",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "gate-open",
+            "rope",
+            "herb"
+          ]
+        },
+        {
+          "question": "child-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat",
+            "bridge"
+          ]
+        },
+        {
+          "question": "market-exchange",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "market",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "broken-protection",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "key",
+            "child-summary"
+          ]
+        },
+        {
+          "question": "child-gate-now",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "child-gate",
+            "bridge",
+            "sigil",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "inherited-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "child-plan-summary",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "child-gate",
+            "raven",
+            "stars",
+            "bridge",
+            "sigil",
+            "market"
+          ]
+        },
+        {
+          "question": "nested-dry-route",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge",
+            "sigil",
+            "nested-gate",
+            "amulet"
+          ]
+        },
+        {
+          "question": "nested-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge",
+            "sigil",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "nested-amulet",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "herb",
+            "archive",
+            "market",
+            "stars",
+            "food",
+            "nested-gate"
+          ]
+        },
+        {
+          "question": "nested-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "restore-archive",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "bridge",
+            "key",
+            "rope",
+            "coat",
+            "food",
+            "raven"
+          ]
+        },
+        {
+          "question": "restore-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "key",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "restore-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "rope",
+            "coat",
+            "bridge",
+            "herb"
+          ]
+        },
+        {
+          "question": "lag-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet",
+            "key",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "lag-parent-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "key",
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "rope"
+          ]
+        },
+        {
+          "question": "two-evidence-route",
+          "k": 8,
+          "relevant": 2,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope"
+          ]
+        }
+      ]
+    },
+    {
+      "tokens": 2048,
+      "questions": 33,
+      "macroRecall": 0.6666666666666666,
+      "meanRetainedDocuments": 7.636363636363637,
+      "rows": [
+        {
+          "question": "key-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "storm",
+            "archive",
+            "stars",
+            "herb",
+            "parent-future",
+            "summary",
+            "raven",
+            "food"
+          ]
+        },
+        {
+          "question": "key-original",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "gate-old",
+            "key",
+            "rope",
+            "bridge"
+          ]
+        },
+        {
+          "question": "rope-location",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil",
+            "herb"
+          ]
+        },
+        {
+          "question": "river-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "storm",
+            "archive",
+            "stars",
+            "herb",
+            "parent-future",
+            "summary",
+            "raven",
+            "food"
+          ]
+        },
+        {
+          "question": "burn-treatment",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil",
+            "herb"
+          ]
+        },
+        {
+          "question": "scout-signal",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil",
+            "herb"
+          ]
+        },
+        {
+          "question": "archive-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "archive",
+            "food",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil"
+          ]
+        },
+        {
+          "question": "messenger-mark",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "summary",
+            "raven",
+            "parent-future",
+            "bridge",
+            "sigil",
+            "key",
+            "gate-open",
+            "rope"
+          ]
+        },
+        {
+          "question": "lighthouse-storm",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "parent-future",
+            "summary",
+            "raven",
+            "stars",
+            "bridge",
+            "sigil",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "current-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-open",
+            "stars",
+            "storm",
+            "parent-future",
+            "archive",
+            "summary",
+            "raven",
+            "herb"
+          ]
+        },
+        {
+          "question": "first-chapter-recap",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "key",
+            "gate-open",
+            "rope",
+            "coat",
+            "archive",
+            "bridge"
+          ]
+        },
+        {
+          "question": "bakery",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "storm",
+            "stars",
+            "food",
+            "key",
+            "gate-open",
+            "rope"
+          ]
+        },
+        {
+          "question": "eclipse-time",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "archive",
+            "storm",
+            "herb",
+            "stars",
+            "food",
+            "parent-future",
+            "key",
+            "gate-open"
+          ]
+        },
+        {
+          "question": "coat-repair",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "coat",
+            "key",
+            "gate-open",
+            "rope",
+            "bridge",
+            "sigil",
+            "food",
+            "summary"
+          ]
+        },
+        {
+          "question": "gate-before-invalidation",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "gate-old",
+            "herb",
+            "bridge",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "past-crossing",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "rope",
+            "herb",
+            "gate-old"
+          ]
+        },
+        {
+          "question": "gate-at-replacement",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "bridge",
+            "key",
+            "gate-open",
+            "rope",
+            "herb"
+          ]
+        },
+        {
+          "question": "child-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil",
+            "food"
+          ]
+        },
+        {
+          "question": "market-exchange",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "market",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil"
+          ]
+        },
+        {
+          "question": "broken-protection",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "child-gate-now",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "child-gate",
+            "bridge",
+            "sigil",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope"
+          ]
+        },
+        {
+          "question": "inherited-cipher",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat",
+            "bridge",
+            "sigil"
+          ]
+        },
+        {
+          "question": "child-plan-summary",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "child-gate",
+            "raven",
+            "stars",
+            "bridge",
+            "sigil",
+            "market",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "nested-dry-route",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge",
+            "sigil",
+            "nested-gate",
+            "amulet",
+            "key",
+            "rope"
+          ]
+        },
+        {
+          "question": "nested-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "raven",
+            "nested-map",
+            "bridge",
+            "sigil",
+            "amulet",
+            "key",
+            "rope",
+            "coat"
+          ]
+        },
+        {
+          "question": "nested-amulet",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "market",
+            "stars",
+            "food",
+            "nested-gate",
+            "amulet",
+            "key"
+          ]
+        },
+        {
+          "question": "nested-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "key",
+            "rope",
+            "coat",
+            "market"
+          ]
+        },
+        {
+          "question": "restore-archive",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "bridge",
+            "key",
+            "rope",
+            "coat",
+            "food",
+            "raven",
+            "restored-gate",
+            "herb"
+          ]
+        },
+        {
+          "question": "restore-key",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "herb",
+            "archive",
+            "food",
+            "key",
+            "rope",
+            "coat",
+            "bridge",
+            "restored-gate"
+          ]
+        },
+        {
+          "question": "restore-gate",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "key",
+            "rope",
+            "coat",
+            "bridge",
+            "herb",
+            "archive",
+            "raven"
+          ]
+        },
+        {
+          "question": "lag-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet",
+            "key",
+            "rope",
+            "coat",
+            "archive",
+            "bridge"
+          ]
+        },
+        {
+          "question": "lag-parent-history",
+          "k": 8,
+          "relevant": 1,
+          "recall": 1,
+          "returned": [
+            "key",
+            "herb",
+            "archive",
+            "food",
+            "amulet",
+            "rope",
+            "coat",
+            "market"
+          ]
+        },
+        {
+          "question": "two-evidence-route",
+          "k": 8,
+          "relevant": 2,
+          "recall": 0,
+          "returned": [
+            "food",
+            "herb",
+            "amulet",
+            "key",
+            "child-summary",
+            "rope",
+            "coat",
+            "archive"
+          ]
+        }
+      ]
+    }
+  ],
+  "rejectedScopeSearch": {
+    "count": 160,
+    "medianMs": 0.150974,
+    "p95Ms": 0.232639,
+    "maxMs": 0.516056
+  },
+  "warmupSearches": 156,
+  "recall": [
+    {
+      "k": 1,
+      "questions": 35,
+      "macroRecall": 0.14285714285714285
+    },
+    {
+      "k": 3,
+      "questions": 35,
+      "macroRecall": 0.4
+    },
+    {
+      "k": 5,
+      "questions": 35,
+      "macroRecall": 0.6285714285714286
+    },
+    {
+      "k": 8,
+      "questions": 35,
+      "macroRecall": 0.6857142857142857
+    }
+  ],
+  "isolationViolations": 0,
+  "searchFailures": 0,
+  "unstableResults": 0,
+  "rows": [
+    {
+      "question": "archive-cipher",
+      "k": 1,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive"
+      ]
+    },
+    {
+      "question": "archive-cipher",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive",
+        "food",
+        "key"
+      ]
+    },
+    {
+      "question": "archive-cipher",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive",
+        "food",
+        "key",
+        "gate-open",
+        "rope"
+      ]
+    },
+    {
+      "question": "archive-cipher",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive",
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil"
+      ]
+    },
+    {
+      "question": "bakery",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "bakery",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "storm"
+      ]
+    },
+    {
+      "question": "bakery",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "storm",
+        "stars",
+        "food"
+      ]
+    },
+    {
+      "question": "bakery",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "storm",
+        "stars",
+        "food",
+        "key",
+        "gate-open",
+        "rope"
+      ]
+    },
+    {
+      "question": "broken-protection",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "broken-protection",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "food"
+      ]
+    },
+    {
+      "question": "broken-protection",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "amulet",
+        "key"
+      ]
+    },
+    {
+      "question": "broken-protection",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "burn-treatment",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "burn-treatment",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "burn-treatment",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "burn-treatment",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil",
+        "herb"
+      ]
+    },
+    {
+      "question": "child-gate-now",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven"
+      ]
+    },
+    {
+      "question": "child-gate-now",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "child-gate",
+        "bridge"
+      ]
+    },
+    {
+      "question": "child-gate-now",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "child-gate",
+        "bridge",
+        "sigil",
+        "amulet"
+      ]
+    },
+    {
+      "question": "child-gate-now",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "child-gate",
+        "bridge",
+        "sigil",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope"
+      ]
+    },
+    {
+      "question": "child-key",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "amulet"
+      ]
+    },
+    {
+      "question": "child-key",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "amulet",
+        "key",
+        "child-summary"
+      ]
+    },
+    {
+      "question": "child-key",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "child-key",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil",
+        "food"
+      ]
+    },
+    {
+      "question": "child-plan-summary",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "child-gate"
+      ]
+    },
+    {
+      "question": "child-plan-summary",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "child-gate",
+        "raven",
+        "stars"
+      ]
+    },
+    {
+      "question": "child-plan-summary",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "child-gate",
+        "raven",
+        "stars",
+        "bridge",
+        "sigil"
+      ]
+    },
+    {
+      "question": "child-plan-summary",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "child-gate",
+        "raven",
+        "stars",
+        "bridge",
+        "sigil",
+        "market",
+        "amulet",
+        "key"
+      ]
+    },
+    {
+      "question": "coat-repair",
+      "k": 1,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "coat"
+      ]
+    },
+    {
+      "question": "coat-repair",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "coat",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "coat-repair",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "coat",
+        "key",
+        "gate-open",
+        "rope",
+        "bridge"
+      ]
+    },
+    {
+      "question": "coat-repair",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "coat",
+        "key",
+        "gate-open",
+        "rope",
+        "bridge",
+        "sigil",
+        "food",
+        "summary"
+      ]
+    },
+    {
+      "question": "current-gate",
+      "k": 1,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-open"
+      ]
+    },
+    {
+      "question": "current-gate",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-open",
+        "stars",
+        "storm"
+      ]
+    },
+    {
+      "question": "current-gate",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-open",
+        "stars",
+        "storm",
+        "parent-future",
+        "archive"
+      ]
+    },
+    {
+      "question": "current-gate",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-open",
+        "stars",
+        "storm",
+        "parent-future",
+        "archive",
+        "summary",
+        "raven",
+        "herb"
+      ]
+    },
+    {
+      "question": "eclipse-time",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "archive"
+      ]
+    },
+    {
+      "question": "eclipse-time",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "archive",
+        "storm",
+        "herb"
+      ]
+    },
+    {
+      "question": "eclipse-time",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive",
+        "storm",
+        "herb",
+        "stars",
+        "food"
+      ]
+    },
+    {
+      "question": "eclipse-time",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "archive",
+        "storm",
+        "herb",
+        "stars",
+        "food",
+        "parent-future",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "empty-time-zero",
+      "k": 1,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "empty-time-zero",
+      "k": 3,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "empty-time-zero",
+      "k": 5,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "empty-time-zero",
+      "k": 8,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "first-chapter-recap",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "first-chapter-recap",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "key"
+      ]
+    },
+    {
+      "question": "first-chapter-recap",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "key",
+        "gate-open",
+        "rope"
+      ]
+    },
+    {
+      "question": "first-chapter-recap",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "key",
+        "gate-open",
+        "rope",
+        "coat",
+        "archive",
+        "bridge"
+      ]
+    },
+    {
+      "question": "gate-at-replacement",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "bridge"
+      ]
+    },
+    {
+      "question": "gate-at-replacement",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "gate-at-replacement",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "gate-open",
+        "rope",
+        "herb"
+      ]
+    },
+    {
+      "question": "gate-at-replacement",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "gate-open",
+        "rope",
+        "herb"
+      ]
+    },
+    {
+      "question": "gate-before-invalidation",
+      "k": 1,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-old"
+      ]
+    },
+    {
+      "question": "gate-before-invalidation",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-old",
+        "herb",
+        "bridge"
+      ]
+    },
+    {
+      "question": "gate-before-invalidation",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-old",
+        "herb",
+        "bridge",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "gate-before-invalidation",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "gate-old",
+        "herb",
+        "bridge",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "inherited-cipher",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "inherited-cipher",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "amulet",
+        "key"
+      ]
+    },
+    {
+      "question": "inherited-cipher",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope"
+      ]
+    },
+    {
+      "question": "inherited-cipher",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil"
+      ]
+    },
+    {
+      "question": "key-location",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm"
+      ]
+    },
+    {
+      "question": "key-location",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm",
+        "archive",
+        "stars"
+      ]
+    },
+    {
+      "question": "key-location",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "storm",
+        "archive",
+        "stars",
+        "herb",
+        "parent-future"
+      ]
+    },
+    {
+      "question": "key-location",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "storm",
+        "archive",
+        "stars",
+        "herb",
+        "parent-future",
+        "summary",
+        "raven",
+        "food"
+      ]
+    },
+    {
+      "question": "key-original",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "key-original",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "gate-old",
+        "key"
+      ]
+    },
+    {
+      "question": "key-original",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "gate-old",
+        "key",
+        "rope",
+        "bridge"
+      ]
+    },
+    {
+      "question": "key-original",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "gate-old",
+        "key",
+        "rope",
+        "bridge"
+      ]
+    },
+    {
+      "question": "lag-history",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "lag-history",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet"
+      ]
+    },
+    {
+      "question": "lag-history",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "lag-history",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet",
+        "key",
+        "rope",
+        "coat",
+        "archive",
+        "bridge"
+      ]
+    },
+    {
+      "question": "lag-parent-history",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "lag-parent-history",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "key",
+        "herb",
+        "archive"
+      ]
+    },
+    {
+      "question": "lag-parent-history",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "key",
+        "herb",
+        "archive",
+        "food",
+        "amulet"
+      ]
+    },
+    {
+      "question": "lag-parent-history",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "key",
+        "herb",
+        "archive",
+        "food",
+        "amulet",
+        "rope",
+        "coat",
+        "market"
+      ]
+    },
+    {
+      "question": "lighthouse-storm",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "parent-future"
+      ]
+    },
+    {
+      "question": "lighthouse-storm",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "parent-future",
+        "summary",
+        "raven"
+      ]
+    },
+    {
+      "question": "lighthouse-storm",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "parent-future",
+        "summary",
+        "raven",
+        "stars",
+        "bridge"
+      ]
+    },
+    {
+      "question": "lighthouse-storm",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "parent-future",
+        "summary",
+        "raven",
+        "stars",
+        "bridge",
+        "sigil",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "market-exchange",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "amulet"
+      ]
+    },
+    {
+      "question": "market-exchange",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "amulet",
+        "market",
+        "key"
+      ]
+    },
+    {
+      "question": "market-exchange",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "market",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope"
+      ]
+    },
+    {
+      "question": "market-exchange",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "market",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil"
+      ]
+    },
+    {
+      "question": "messenger-mark",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "summary"
+      ]
+    },
+    {
+      "question": "messenger-mark",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "summary",
+        "raven",
+        "parent-future"
+      ]
+    },
+    {
+      "question": "messenger-mark",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "summary",
+        "raven",
+        "parent-future",
+        "bridge",
+        "sigil"
+      ]
+    },
+    {
+      "question": "messenger-mark",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "summary",
+        "raven",
+        "parent-future",
+        "bridge",
+        "sigil",
+        "key",
+        "gate-open",
+        "rope"
+      ]
+    },
+    {
+      "question": "nested-amulet",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "nested-amulet",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "market"
+      ]
+    },
+    {
+      "question": "nested-amulet",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "market",
+        "stars",
+        "food"
+      ]
+    },
+    {
+      "question": "nested-amulet",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "market",
+        "stars",
+        "food",
+        "nested-gate",
+        "amulet",
+        "key"
+      ]
+    },
+    {
+      "question": "nested-dry-route",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven"
+      ]
+    },
+    {
+      "question": "nested-dry-route",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge"
+      ]
+    },
+    {
+      "question": "nested-dry-route",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge",
+        "sigil",
+        "nested-gate"
+      ]
+    },
+    {
+      "question": "nested-dry-route",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge",
+        "sigil",
+        "nested-gate",
+        "amulet",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "nested-gate",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven"
+      ]
+    },
+    {
+      "question": "nested-gate",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge"
+      ]
+    },
+    {
+      "question": "nested-gate",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge",
+        "sigil",
+        "amulet"
+      ]
+    },
+    {
+      "question": "nested-gate",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "raven",
+        "nested-map",
+        "bridge",
+        "sigil",
+        "amulet",
+        "key",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "nested-key",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "nested-key",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "food"
+      ]
+    },
+    {
+      "question": "nested-key",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "amulet",
+        "key"
+      ]
+    },
+    {
+      "question": "nested-key",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "amulet",
+        "key",
+        "rope",
+        "coat",
+        "market"
+      ]
+    },
+    {
+      "question": "past-crossing",
+      "k": 1,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge"
+      ]
+    },
+    {
+      "question": "past-crossing",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "past-crossing",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "rope",
+        "herb",
+        "gate-old"
+      ]
+    },
+    {
+      "question": "past-crossing",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "bridge",
+        "key",
+        "rope",
+        "herb",
+        "gate-old"
+      ]
+    },
+    {
+      "question": "private-captain",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "private-belief"
+      ]
+    },
+    {
+      "question": "private-captain",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-belief",
+        "private-knowledge"
+      ]
+    },
+    {
+      "question": "private-captain",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-belief",
+        "private-knowledge"
+      ]
+    },
+    {
+      "question": "private-captain",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-belief",
+        "private-knowledge"
+      ]
+    },
+    {
+      "question": "private-suspicion",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "private-knowledge"
+      ]
+    },
+    {
+      "question": "private-suspicion",
+      "k": 3,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-knowledge",
+        "private-belief"
+      ]
+    },
+    {
+      "question": "private-suspicion",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-knowledge",
+        "private-belief"
+      ]
+    },
+    {
+      "question": "private-suspicion",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "private-knowledge",
+        "private-belief"
+      ]
+    },
+    {
+      "question": "private-unknown-owner",
+      "k": 1,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "private-unknown-owner",
+      "k": 3,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "private-unknown-owner",
+      "k": 5,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "private-unknown-owner",
+      "k": 8,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-foreign-story",
+      "k": 1,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-foreign-story",
+      "k": 3,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-foreign-story",
+      "k": 5,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-foreign-story",
+      "k": 8,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-pre-fork",
+      "k": 1,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-pre-fork",
+      "k": 3,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-pre-fork",
+      "k": 5,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "reject-pre-fork",
+      "k": 8,
+      "relevant": 0,
+      "returned": []
+    },
+    {
+      "question": "restore-archive",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "bridge"
+      ]
+    },
+    {
+      "question": "restore-archive",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "bridge",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "restore-archive",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "bridge",
+        "key",
+        "rope",
+        "coat",
+        "food"
+      ]
+    },
+    {
+      "question": "restore-archive",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "bridge",
+        "key",
+        "rope",
+        "coat",
+        "food",
+        "raven",
+        "restored-gate",
+        "herb"
+      ]
+    },
+    {
+      "question": "restore-gate",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "restore-gate",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "restore-gate",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "rope",
+        "coat",
+        "bridge"
+      ]
+    },
+    {
+      "question": "restore-gate",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "rope",
+        "coat",
+        "bridge",
+        "herb",
+        "archive",
+        "raven"
+      ]
+    },
+    {
+      "question": "restore-key",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb"
+      ]
+    },
+    {
+      "question": "restore-key",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "herb",
+        "archive",
+        "food"
+      ]
+    },
+    {
+      "question": "restore-key",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "key",
+        "rope"
+      ]
+    },
+    {
+      "question": "restore-key",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "herb",
+        "archive",
+        "food",
+        "key",
+        "rope",
+        "coat",
+        "bridge",
+        "restored-gate"
+      ]
+    },
+    {
+      "question": "river-crossing",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm"
+      ]
+    },
+    {
+      "question": "river-crossing",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm",
+        "archive",
+        "stars"
+      ]
+    },
+    {
+      "question": "river-crossing",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm",
+        "archive",
+        "stars",
+        "herb",
+        "parent-future"
+      ]
+    },
+    {
+      "question": "river-crossing",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "storm",
+        "archive",
+        "stars",
+        "herb",
+        "parent-future",
+        "summary",
+        "raven",
+        "food"
+      ]
+    },
+    {
+      "question": "rope-location",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "rope-location",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "rope-location",
+      "k": 5,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "rope-location",
+      "k": 8,
+      "relevant": 1,
+      "recall": 1,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil",
+        "herb"
+      ]
+    },
+    {
+      "question": "scout-signal",
+      "k": 1,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "scout-signal",
+      "k": 3,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open"
+      ]
+    },
+    {
+      "question": "scout-signal",
+      "k": 5,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat"
+      ]
+    },
+    {
+      "question": "scout-signal",
+      "k": 8,
+      "relevant": 1,
+      "recall": 0,
+      "returned": [
+        "food",
+        "key",
+        "gate-open",
+        "rope",
+        "coat",
+        "bridge",
+        "sigil",
+        "herb"
+      ]
+    },
+    {
+      "question": "two-evidence-route",
+      "k": 1,
+      "relevant": 2,
+      "recall": 0,
+      "returned": [
+        "food"
+      ]
+    },
+    {
+      "question": "two-evidence-route",
+      "k": 3,
+      "relevant": 2,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet"
+      ]
+    },
+    {
+      "question": "two-evidence-route",
+      "k": 5,
+      "relevant": 2,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet",
+        "key",
+        "child-summary"
+      ]
+    },
+    {
+      "question": "two-evidence-route",
+      "k": 8,
+      "relevant": 2,
+      "recall": 0,
+      "returned": [
+        "food",
+        "herb",
+        "amulet",
+        "key",
+        "child-summary",
+        "rope",
+        "coat",
+        "archive"
+      ]
+    }
+  ],
+  "notes": [
+    "Fixed, manually annotated synthetic Russian corpus; not a sample of real stories.",
+    "Repeated searches measure timing/reproducibility; recall uses one result per unique question and k.",
+    "Search time includes trusted lineage and ranking; query embedding is reported separately. No text LLM or generation latency is measured.",
+    "Warm-cache, single-client exact filtered search; no large-corpus or concurrent-load claim.",
+    "Context-budget replay uses cached query vectors and the real narrative supplement service at top-k=8; private-character questions are excluded. Recent-beat deduplication is not simulated.",
+    "FAKE length-based embeddings: recall values are mechanical diagnostics, NOT semantic quality evidence."
+  ]
+}

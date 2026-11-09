@@ -222,8 +222,10 @@ explicit UI status rather than silently blocking a turn.
   wider search or a failed story turn.
 - Hybrid RRF ordering/deduplication and memory budgets have deterministic tests.
 - Measure recall@k on frozen questions and search latency independently of LLM
-  response time. `cmd/hybridbench` currently measures generation experiments;
-  it needs a dedicated memory mode to support these metrics honestly.
+  response time. `cmd/hybridbench -memory-bench` now provides this mode plus
+  production-budget replay. The first live USER2 baseline and independent repeat
+  are recorded in `MEMORY_BENCHMARK_2026-11-09.md`; larger real-story coverage and
+  full generation timing remain separate acceptance work.
 
 Implementation order: visibility contract and tests; transactional outbox and
 version boundaries; indexing worker and snapshot seed; hybrid retrieval;
