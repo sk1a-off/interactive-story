@@ -10,8 +10,10 @@ in `backend/internal/adapters/postgres/memory_visibility.go`. Unit tests cover
 nested caps, safe restore, state-version boundaries, malformed lineage, and
 immutable plans. PostgreSQL integration tests resolve real timeline/save-point
 edges inside a rolled-back fixture transaction. Existing search and Context
-Builder have not yet been switched to this plan. Outbox, indexing, hybrid
-ranking, and runtime memory settings remain subsequent work.
+Builder have not yet been switched to this plan. Migration 00037 now captures
+event/snapshot work transactionally; the queue implements ordered claims,
+recovery, retry, and lease-token fencing. Embedding execution, publication,
+hybrid ranking, and runtime memory settings remain subsequent work.
 
 ## Existing behavior verified in this checkout
 
@@ -153,6 +155,15 @@ Use bounded batches, lease recovery, attempts/backoff, and fenced completion.
 Model calls happen outside database transactions. Reindex jobs build a new
 revision and publish it only after completion; never mix vectors from different
 embedding identities. Canon commits do not depend on the embedding service.
+
+The initial conservative invalidation boundary is implemented by 00037's
+`memory_index_state.observed_event_seq`: every committed event advances it in
+the same transaction, and older snapshots cannot move it backward. Until the
+index publisher reaches this cursor for the selected embedding identity,
+branch-state search must omit that branch's structured memories entirely.
+This sacrifices availability during indexing lag instead of risking stale
+state. Per-source validity intervals are still required when publishing
+versions. The cursor does not by itself mark any embedding as published.
 
 ## Retrieval and integration plan
 
