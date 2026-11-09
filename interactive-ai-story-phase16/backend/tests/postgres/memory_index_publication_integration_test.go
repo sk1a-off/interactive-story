@@ -15,6 +15,7 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/projection"
 	"github.com/local/interactive-ai-story/backend/internal/domain/snapshot"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
+	"github.com/local/interactive-ai-story/backend/internal/ports/memory"
 	repo "github.com/local/interactive-ai-story/backend/internal/ports/memoryindexrepo"
 )
 
@@ -114,6 +115,25 @@ func TestMemoryWorkerPublishesVersionsAndInvalidationAtomically(t *testing.T) {
 	}
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM memory_index_jobs WHERE timeline_id=$1 AND status='completed'`, tid).Scan(&completed); err != nil || completed != 3 {
 		t.Fatalf("completed=%d error=%v", completed, err)
+	}
+	queryVector := make([]float32, 384)
+	queryVector[0] = 1
+	for seq, expected := range []string{"locked", "open", ""} {
+		found, searchErr := pg.NewHybridMemoryRetriever(tx).Search(ctx, memory.Query{
+			StoryID: story, TimelineID: timeline.ID(tid), OwnerType: memory.OwnerTimeline, OwnerID: tid,
+			AtEventSeq: int64(seq), Vector: queryVector, Text: "door", Limit: 8,
+			Profile: memory.EmbeddingProfile{Provider: profile.Provider, Model: profile.Model, Revision: profile.Revision},
+		})
+		if searchErr != nil {
+			t.Fatal(searchErr)
+		}
+		if expected == "" {
+			if len(found) != 0 {
+				t.Fatalf("invalidated memory retrieved: %+v", found)
+			}
+		} else if len(found) != 1 || !strings.Contains(found[0].Content, expected) {
+			t.Fatalf("checkpoint %d retrieval: %+v", seq, found)
+		}
 	}
 }
 

@@ -1,8 +1,8 @@
 # Vector memory: branch visibility and rollback model
 
-Status: design decision for Stage 2. This document precedes the new memory
-implementation. It does not enable retrieval or claim branch-aware search is
-already implemented.
+Status: Stage 2 design decision, written before the new memory implementation.
+The implementation status below tracks completed components. Live generation
+retrieval remains disabled/unwired.
 
 The first implementation increment now provides a domain visibility plan in
 `backend/internal/domain/memory/visibility.go` and a persisted-lineage resolver
@@ -15,9 +15,12 @@ event/snapshot work transactionally; the queue implements ordered claims,
 recovery, retry, and lease-token fencing. Migration 00038 and the memory indexing
 worker now implement exact-checkpoint document extraction, batched embeddings,
 and atomic version publication. The worker is not started by the application
-yet. Hybrid ranking, retrieval integration, and runtime memory settings remain
-subsequent work. See `MEMORY_INDEX_PUBLICATION_2026-11-09.md` for executed checks
-and the current boundaries.
+yet. The opt-in hybrid adapter now resolves this plan, filters before exact
+vector/Russian lexical ranking, and suppresses branch state during profile-specific
+publication lag. Migration 00039 adds Russian FTS. Context Builder integration
+and runtime memory settings remain subsequent work. See
+`MEMORY_HYBRID_SEARCH_2026-11-09.md` for the search checks and boundaries, and
+`MEMORY_INDEX_PUBLICATION_2026-11-09.md` for publication checks.
 
 ## Existing behavior verified in this checkout
 
@@ -129,7 +132,8 @@ The retriever should return original `source_timeline_id` and an explicit
 resolved segment/provenance alongside the requested context scope. Context
 Builder checks these against a trusted, database-resolved visibility plan.
 Do not relabel arbitrary parent rows as child rows to bypass its existing check.
-Unclassified legacy embedding rows remain local-only until safely reindexed.
+Unclassified legacy embedding rows remain available only to the legacy local
+retriever; the new hybrid adapter excludes them entirely until safely reindexed.
 
 ## Transactional outbox and invalidation
 

@@ -23,6 +23,15 @@ type Query struct {
 	AtEventSeq int64
 	Vector     []float32
 	Limit      int
+	// Hybrid retrieval requires an explicit embedding identity. Legacy exact
+	// retrieval remains available for callers that have not migrated yet.
+	Text    string
+	Profile EmbeddingProfile
+}
+type EmbeddingProfile struct {
+	Provider string
+	Model    string
+	Revision int64
 }
 type Memory struct {
 	ID           id.ID
@@ -35,9 +44,13 @@ type Memory struct {
 	Kind         string
 	Content      string
 	Score        float64
+	// TimelineID always identifies the original source, including ancestors.
+	DocumentClass string
+	SourceKey     string
 }
 type Retriever interface {
-	// Search implementations must apply story/timeline/owner/validity predicates
-	// before ranking candidate rows by vector distance.
+	// Search implementations must apply story, owner, temporal validity, and
+	// trusted branch visibility before ranking. Ancestors require fork caps;
+	// returned TimelineID/OwnerID must preserve the original source scope.
 	Search(context.Context, Query) ([]Memory, error)
 }
