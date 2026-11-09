@@ -199,8 +199,8 @@ into the generator HTML/runtime where `generateImage()` is actually available.
 The runtime performs exactly:
 
 - Digital Painting style
-- square 768×768
-- two `generateImage()` calls in `Promise.all`
+- the resolution pinned by the backend: 768×768, 512×768, or 768×512
+- 1–4 `generateImage()` calls in `Promise.all`, matching the pinned variant count
 
 It receives a scene prompt, a frozen style layer, and a separate negative layer. Do not embed `(resolution:::)`, `(seed:::)`, `(guidanceScale:::)`, or `(negativePrompt:::)` tokens in story prompts; the backend strips them and the worker owns validated provider options.
 
@@ -218,7 +218,10 @@ It polls:
 
 `http://127.0.0.1:8787/internal/image-worker/jobs/next`
 
-using `GM_xmlhttpRequest`, writes the job to the DOM mailbox, reads the result mailbox, and posts the two data URLs back to Go.
+using `GM_xmlhttpRequest`, writes the job to the DOM mailbox, reads the result
+mailbox, and posts the requested number of data URLs back to Go. A legacy job
+without a variant count defaults to two. AI settings and Reader show worker
+connection state; AI settings also expose resolution and variant count.
 
 Verify:
 

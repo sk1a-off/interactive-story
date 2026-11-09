@@ -22,7 +22,13 @@ Current image integration is the browser-worker architecture:
 
 `Go/PostgreSQL ↔ Violentmonkey ↔ DOM mailbox ↔ Perchance generateImage()`
 
-Each Scene generation produces exactly two Digital Painting 768×768 variants. Story text never waits for image completion. The visual prompt pipeline uses a layered Perchance/Flux-friendly natural-language scene prompt, a separately pinned style layer, a separately merged negative layer, and strips provider control tokens from model output.
+Image generations use Digital Painting with configurable resolution (768×768,
+512×768, or 768×512) and 1–4 variants. Defaults remain 768×768 and two variants.
+AI settings changes affect only new image generations. Story text never waits
+for image completion. The visual prompt pipeline uses a layered
+Perchance/Flux-friendly natural-language scene prompt, a separately pinned style
+layer, a separately merged negative layer, and strips provider control tokens
+from model output.
 
 For first launch, use:
 
