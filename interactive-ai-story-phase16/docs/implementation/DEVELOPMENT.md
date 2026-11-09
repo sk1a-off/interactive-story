@@ -82,6 +82,9 @@ Full-pipeline timing has a dedicated `cmd/llmbench -turn-bench` mode with frozen
 off/on memory pairs, explicit isolated fixtures, and read-only provider metadata.
 See [`TURN_BASELINE_METHOD_2026-11-09.md`](TURN_BASELINE_METHOD_2026-11-09.md)
 and [measured results](TURN_BASELINE_RESULTS_2026-11-09.md).
+Offline dependency/critical-path analysis is available through
+`cmd/llmbench -turn-schedule-report <report.json> -output <analysis.json>`; see
+[the parallelism audit](PARALLEL_DEPENDENCY_AUDIT_2026-11-09.md).
 Runtime recorded timing is available through
 `GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
 

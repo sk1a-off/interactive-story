@@ -1,0 +1,203 @@
+{
+  "sourceSha256": "3fda97e9083005361631f83f3e381f04fc93ad237410b45a6af43eadeb9ca070",
+  "sourceStatus": "measured",
+  "runs": [
+    {
+      "pair": "conversation/1",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "world",
+      "observedPostWriterMs": 46694.11866099999,
+      "serialCallSumMs": 71492.79205399999,
+      "dependencyFloorMs": 46693.547942,
+      "schedulingGapMs": 0.5707189999957336,
+      "overlapVersusSerialMs": 24798.673392999997,
+      "independentChoicesUpperBoundMs": 0
+    },
+    {
+      "pair": "conversation/1",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "world",
+      "observedPostWriterMs": 79825.650772,
+      "serialCallSumMs": 103560.725477,
+      "dependencyFloorMs": 79825.175473,
+      "schedulingGapMs": 0.4752989999979036,
+      "overlapVersusSerialMs": 23735.074705000006,
+      "independentChoicesUpperBoundMs": 0
+    },
+    {
+      "pair": "danger/1",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 75300.8115,
+      "serialCallSumMs": 95475.47266400002,
+      "dependencyFloorMs": 75299.97383100001,
+      "schedulingGapMs": 0.8376689999859082,
+      "overlapVersusSerialMs": 20174.66116400002,
+      "independentChoicesUpperBoundMs": 1248.0863300000055
+    },
+    {
+      "pair": "danger/1",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 26013.030480999998,
+      "serialCallSumMs": 45675.621137999995,
+      "dependencyFloorMs": 26012.508433000003,
+      "schedulingGapMs": 0.5220479999952659,
+      "overlapVersusSerialMs": 19662.590656999997,
+      "independentChoicesUpperBoundMs": 1069.244619000001
+    },
+    {
+      "pair": "inspection/1",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 44498.129095,
+      "serialCallSumMs": 70982.823537,
+      "dependencyFloorMs": 44497.536018,
+      "schedulingGapMs": 0.5930769999977201,
+      "overlapVersusSerialMs": 26484.694442000007,
+      "independentChoicesUpperBoundMs": 963.9695349999965
+    },
+    {
+      "pair": "inspection/1",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 39934.351394,
+      "serialCallSumMs": 62699.17249600001,
+      "dependencyFloorMs": 39933.821426,
+      "schedulingGapMs": 0.5299679999952787,
+      "overlapVersusSerialMs": 22764.82110200001,
+      "independentChoicesUpperBoundMs": 1498.583636000003
+    },
+    {
+      "pair": "inspection/2",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 69122.382216,
+      "serialCallSumMs": 89111.264454,
+      "dependencyFloorMs": 69121.906837,
+      "schedulingGapMs": 0.4753789999958826,
+      "overlapVersusSerialMs": 19988.882238000006,
+      "independentChoicesUpperBoundMs": 1171.9725920000055
+    },
+    {
+      "pair": "inspection/2",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 47121.087529000004,
+      "serialCallSumMs": 71828.80660499999,
+      "dependencyFloorMs": 47120.459751,
+      "schedulingGapMs": 0.6277780000018538,
+      "overlapVersusSerialMs": 24707.719075999987,
+      "independentChoicesUpperBoundMs": 1205.8673510000008
+    },
+    {
+      "pair": "danger/2",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 28498.856513000002,
+      "serialCallSumMs": 54316.792936,
+      "dependencyFloorMs": 28498.386015,
+      "schedulingGapMs": 0.47049800000240793,
+      "overlapVersusSerialMs": 25817.936422999996,
+      "independentChoicesUpperBoundMs": 1204.6167959999984
+    },
+    {
+      "pair": "danger/2",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 33751.142425,
+      "serialCallSumMs": 68526.586035,
+      "dependencyFloorMs": 33750.647677,
+      "schedulingGapMs": 0.49474799999734387,
+      "overlapVersusSerialMs": 34775.44361,
+      "independentChoicesUpperBoundMs": 40.90058800000406
+    },
+    {
+      "pair": "conversation/2",
+      "memory": true,
+      "eligible": true,
+      "criticalBranch": "world",
+      "observedPostWriterMs": 53001.910113,
+      "serialCallSumMs": 78847.34620200002,
+      "dependencyFloorMs": 53001.576195,
+      "schedulingGapMs": 0.3339179999966291,
+      "overlapVersusSerialMs": 25845.436089000017,
+      "independentChoicesUpperBoundMs": 0
+    },
+    {
+      "pair": "conversation/2",
+      "memory": false,
+      "eligible": true,
+      "criticalBranch": "state_quest_choices",
+      "observedPostWriterMs": 33968.086173,
+      "serialCallSumMs": 67509.490826,
+      "dependencyFloorMs": 33967.550275,
+      "schedulingGapMs": 0.5358980000019073,
+      "overlapVersusSerialMs": 33541.40465299999,
+      "independentChoicesUpperBoundMs": 1448.4916860000012
+    }
+  ],
+  "summary": [
+    {
+      "memory": false,
+      "eligible": 6,
+      "excluded": 0,
+      "worldCritical": 1,
+      "choicesBranchCritical": 5,
+      "schedulingGap": {
+        "count": 6,
+        "medianMs": 0.532932999998593,
+        "p95Ms": 0.8376689999859082
+      },
+      "overlapVersusSerial": {
+        "count": 6,
+        "medianMs": 23781.747247500003,
+        "p95Ms": 34775.44361
+      },
+      "independentChoicesUpperBound": {
+        "count": 6,
+        "medianMs": 1210.0294610000055,
+        "p95Ms": 1498.583636000003
+      }
+    },
+    {
+      "memory": true,
+      "eligible": 6,
+      "excluded": 0,
+      "worldCritical": 2,
+      "choicesBranchCritical": 4,
+      "schedulingGap": {
+        "count": 6,
+        "medianMs": 0.4986734999965847,
+        "p95Ms": 0.6277780000018538
+      },
+      "overlapVersusSerial": {
+        "count": 6,
+        "medianMs": 25262.827749499993,
+        "p95Ms": 26484.694442000007
+      },
+      "independentChoicesUpperBound": {
+        "count": 6,
+        "medianMs": 1016.6070769999988,
+        "p95Ms": 1205.8673510000008
+      }
+    }
+  ],
+  "notes": [
+    "Offline arithmetic on recorded calls; no new provider requests, speed comparison or quality approval.",
+    "Only successful single-call six-role planner DAGs with no repairs, escalations or fallbacks are eligible. Exclusions are explicit.",
+    "Scheduling gap includes validation, Go work and observer overhead between calls, not just scheduler delay.",
+    "Serial call sum is a same-duration counterfactual, not a separately measured serial provider run.",
+    "Independent choices bound assumes unchanged durations and discards real journal/quest dependencies; it is not an implemented or safe optimization."
+  ]
+}
