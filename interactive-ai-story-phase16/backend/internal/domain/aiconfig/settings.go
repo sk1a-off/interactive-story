@@ -44,9 +44,17 @@ type PublicSettings struct {
 	WorldRulesSafeMode bool   `json:"worldRulesSafeMode"`
 	EmbeddingEndpoint  string `json:"embeddingEndpoint"`
 	ImageEndpoint      string `json:"imageEndpoint"`
+	ImageResolution    string `json:"image_resolution"`
+	ImageCount         *int   `json:"image_count,omitempty"`
 }
 
 func (s PublicSettings) Validate() error {
+	if s.ImageResolution != "" && s.ImageResolution != "768x768" && s.ImageResolution != "512x768" && s.ImageResolution != "768x512" {
+		return ErrInvalidPublicSettings
+	}
+	if s.ImageCount != nil && (*s.ImageCount < 1 || *s.ImageCount > 4) {
+		return ErrInvalidPublicSettings
+	}
 	if s.StoryLLMContext < 1024 || s.StoryLLMContext > 1048576 {
 		return ErrInvalidPublicSettings
 	}
@@ -61,7 +69,21 @@ func (s PublicSettings) Validate() error {
 	}
 	return nil
 }
-func (s PublicSettings) JSON() json.RawMessage { b, _ := json.Marshal(s); return b }
+func (s PublicSettings) WithImageDefaults() PublicSettings {
+	if s.ImageResolution == "" {
+		s.ImageResolution = "768x768"
+	}
+	if s.ImageCount == nil {
+		count := 2
+		s.ImageCount = &count
+	}
+	return s
+}
+
+func (s PublicSettings) JSON() json.RawMessage {
+	b, _ := json.Marshal(s.WithImageDefaults())
+	return b
+}
 
 type CreateRevisionCommand struct {
 	StoryLLM  aiport.ProviderIdentity `json:"storyLlm"`

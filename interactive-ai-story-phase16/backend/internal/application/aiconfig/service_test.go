@@ -127,6 +127,43 @@ func TestSwitchCreatesNewRevisionWithoutMutatingOld(t *testing.T) {
 	}
 }
 
+func TestImageSettingsAreStoredInNewRevisionAndCanBeReactivated(t *testing.T) {
+	ctx := context.Background()
+	rp := &repo{}
+	svc := Service{Repo: rp}
+	first, err := svc.Create(ctx, UpdateRequest{Config: command("m1"), Activate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	newConfig := command("m1")
+	count := 4
+	newConfig.Public.ImageResolution = "512x768"
+	newConfig.Public.ImageCount = &count
+	second, err := svc.Create(ctx, UpdateRequest{Config: newConfig, Activate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	old, _ := rp.Get(ctx, id.MustParse(first.ID))
+	var stored domain.PublicSettings
+	if err := json.Unmarshal(old.Settings, &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.ImageResolution != "768x768" || *stored.ImageCount != 2 || first.ID == second.ID {
+		t.Fatal("old image settings were changed")
+	}
+	active, err := svc.Active(ctx)
+	if err != nil || active.Public.ImageResolution != "512x768" || *active.Public.ImageCount != 4 {
+		t.Fatalf("new settings not active: %+v error=%v", active.Public, err)
+	}
+	if _, err := svc.Activate(ctx, id.MustParse(first.ID)); err != nil {
+		t.Fatal(err)
+	}
+	active, err = svc.Active(ctx)
+	if err != nil || active.Public.ImageResolution != "768x768" || *active.Public.ImageCount != 2 {
+		t.Fatalf("old settings not restored: %+v error=%v", active.Public, err)
+	}
+}
+
 func TestRevisionSecretsDoNotOverwriteOlderRevision(t *testing.T) {
 	rp := &repo{}
 	sec := &secretStub{values: map[string]string{}}

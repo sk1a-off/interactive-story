@@ -1,11 +1,44 @@
 package aiconfig
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
+
+func TestImageSettingsValidationAndLegacyDefaults(t *testing.T) {
+	for _, resolution := range []string{"", "768x768", "512x768", "768x512"} {
+		for count := 1; count <= 4; count++ {
+			public := PublicSettings{StoryLLMContext: 16384, ImageResolution: resolution, ImageCount: &count}
+			if err := public.Validate(); err != nil {
+				t.Fatalf("rejected %s count=%d: %v", resolution, count, err)
+			}
+		}
+	}
+	for _, resolution := range []string{"512x512", "1024x768", "768X768"} {
+		if err := (PublicSettings{StoryLLMContext: 16384, ImageResolution: resolution}).Validate(); err == nil {
+			t.Fatalf("accepted invalid resolution %s", resolution)
+		}
+	}
+	for _, count := range []int{-1, 0, 5} {
+		if err := (PublicSettings{StoryLLMContext: 16384, ImageCount: &count}).Validate(); err == nil {
+			t.Fatalf("accepted invalid count %d", count)
+		}
+	}
+	var legacy PublicSettings
+	if err := json.Unmarshal([]byte(`{"storyLlmContext":16384}`), &legacy); err != nil {
+		t.Fatal(err)
+	}
+	var persisted PublicSettings
+	if err := json.Unmarshal(legacy.JSON(), &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if persisted.ImageResolution != "768x768" || persisted.ImageCount == nil || *persisted.ImageCount != 2 {
+		t.Fatalf("legacy defaults = %s", legacy.JSON())
+	}
+}
 
 func googleCommand(model string) CreateRevisionCommand {
 	return CreateRevisionCommand{

@@ -100,6 +100,7 @@ func (s Service) Activate(ctx context.Context, i id.ID) (domain.SafeView, error)
 func (s Service) safe(ctx context.Context, v domain.Revision, active bool) domain.SafeView {
 	var pub domain.PublicSettings
 	_ = json.Unmarshal(v.Settings, &pub)
+	pub = pub.WithImageDefaults()
 	keyCount := len(CredentialKeys(ctx, s.Secrets, v.ID))
 	return domain.SafeView{ID: v.ID.String(), Revision: v.Revision, StoryLLM: v.StoryLLM, Embedding: v.Embedding, Image: v.Image, Public: pub, Active: active, StoryLLMSecretConfigured: keyCount > 0, StoryLLMSecretCount: keyCount}
 }
