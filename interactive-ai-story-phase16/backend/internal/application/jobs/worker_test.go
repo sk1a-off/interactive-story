@@ -14,9 +14,13 @@ import (
 type memQueue struct {
 	mu                sync.Mutex
 	claimed           jobqueue.ClaimedJob
+	claimErr          error
+	heartbeatErr      error
 	completed, failed bool
 	cancel            bool
 	heartbeats        int
+	requeues          int
+	requeueNotify     chan struct{}
 }
 
 func (q *memQueue) Enqueue(context.Context, generation.Job, int) error { return nil }
@@ -29,13 +33,14 @@ func (q *memQueue) FindActiveByTimelineHead(context.Context, id.ID, int64) (jobq
 func (q *memQueue) ClaimNext(context.Context, string, time.Time, time.Duration) (jobqueue.ClaimedJob, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	return q.claimed, nil
+	return q.claimed, q.claimErr
 }
 func (q *memQueue) Heartbeat(context.Context, id.ID, string, time.Time, time.Duration) error {
 	q.mu.Lock()
 	q.heartbeats++
+	err := q.heartbeatErr
 	q.mu.Unlock()
-	return nil
+	return err
 }
 func (q *memQueue) Complete(context.Context, id.ID, string, time.Time) error {
 	q.mu.Lock()
@@ -60,7 +65,19 @@ func (q *memQueue) IsCancelRequested(context.Context, id.ID) (bool, error) {
 	defer q.mu.Unlock()
 	return q.cancel, nil
 }
-func (q *memQueue) RequeueExpired(context.Context, time.Time) (int64, error) { return 0, nil }
+func (q *memQueue) RequeueExpired(context.Context, time.Time) (int64, error) {
+	q.mu.Lock()
+	q.requeues++
+	notify := q.requeueNotify
+	q.mu.Unlock()
+	if notify != nil {
+		select {
+		case notify <- struct{}{}:
+		default:
+		}
+	}
+	return 0, nil
+}
 
 type execFn func(context.Context, jobqueue.ClaimedJob) error
 
@@ -114,5 +131,52 @@ func TestWorkerTimeoutRoutesToRetry(t *testing.T) {
 	}
 	if !q.failed || q.completed {
 		t.Fatal("timeout must retry/fail, not complete")
+	}
+}
+
+func TestWorkerCancelsExecutionWhenHeartbeatLosesLease(t *testing.T) {
+	q := &memQueue{
+		claimed:      jobqueue.ClaimedJob{Job: generation.Job{ID: jid()}, Reliability: generation.Reliability{AttemptCount: 1, MaxAttempts: 3}},
+		heartbeatErr: generation.ErrLeaseLost,
+	}
+	w := Worker{
+		Queue: q, Executor: execFn(func(ctx context.Context, _ jobqueue.ClaimedJob) error {
+			<-ctx.Done()
+			return ctx.Err()
+		}), Owner: "w", LeaseTTL: time.Second, HeartbeatEvery: time.Millisecond, Now: time.Now,
+	}
+	if err := w.RunOnce(context.Background()); !errors.Is(err, context.Canceled) {
+		t.Fatalf("RunOnce() error = %v, want context cancellation after lease loss", err)
+	}
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if q.heartbeats == 0 || q.completed || q.failed {
+		t.Fatalf("heartbeats=%d completed=%v failed=%v", q.heartbeats, q.completed, q.failed)
+	}
+}
+
+func TestWorkerRecoversExpiredLeasesPeriodically(t *testing.T) {
+	notify := make(chan struct{}, 2)
+	q := &memQueue{claimErr: jobqueue.ErrNoJob, requeueNotify: notify}
+	w := Worker{Queue: q, Owner: "w", LeaseTTL: time.Minute, RecoveryEvery: 5 * time.Millisecond, Now: time.Now}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- w.Run(ctx, time.Hour) }()
+
+	for calls := 0; calls < 2; calls++ {
+		select {
+		case <-notify:
+		case <-time.After(time.Second):
+			t.Fatal("worker did not run periodic lease recovery")
+		}
+	}
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("Run() error = %v", err)
+	}
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if q.requeues < 2 {
+		t.Fatalf("requeues=%d, want startup and periodic recovery", q.requeues)
 	}
 }

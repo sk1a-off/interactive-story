@@ -18,6 +18,7 @@ type Worker struct {
 	Owner            string
 	LeaseTTL         time.Duration
 	HeartbeatEvery   time.Duration
+	RecoveryEvery    time.Duration
 	ExecutionTimeout time.Duration
 	Backoff          func(int) time.Duration
 	Now              func() time.Time
@@ -37,10 +38,14 @@ func (w Worker) RunOnce(ctx context.Context) error {
 		runCtx, cancel = context.WithCancel(ctx)
 	}
 	defer cancel()
+	heartbeatEvery := w.HeartbeatEvery
+	if heartbeatEvery <= 0 {
+		heartbeatEvery = 10 * time.Second
+	}
 	hbDone := make(chan struct{})
 	go func() {
 		defer close(hbDone)
-		ticker := time.NewTicker(w.HeartbeatEvery)
+		ticker := time.NewTicker(heartbeatEvery)
 		defer ticker.Stop()
 		for {
 			select {
@@ -51,7 +56,10 @@ func (w Worker) RunOnce(ctx context.Context) error {
 					cancel()
 					return
 				}
-				_ = w.Queue.Heartbeat(runCtx, claimed.Job.ID, w.Owner, w.Now(), w.LeaseTTL)
+				if e := w.Queue.Heartbeat(runCtx, claimed.Job.ID, w.Owner, w.Now(), w.LeaseTTL); e != nil {
+					cancel()
+					return
+				}
 			}
 		}
 	}()
@@ -101,8 +109,17 @@ func (w Worker) Run(ctx context.Context, poll time.Duration) error {
 	if _, err := w.Queue.RequeueExpired(ctx, w.Now()); err != nil {
 		return err
 	}
-	ticker := time.NewTicker(poll)
-	defer ticker.Stop()
+	recoveryEvery := w.RecoveryEvery
+	if recoveryEvery <= 0 {
+		recoveryEvery = w.LeaseTTL / 2
+		if recoveryEvery <= 0 || recoveryEvery > 5*time.Second {
+			recoveryEvery = 5 * time.Second
+		}
+	}
+	pollTicker := time.NewTicker(poll)
+	defer pollTicker.Stop()
+	recoveryTicker := time.NewTicker(recoveryEvery)
+	defer recoveryTicker.Stop()
 	for {
 		err := w.RunOnce(ctx)
 		if err != nil && !errors.Is(err, jobqueue.ErrNoJob) {
@@ -111,7 +128,11 @@ func (w Worker) Run(ctx context.Context, poll time.Duration) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-ticker.C:
+		case <-recoveryTicker.C:
+			if _, err := w.Queue.RequeueExpired(ctx, w.Now()); err != nil {
+				return err
+			}
+		case <-pollTicker.C:
 		}
 	}
 }
