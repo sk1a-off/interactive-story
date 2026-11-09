@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	ErrWrongImageCount           = errors.New("worker must return exactly two images")
+	ErrWrongImageCount           = errors.New("worker image count does not match generation")
 	ErrWorkerMismatch            = errors.New("worker does not own image generation lease")
 	ErrUnsupportedProvider       = errors.New("active image provider is not perchance_browser")
 	ErrIllustrationNotNeeded     = errors.New("visual director decided this beat does not need an illustration")
@@ -223,13 +223,13 @@ func (s Service) Complete(ctx context.Context, gid id.ID, worker string, input W
 	if current.Generation.Status != domain.Running || current.Generation.LeaseOwner != worker {
 		return domain.View{}, ErrWorkerMismatch
 	}
-	if len(input.Images) != domain.DefaultCount {
+	if current.Generation.ImageCount < 1 || current.Generation.ImageCount > 4 || len(input.Images) != current.Generation.ImageCount {
 		return domain.View{}, ErrWrongImageCount
 	}
 	if s.Storage == nil {
 		return domain.View{}, errors.New("image storage unavailable")
 	}
-	imgs := make([]domain.Image, 0, 2)
+	imgs := make([]domain.Image, 0, current.Generation.ImageCount)
 	for i, dataURL := range input.Images {
 		decoded, e := DecodeDataURL(dataURL)
 		if e != nil {

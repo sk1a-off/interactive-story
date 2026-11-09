@@ -221,7 +221,7 @@ func TestCreateForSceneUpgradesLegacyLocalImageProvider(t *testing.T) {
 func TestCompleteRequiresExactlyTwoAndIsIdempotent(t *testing.T) {
 	rp := &fakeRepo{}
 	now := time.Unix(20, 0)
-	rp.view.Generation = domain.Generation{ID: xid("000000000020"), StoryID: xid("000000000021"), SceneID: xid("000000000022"), Status: domain.Running, LeaseOwner: "browser-local-1"}
+	rp.view.Generation = domain.Generation{ID: xid("000000000020"), StoryID: xid("000000000021"), SceneID: xid("000000000022"), Status: domain.Running, LeaseOwner: "browser-local-1", ImageCount: 2}
 	st := &memStorage{}
 	svc := Service{Repo: rp, Storage: st, Now: func() time.Time { return now }}
 	if _, e := svc.Complete(context.Background(), rp.view.Generation.ID, "browser-local-1", WorkerResult{Images: []string{pngDataURL()}}); e != ErrWrongImageCount {
@@ -245,6 +245,31 @@ func TestDecodeRejectsMimeSpoof(t *testing.T) {
 	fake := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString([]byte("not-a-jpeg"))
 	if _, e := DecodeDataURL(fake); e == nil {
 		t.Fatal("mime spoof accepted")
+	}
+}
+
+func TestCompleteUsesPinnedImageCount(t *testing.T) {
+	for _, count := range []int{1, 4} {
+		rp := &fakeRepo{view: domain.View{Generation: domain.Generation{ID: xid("000000000020"), StoryID: xid("000000000021"), SceneID: xid("000000000022"), Status: domain.Running, LeaseOwner: "worker", ImageCount: count}}}
+		storage := &memStorage{}
+		svc := Service{Repo: rp, Storage: storage}
+		wrong := make([]string, count+1)
+		if _, err := svc.Complete(context.Background(), rp.view.Generation.ID, "worker", WorkerResult{Images: wrong}); !errors.Is(err, ErrWrongImageCount) || storage.calls != 0 {
+			t.Fatalf("count=%d wrong result error=%v storage calls=%d", count, err, storage.calls)
+		}
+		images := make([]string, count)
+		for index := range images {
+			images[index] = pngDataURL()
+		}
+		result, err := svc.Complete(context.Background(), rp.view.Generation.ID, "worker", WorkerResult{Images: images})
+		if err != nil || len(result.Images) != count || storage.calls != count {
+			t.Fatalf("count=%d result=%+v error=%v storage calls=%d", count, result, err, storage.calls)
+		}
+		for index, image := range result.Images {
+			if image.Variant != index+1 {
+				t.Fatal("variants must be numbered consecutively")
+			}
+		}
 	}
 }
 

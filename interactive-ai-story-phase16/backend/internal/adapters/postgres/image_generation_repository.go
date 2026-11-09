@@ -349,20 +349,26 @@ func (r *ImageGenerationRepository) Complete(ctx context.Context, gid id.ID, wor
 	defer tx.Rollback(ctx)
 	var status domain.Status
 	var owner string
-	if e = tx.QueryRow(ctx, `SELECT status,COALESCE(lease_owner,'') FROM image_generations WHERE id=$1 FOR UPDATE`, gid).Scan(&status, &owner); e != nil {
+	var count int
+	if e = tx.QueryRow(ctx, `SELECT status,COALESCE(lease_owner,''),image_count FROM image_generations WHERE id=$1 FOR UPDATE`, gid).Scan(&status, &owner, &count); e != nil {
 		return domain.View{}, e
 	}
 	if status == domain.Done {
-		_ = tx.Commit(ctx)
+		if e = tx.Commit(ctx); e != nil {
+			return domain.View{}, e
+		}
 		return r.Get(ctx, gid)
 	}
 	if status != domain.Running || owner != worker {
 		return domain.View{}, domain.ErrLeaseMismatch
 	}
-	if len(images) != 2 {
+	if len(images) != count {
 		return domain.View{}, domain.ErrInvalid
 	}
-	for _, img := range images {
+	for index, img := range images {
+		if img.GenerationID != gid || img.Variant != index+1 {
+			return domain.View{}, domain.ErrInvalid
+		}
 		if _, e = tx.Exec(ctx, `INSERT INTO scene_images(id,story_id,scene_id,generation_id,variant,url,content_type,byte_size,created_at)
   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(generation_id,variant) DO NOTHING`,
 			img.ID, img.StoryID, img.SceneID, img.GenerationID, img.Variant, img.URL, img.ContentType, img.ByteSize, img.CreatedAt); e != nil {

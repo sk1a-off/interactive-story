@@ -116,4 +116,37 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 	if err = imageRepo.Create(ctx, newGeneration()); err != nil {
 		t.Fatalf("failed anchor should be reusable: %v", err)
 	}
+	for _, count := range []int{1, 4} {
+		generation := newGeneration()
+		generation.AnchorParagraph = 0
+		generation.ImageCount = count
+		if err = imageRepo.Create(ctx, generation); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = pool.Exec(ctx, `UPDATE image_generations SET status='running',lease_owner='settings-test',lease_until=now()+interval '1 minute' WHERE id=$1`, generation.ID); err != nil {
+			t.Fatal(err)
+		}
+		if _, err = imageRepo.Complete(ctx, generation.ID, "settings-test", nil, time.Now()); !errors.Is(err, domain.ErrInvalid) {
+			t.Fatalf("count=%d accepted wrong number: %v", count, err)
+		}
+		images := make([]domain.Image, count)
+		for index := range images {
+			imageID, _ := id.New()
+			images[index] = domain.Image{ID: imageID, StoryID: storyID, SceneID: sceneID, GenerationID: generation.ID, Variant: index + 1, URL: "/media/test.png", ContentType: "image/png", ByteSize: 1, CreatedAt: time.Now()}
+		}
+		if count == 4 {
+			images[1].Variant = 1
+			if _, err = imageRepo.Complete(ctx, generation.ID, "settings-test", images, time.Now()); !errors.Is(err, domain.ErrInvalid) {
+				t.Fatalf("duplicate variants accepted: %v", err)
+			}
+			images[1].Variant = 2
+		}
+		result, completeErr := imageRepo.Complete(ctx, generation.ID, "settings-test", images, time.Now())
+		if completeErr != nil || result.Generation.Status != domain.Done || len(result.Images) != count {
+			t.Fatalf("count=%d result=%+v error=%v", count, result, completeErr)
+		}
+		if _, err = imageRepo.Complete(ctx, generation.ID, "settings-test", images, time.Now()); err != nil {
+			t.Fatalf("repeated result must be idempotent: %v", err)
+		}
+	}
 }
