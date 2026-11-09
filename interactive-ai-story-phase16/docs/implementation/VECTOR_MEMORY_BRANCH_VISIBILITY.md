@@ -4,6 +4,15 @@ Status: design decision for Stage 2. This document precedes the new memory
 implementation. It does not enable retrieval or claim branch-aware search is
 already implemented.
 
+The first implementation increment now provides a domain visibility plan in
+`backend/internal/domain/memory/visibility.go` and a persisted-lineage resolver
+in `backend/internal/adapters/postgres/memory_visibility.go`. Unit tests cover
+nested caps, safe restore, state-version boundaries, malformed lineage, and
+immutable plans. PostgreSQL integration tests resolve real timeline/save-point
+edges inside a rolled-back fixture transaction. Existing search and Context
+Builder have not yet been switched to this plan. Outbox, indexing, hybrid
+ranking, and runtime memory settings remain subsequent work.
+
 ## Existing behavior verified in this checkout
 
 - Migration 00006 ties a child timeline to a save point in the same story. Its
