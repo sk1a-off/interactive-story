@@ -1,8 +1,11 @@
 .env
 .env.*
 !.env.example
+backend/server
 backend/bin/
+bin/
 backend/coverage.out
+coverage.out
 frontend/node_modules/
 frontend/dist/
 frontend/coverage/
