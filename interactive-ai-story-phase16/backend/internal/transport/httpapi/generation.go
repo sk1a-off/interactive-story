@@ -22,6 +22,9 @@ type GenerationApplication interface {
 }
 
 func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
+	if metrics, ok := app.(generationMetricsApplication); ok {
+		registerGenerationMetricsRoute(r, metrics)
+	}
 	r.Post("/api/v1/timelines/{timelineId}/actions", func(w http.ResponseWriter, req *http.Request) {
 		tid, err := id.Parse(chi.URLParam(req, "timelineId"))
 		if err != nil {

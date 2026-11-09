@@ -3,14 +3,19 @@ package postgres
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/ports/generationmetrics"
 )
 
-type GenerationMetrics struct{ pool *pgxpool.Pool }
+type generationMetricsDB interface {
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	BeginTx(context.Context, pgx.TxOptions) (pgx.Tx, error)
+}
+type GenerationMetrics struct{ pool generationMetricsDB }
 
-func NewGenerationMetrics(pool *pgxpool.Pool) *GenerationMetrics {
+func NewGenerationMetrics(pool generationMetricsDB) *GenerationMetrics {
 	return &GenerationMetrics{pool: pool}
 }
 

@@ -30,13 +30,22 @@ var (
 )
 
 type DurableRunner struct {
-	Queue       jobqueue.Queue
-	Config      aiconfigrepo.Repository
-	Metadata    generationmeta.Source
-	PromptSets  promptsetrepo.Repository
-	Hub         *Hub
-	Updates     UpdateStore
-	MaxAttempts int
+	Queue         jobqueue.Queue
+	Config        aiconfigrepo.Repository
+	Metadata      generationmeta.Source
+	PromptSets    promptsetrepo.Repository
+	Hub           *Hub
+	Updates       UpdateStore
+	MaxAttempts   int
+	MetricsReader generationmetrics.Reader
+	LocalOwnerID  id.ID
+}
+
+func (r *DurableRunner) GenerationMetrics(ctx context.Context, gid id.ID) (generationmetrics.Report, error) {
+	if r.MetricsReader == nil {
+		return generationmetrics.Report{}, generationmetrics.ErrUnavailable
+	}
+	return r.MetricsReader.Read(ctx, gid, r.LocalOwnerID)
 }
 
 func (r *DurableRunner) Submit(ctx context.Context, key string, action PlayerAction) (id.ID, error) {
@@ -218,6 +227,9 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 			metrics.PromptSetRevisionID = claimed.Job.PromptSetRevisionID
 			metrics.ContextMode = contextMode
 			metrics.QueueWaitMS = queueWait
+			if e.Logger != nil {
+				e.Logger.InfoContext(ctx, "generation attempt timing", "generation_id", claimed.Job.ID, "attempt", claimed.Reliability.AttemptCount, "queue_wait_ms", queueWait, "writer_ready_ms", metrics.TimeToFirstStoryTextMS, "pipeline_total_ms", metrics.TotalMS, "succeeded", metrics.Succeeded)
+			}
 			recordCtx, cancelRecord := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 			defer cancelRecord()
 			if recordErr := e.RunMetrics.Record(recordCtx, metrics); recordErr != nil && e.Logger != nil {

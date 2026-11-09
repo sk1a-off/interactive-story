@@ -166,6 +166,7 @@ type report struct {
 }
 
 func main() {
+	turnOptions := registerTurnBenchmarkFlags(flag.CommandLine)
 	var endpoint, model, output, reasoning, onlyCase, secretStorePath, secretName string
 	var noThinkToken, interactions, skipWarmup bool
 	var strictSchema bool
@@ -181,6 +182,13 @@ func main() {
 	flag.BoolVar(&interactions, "interactions", false, "use the Google Interactions API instead of chat completions")
 	flag.BoolVar(&skipWarmup, "skip-warmup", false, "do not spend a separate request on endpoint warmup")
 	flag.Parse()
+	if turnOptions.Enabled {
+		if err := runTurnBenchmark(*turnOptions, output); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if strings.TrimSpace(model) == "" || strings.TrimSpace(output) == "" {
 		fmt.Fprintln(os.Stderr, "-model and -output are required")
 		os.Exit(2)

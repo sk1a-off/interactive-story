@@ -1,9 +1,14 @@
 package generation
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"log/slog"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
@@ -13,6 +18,29 @@ import (
 type callStore struct {
 	calls []generationattempts.Call
 	err   error
+}
+
+type delayedCallStore struct{ callStore }
+
+func (s *delayedCallStore) Record(ctx context.Context, c generationattempts.Call) error {
+	err := s.callStore.Record(ctx, c)
+	time.Sleep(10 * time.Millisecond)
+	return err
+}
+func TestRoleTimingLogExcludesPersistenceAndPromptContent(t *testing.T) {
+	store := &delayedCallStore{}
+	var log bytes.Buffer
+	llm := &observingLLM{base: observedFake{}, store: store, logger: slog.New(slog.NewJSONHandler(&log, nil)), jobID: id.MustParse("00000000-0000-4000-8000-000000000803"), attemptNo: 1}
+	if _, err := llm.Generate(context.Background(), aiport.StoryRequest{Role: "writer", Input: []byte(`{"secret":"PRIVATE_PROMPT"}`)}); err != nil {
+		t.Fatal(err)
+	}
+	var entry map[string]any
+	if err := json.Unmarshal(log.Bytes(), &entry); err != nil {
+		t.Fatal(err)
+	}
+	if int64(entry["elapsed_ms"].(float64)) != store.calls[0].LatencyMS || strings.Contains(log.String(), "PRIVATE_PROMPT") {
+		t.Fatal("timing/logging mixed provider latency with persistence or exposed input")
+	}
 }
 
 func (s *callStore) Record(_ context.Context, call generationattempts.Call) error {

@@ -78,6 +78,13 @@ for setup, scope, and verification limitations.
 
 ### Standard checks
 
+Full-pipeline timing has a dedicated `cmd/llmbench -turn-bench` mode with frozen
+off/on memory pairs, explicit isolated fixtures, and read-only provider metadata.
+See [`TURN_BASELINE_METHOD_2026-11-09.md`](TURN_BASELINE_METHOD_2026-11-09.md)
+and [measured results](TURN_BASELINE_RESULTS_2026-11-09.md).
+Runtime recorded timing is available through
+`GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
+
 Memory retrieval has a dedicated `cmd/hybridbench -memory-bench` mode. It requires
 an explicit `-memory-database-url` for isolated rolled-back fixtures and supports
 real USER2 or an explicitly labeled fake smoke. Frozen labels, recall@k,

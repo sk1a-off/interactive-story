@@ -206,7 +206,7 @@ func main() {
 		updateStore := pgadapter.NewGenerationUpdates(pool)
 		attemptStore := pgadapter.NewGenerationAttempts(pool)
 		generationMetricsStore := pgadapter.NewGenerationMetrics(pool)
-		gameRunner := &appgen.DurableRunner{Queue: jobQueue, Config: configRepo, Metadata: metadata, PromptSets: promptRepo, Hub: hub, Updates: updateStore, MaxAttempts: 3}
+		gameRunner := &appgen.DurableRunner{Queue: jobQueue, Config: configRepo, Metadata: metadata, PromptSets: promptRepo, Hub: hub, Updates: updateStore, MaxAttempts: 3, MetricsReader: generationMetricsStore, LocalOwnerID: ownerID}
 		resolvePipeline := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (appgen.Pipeline, error) {
 			if promptRev == nil {
 				activePrompt, promptErr := promptRepo.Active(ctx)
