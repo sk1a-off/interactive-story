@@ -82,7 +82,8 @@ func (r *HybridMemoryRetriever) Search(ctx context.Context, q memory.Query) ([]m
 		var tid id.ID
 		var owner string
 		if err = rows.Scan(&m.ID, &m.StoryID, &tid, &owner, &m.OwnerID, &m.ValidFromSeq, &m.ValidToSeq,
-			&m.Kind, &m.Content, &m.DocumentClass, &m.SourceKey, &m.Score); err != nil {
+			&m.Kind, &m.Content, &m.DocumentClass, &m.SourceKey, &m.Score,
+			&m.Profile.Provider, &m.Profile.Model, &m.Profile.Revision); err != nil {
 			return nil, err
 		}
 		m.TimelineID, m.OwnerType = timeline.ID(tid), memory.OwnerType(owner)
@@ -137,6 +138,7 @@ WITH segments AS (
  FROM vector_rank v FULL JOIN lexical_rank l ON l.id=v.id
 )
 SELECT e.id,e.story_id,e.timeline_id,e.owner_type,e.owner_id,e.valid_from_event_seq,e.valid_to_event_seq,
-       e.kind,e.content,e.document_class,e.source_key,f.score::double precision
+       e.kind,e.content,e.document_class,e.source_key,f.score::double precision,
+       e.embedding_provider,e.embedding_model,e.embedding_revision
 FROM fused f JOIN eligible e ON e.id=f.id
 ORDER BY f.score DESC,e.id LIMIT $15`

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
+	domain "github.com/local/interactive-ai-story/backend/internal/domain/memory"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 )
 
@@ -47,6 +48,12 @@ type Memory struct {
 	// TimelineID always identifies the original source, including ancestors.
 	DocumentClass string
 	SourceKey     string
+	Profile       EmbeddingProfile
+}
+
+// VisibilityResolver loads trusted persisted lineage independently of rankings.
+type VisibilityResolver interface {
+	Resolve(context.Context, id.ID, timeline.ID, int64) (domain.Visibility, error)
 }
 type Retriever interface {
 	// Search implementations must apply story, owner, temporal validity, and

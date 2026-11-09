@@ -86,6 +86,24 @@ func (v Visibility) Segments() []HistorySegment {
 	return append([]HistorySegment(nil), v.segments...)
 }
 
+func (v Visibility) Matches(storyID id.ID, requested timeline.ID, at int64) bool {
+	return !v.storyID.IsZero() && v.storyID == storyID && v.timelineID == requested && v.atEventSeq == at
+}
+
+// AllowsHistoricalVersion evaluates inclusive expiry at the ancestor cap,
+// which can be earlier than the requested branch's cursor.
+func (v Visibility) AllowsHistoricalVersion(storyID id.ID, source timeline.ID, from int64, to *int64) bool {
+	if !v.AllowsHistorical(storyID, source, from) {
+		return false
+	}
+	for _, segment := range v.segments {
+		if segment.TimelineID == source {
+			return to == nil || (*to >= from && *to >= segment.AtEventSeq)
+		}
+	}
+	return false
+}
+
 func (v Visibility) AllowsHistorical(storyID id.ID, source timeline.ID, eventSeq int64) bool {
 	if v.storyID.IsZero() || storyID != v.storyID {
 		return false

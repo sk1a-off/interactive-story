@@ -9,16 +9,19 @@ The first implementation increment now provides a domain visibility plan in
 in `backend/internal/adapters/postgres/memory_visibility.go`. Unit tests cover
 nested caps, safe restore, state-version boundaries, malformed lineage, and
 immutable plans. PostgreSQL integration tests resolve real timeline/save-point
-edges inside a rolled-back fixture transaction. Existing search and Context
-Builder have not yet been switched to this plan. Migration 00037 now captures
+edges inside a rolled-back fixture transaction. The legacy runtime path retains
+its original local-only search. Migration 00037 now captures
 event/snapshot work transactionally; the queue implements ordered claims,
 recovery, retry, and lease-token fencing. Migration 00038 and the memory indexing
 worker now implement exact-checkpoint document extraction, batched embeddings,
 and atomic version publication. The worker is not started by the application
 yet. The opt-in hybrid adapter now resolves this plan, filters before exact
 vector/Russian lexical ranking, and suppresses branch state during profile-specific
-publication lag. Migration 00039 adds Russian FTS. Context Builder integration
-and runtime memory settings remain subsequent work. See
+publication lag. Migration 00039 adds Russian FTS. Context Builder now has an
+opt-in branch-aware path that independently validates source provenance, scopes,
+embedding identity, and a separate memory budget. It is tested against the hybrid
+adapter but is not wired into live role inputs or runtime settings yet. See
+`MEMORY_CONTEXT_BUILDER_2026-11-09.md` for these integration checks and
 `MEMORY_HYBRID_SEARCH_2026-11-09.md` for the search checks and boundaries, and
 `MEMORY_INDEX_PUBLICATION_2026-11-09.md` for publication checks.
 

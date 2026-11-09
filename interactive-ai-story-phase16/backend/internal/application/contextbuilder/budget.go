@@ -1,5 +1,37 @@
 package contextbuilder
 
+import "encoding/json"
+
+// ApplyBudgetWithMemoryLimit reserves authoritative/recent/summary priority,
+// then caps retrieved evidence independently, including serialized provenance.
+// Counts are deterministic rune-based estimates, not model tokenizer counts.
+func ApplyBudgetWithMemoryLimit(in Result, budget, memoryBudget int) Result {
+	base := in
+	base.Retrieved = nil
+	out := ApplyBudget(base, budget)
+	used := estimate(string(out.Authoritative))
+	for _, text := range out.RecentBeats {
+		used += estimate(text)
+	}
+	for _, text := range out.Summaries {
+		used += estimate(text)
+	}
+	remaining := min(budget-used, memoryBudget)
+	for _, item := range in.Retrieved {
+		raw, err := json.Marshal(item)
+		if err != nil {
+			continue
+		}
+		cost := estimate(string(raw))
+		if cost > remaining {
+			break
+		}
+		out.Retrieved = append(out.Retrieved, item)
+		remaining -= cost
+	}
+	return out
+}
+
 // ApplyBudget uses a deterministic priority order. Authoritative state is never
 // removed by semantic retrieval; if it alone exceeds the requested soft budget,
 // it is returned intact and lower-priority material is omitted.

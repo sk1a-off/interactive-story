@@ -15,6 +15,32 @@ func testTimeline(n int) timeline.ID { return timeline.ID(testID(n)) }
 func timelinePtr(n int) *timeline.ID { value := testTimeline(n); return &value }
 func sequencePtr(n int64) *int64     { return &n }
 
+func TestVisibilityMatchesRequestAndCappedHistoricalValidity(t *testing.T) {
+	plan, err := ResolveVisibility(testID(1), testTimeline(12), 140, fixture())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !plan.Matches(testID(1), testTimeline(12), 140) || plan.Matches(testID(2), testTimeline(12), 140) ||
+		plan.Matches(testID(1), testTimeline(11), 140) || plan.Matches(testID(1), testTimeline(12), 141) ||
+		(Visibility{}).Matches(testID(1), testTimeline(12), 140) {
+		t.Fatal("request mismatch accepted")
+	}
+	for _, check := range []struct {
+		source int
+		from   int64
+		to     *int64
+		want   bool
+	}{
+		{10, 100, sequencePtr(100), true}, {10, 100, sequencePtr(99), false},
+		{10, 101, nil, false}, {11, 130, sequencePtr(130), true}, {11, 131, nil, false},
+		{12, 140, nil, true}, {12, 140, sequencePtr(139), false}, {13, 100, nil, false},
+	} {
+		if got := plan.AllowsHistoricalVersion(testID(1), testTimeline(check.source), check.from, check.to); got != check.want {
+			t.Fatalf("check=%+v got=%v", check, got)
+		}
+	}
+}
+
 func fixture() []LineageNode {
 	return []LineageNode{
 		{StoryID: testID(1), TimelineID: testTimeline(10), HeadEventSeq: 200},

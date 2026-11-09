@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/local/interactive-ai-story/backend/internal/adapters/fakeai"
 	pg "github.com/local/interactive-ai-story/backend/internal/adapters/postgres"
+	"github.com/local/interactive-ai-story/backend/internal/application/contextbuilder"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	"github.com/local/interactive-ai-story/backend/internal/ports/memory"
@@ -118,7 +120,7 @@ func TestHybridSearchFiltersNestedBranchesBeforeRanking(t *testing.T) {
 		{child, "parent-state", "branch_state", 130}, {nested, "local-state", "branch_state", 140},
 		{nested, "before-branch-base", "branch_state", 129},
 	} {
-		f.document(d.tid, d.key, d.class, "дракон", d.seq, nil, v)
+		f.document(d.tid, d.key, d.class, "дракон "+d.key, d.seq, nil, v)
 	}
 	closed := int64(139)
 	f.document(nested, "invalidated", "branch_state", "дракон", 130, &closed, v)
@@ -152,6 +154,21 @@ func TestHybridSearchFiltersNestedBranchesBeforeRanking(t *testing.T) {
 	for _, row := range rows {
 		if source, ok := want[row.SourceKey]; !ok || row.TimelineID != timeline.ID(source) || row.OwnerID != source {
 			t.Fatalf("scope/provenance leak: %+v", row)
+		}
+	}
+	embeddings := fakeai.NewEmbeddingProvider(384)
+	embeddings.ID.Provider, embeddings.ID.Model = q.Profile.Provider, q.Profile.Model
+	builder := contextbuilder.Builder{Embeddings: embeddings, Memory: pg.NewHybridMemoryRetriever(f.tx), Visibility: pg.NewMemoryVisibilityResolver(f.tx), Profile: q.Profile}
+	memoryBudget := 4000
+	built, err := builder.Build(f.ctx, contextbuilder.Input{State: contextbuilder.AuthoritativeState{
+		StoryID: f.story, TimelineID: timeline.ID(nested), HeadEventSeq: 140, CurrentState: []byte(`{"door":"locked"}`), RecentBeats: []string{"recent"}},
+		QueryText: q.Text, OwnerType: q.OwnerType, OwnerID: q.OwnerID, TokenBudget: 10000, RetrievalLimit: 8, MemoryTokenBudget: &memoryBudget})
+	if err != nil || built.RetrievalError != "" || len(built.Retrieved) != len(want) {
+		t.Fatalf("Context Builder integration: %+v %v", built, err)
+	}
+	for _, row := range built.Retrieved {
+		if row.TimelineID != timeline.ID(want[row.SourceKey]) {
+			t.Fatal("lost source provenance")
 		}
 	}
 	q.Limit = 1
