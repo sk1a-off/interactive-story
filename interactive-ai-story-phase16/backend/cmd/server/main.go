@@ -243,7 +243,7 @@ func main() {
 			}
 			startRestarting(promptWorker.Owner, func(runCtx context.Context) error { return promptWorker.Run(runCtx, 250*time.Millisecond) })
 		}
-		handler = httpapi.NewRouterWithApplications(saveService, gameRunner, setupService, setupRepo, readerRepo, directorService, aiSettingsService, promptSettingsService, imageService, narrationService)
+		handler = httpapi.NewRouterWithApplicationsAndReadiness(saveService, gameRunner, setupService, setupRepo, readerRepo, directorService, aiSettingsService, promptSettingsService, imageService, narrationService, pool)
 	}
 	if closeDatabase != nil {
 		defer closeDatabase()
