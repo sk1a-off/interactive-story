@@ -1,0 +1,178 @@
+{
+  "name": "world-acceptance-v2",
+  "revision": 2,
+  "cases": [
+    {
+      "id": "world-boris-01",
+      "category": "world",
+      "action": "Познакомиться с Борисом, узнать его имя и договориться о будущих ремонтах.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "sceneGoal": "Познакомиться с постоянным мастером",
+        "previousBeatText": "Алекс подошёл к кузнецу. Его зовут Борис, ему сорок лет, у него рыжая борода. Кузнец готов представиться и стать постоянным мастером по ремонту снаряжения Алекса.",
+        "heroJournal": [],
+        "initialCast": {
+          "characters": []
+        },
+        "world": {
+          "locations": []
+        }
+      },
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "character_world_upserted",
+          "minimum": 1,
+          "maximum": 2
+        }
+      ]
+    },
+    {
+      "id": "world-lighthouse-01",
+      "category": "world",
+      "action": "Войти в Северный маяк и осмотреть его как постоянное убежище.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "sceneGoal": "Найти постоянное убежище",
+        "previousBeatText": "Алекс стоит перед открытой дверью Северного маяка — высокой белой каменной башни с красной металлической крышей. Внутри никого нет, здание безопасно и пригодно для постоянного убежища. Алекс может беспрепятственно войти.",
+        "heroJournal": [],
+        "initialCast": {
+          "characters": []
+        },
+        "world": {
+          "locations": []
+        }
+      },
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "location_world_upserted",
+          "minimum": 1,
+          "maximum": 2
+        }
+      ]
+    },
+    {
+      "id": "world-rumor-negative-02",
+      "category": "world-negative",
+      "action": "Посмотреть издалека на знакомый Архив, убедиться, что слух о пожаре ложный. Ничего не менять и ни с кем не знакомиться.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "heroJournal": [],
+        "initialCast": {
+          "characters": []
+        },
+        "world": {
+          "locations": [
+            {
+              "locationId": "00000000-0000-4000-8000-000000000302",
+              "name": "Архив",
+              "description": "Каменный архив с дубовой дверью",
+              "visualAnchorEn": "Stone archive with an oak door"
+            }
+          ]
+        },
+        "sceneGoal": "Проверить ложный слух без новых открытий",
+        "previousBeatText": "Алекс стоит напротив знакомого Архива — каменного здания с дубовой дверью. Прошёл необоснованный слух о пожаре, но пожара точно не было. Здание цело, полностью соответствует известному описанию. Поблизости никого нет, никаких изменений или новых значимых объектов не обнаруживается."
+      },
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "character_world_upserted",
+          "minimum": 0,
+          "maximum": 0
+        },
+        {
+          "eventType": "location_world_upserted",
+          "minimum": 0,
+          "maximum": 0
+        }
+      ]
+    },
+    {
+      "id": "world-observation-negative-02",
+      "category": "world-negative",
+      "action": "Осмотреть знакомый Архив снаружи. Просто понаблюдать, не заходить внутрь и не вступать в разговоры.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "heroJournal": [],
+        "initialCast": {
+          "characters": []
+        },
+        "world": {
+          "locations": [
+            {
+              "locationId": "00000000-0000-4000-8000-000000000302",
+              "name": "Архив",
+              "description": "Каменный архив с дубовой дверью",
+              "visualAnchorEn": "Stone archive with an oak door"
+            }
+          ]
+        },
+        "sceneGoal": "Наблюдать за неизменившимся знакомым местом",
+        "previousBeatText": "Алекс находится напротив знакомого Архива — каменного здания с дубовой дверью. Здание неизменно, новых деталей или значимых объектов нет. Мимо проходит безымянная толпа, никто не выделяется и не обращается к Алексу. Он лишь наблюдает издали."
+      },
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "character_world_upserted",
+          "minimum": 0,
+          "maximum": 0
+        },
+        {
+          "eventType": "location_world_upserted",
+          "minimum": 0,
+          "maximum": 0
+        }
+      ]
+    }
+  ]
+}

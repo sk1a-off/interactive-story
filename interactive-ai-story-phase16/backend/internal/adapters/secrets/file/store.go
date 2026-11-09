@@ -13,9 +13,23 @@ import (
 // Secrets never enter PostgreSQL or public configuration responses. The file
 // and its parent directory are restricted to the backend OS user.
 type Store struct {
-	mu   sync.RWMutex
-	path string
-	data map[string]string
+	mu       sync.RWMutex
+	path     string
+	data     map[string]string
+	readOnly bool
+}
+
+// NewReadOnly opens existing credentials without changing file permissions.
+// Benchmarks can therefore mount the production secret volume read-only.
+func NewReadOnly(path string) (*Store, error) {
+	if path == "" || filepath.Clean(path) == "." {
+		return nil, errors.New("secret store path is required")
+	}
+	s := &Store{path: path, data: map[string]string{}, readOnly: true}
+	if err := s.load(); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 func New(path string) (*Store, error) {
@@ -43,10 +57,16 @@ func (s *Store) load() error {
 	if s.data == nil {
 		s.data = map[string]string{}
 	}
+	if s.readOnly {
+		return nil
+	}
 	return os.Chmod(s.path, 0o600)
 }
 
 func (s *Store) Set(_ context.Context, key, value string) error {
+	if s.readOnly {
+		return errors.New("secret store is read-only")
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if value == "" {

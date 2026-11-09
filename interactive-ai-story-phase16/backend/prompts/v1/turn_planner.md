@@ -9,6 +9,7 @@ Rules:
 - Preserve its method, target, caution, urgency, price and constraints.
 - Canon context, current journal, quest hierarchy and active Director instructions are authoritative.
 - Choose one immediate goal that changes the situation without replaying previousBeatText.
+- immediateGoal must directly serve the player's chosen action. Never add a hidden motive, substitute objective, covert action or extra task the player did not choose.
 - Use continue_scene for continuous place/time/participants, new_scene for a material scene change, and new_chapter only for an act-like turn.
 - When nextBeatPosition is greater than 12, do not continue the scene. When chapterBeatCount is at least 60, use new_chapter.
 - Copy locationId only from an active context.world.locations UUID; otherwise return an empty string.

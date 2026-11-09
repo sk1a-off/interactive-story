@@ -1,0 +1,174 @@
+{
+  "name": "durable-resources",
+  "revision": 2,
+  "cases": [
+    {
+      "id": "spend-coins-01",
+      "category": "inventory_resource",
+      "action": "Заплатить владельцу постоялого двора ровно три монеты за ночлег из моих десяти монет.",
+      "expectedImportantFacts": [
+        "Баланс уменьшается с 10 до 7, списание ровно один раз"
+      ],
+      "validators": [
+        {
+          "kind": "journal_state"
+        }
+      ],
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "journal_entry_updated",
+          "minimum": 1,
+          "maximum": 1
+        }
+      ],
+      "expectedMutations": [
+        {
+          "eventType": "journal_entry_updated",
+          "entityId": "00000000-0000-4000-8000-000000000101",
+          "status": "active",
+          "quantity": 7
+        }
+      ],
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "sceneGoal": "Оплатить ночлег",
+        "previousBeatText": "Алекс пересчитал десять своих монет. Владелец двора подтвердил цену ночлега: ровно три монеты, без доплат. Он ждёт оплаты и готов принять деньги.",
+        "heroJournal": [
+          {
+            "id": "00000000-0000-4000-8000-000000000101",
+            "name": "Монеты",
+            "category": "currency",
+            "status": "active",
+            "quantity": 10
+          }
+        ]
+      }
+    },
+    {
+      "id": "consume-last-ration-01",
+      "category": "inventory_resource",
+      "action": "Полностью съесть мой последний походный паёк, лежащий передо мной.",
+      "expectedImportantFacts": [
+        "Последний паёк израсходован: quantity=0, status=inactive"
+      ],
+      "validators": [
+        {
+          "kind": "journal_state"
+        }
+      ],
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        },
+        {
+          "eventType": "journal_entry_updated",
+          "minimum": 1,
+          "maximum": 1
+        }
+      ],
+      "expectedMutations": [
+        {
+          "eventType": "journal_entry_updated",
+          "entityId": "00000000-0000-4000-8000-000000000101",
+          "status": "inactive",
+          "quantity": 0
+        }
+      ],
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "sceneGoal": "Поесть",
+        "previousBeatText": "Алекс сел за стол. У него остался один походный паёк. Он голоден, здоров и спокойно может съесть его целиком.",
+        "heroJournal": [
+          {
+            "id": "00000000-0000-4000-8000-000000000101",
+            "name": "Походный паёк",
+            "category": "item",
+            "status": "active",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial-wagons-01",
+      "category": "quest_progress",
+      "action": "Закрепить канатом только первую повозку. Вторую оставить незакреплённой до следующего решения.",
+      "expectedImportantFacts": [
+        "Критерий требует обе закреплённые повозки; первая не завершает цель",
+        "Частичный прогресс сохраняется у исходной цели, а не только у новой подзадачи"
+      ],
+      "validators": [
+        {
+          "kind": "objective_state"
+        },
+        {
+          "kind": "objectives_remain_active"
+        }
+      ],
+      "goldenDurableDeltas": [
+        {
+          "eventType": "beat_committed",
+          "minimum": 1,
+          "maximum": 1
+        }
+      ],
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {
+          "name": "Алекс",
+          "age": 25
+        },
+        "sceneGoal": "Закрепить обе повозки",
+        "previousBeatText": "На площадке стоят две незакреплённые повозки. Канатов хватает. Алекс подошёл к первой; вторая стоит отдельно и остаётся незакреплённой.",
+        "objectives": [
+          {
+            "id": "00000000-0000-4000-8000-000000000201",
+            "scope": "global",
+            "kind": "quest",
+            "questType": "main",
+            "title": "Закрепить обе повозки",
+            "successCriteria": "Обе повозки надёжно закреплены канатами.",
+            "status": "active",
+            "progress": 0
+          }
+        ]
+      },
+      "expectedMutations": [
+        {
+          "eventType": "objective_updated",
+          "entityId": "00000000-0000-4000-8000-000000000201",
+          "status": "active",
+          "minimumProgress": 1,
+          "maximumProgress": 99
+        }
+      ]
+    }
+  ]
+}

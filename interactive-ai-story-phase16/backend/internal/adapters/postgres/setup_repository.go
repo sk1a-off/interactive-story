@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -171,6 +172,7 @@ func (r *SetupRepository) SetComponent(ctx context.Context, c setup.Component) e
 	return nil
 }
 func (r *SetupRepository) CreateSetupGeneration(ctx context.Context, gid event.GenerationID, sid story.ID, provider, model, profile string) error {
+	// Inline setup has no player action; match migration 00030's empty-action hash.
 	tag, e := r.pool.Exec(ctx, `
 WITH retired AS (
   UPDATE generation_jobs
@@ -178,8 +180,8 @@ WITH retired AS (
       heartbeat_at=now(),error_code='setup_lease_expired',last_error='inline setup generation lease expired'
   WHERE story_id=$2 AND timeline_id IS NULL AND status='running' AND lease_expires_at<now()
 )
-INSERT INTO generation_jobs(id,story_id,timeline_id,expected_head_event_seq,config_revision_id,prompt_set_revision_id,status,provider_kind,provider_name,model_name,profile_name,attempt_count,max_attempts,available_at,lease_owner,lease_expires_at,heartbeat_at,started_at)
-SELECT $1,$2,NULL,0,c.id,p.id,'running','story_llm',$3,$4,$5,1,1,now(),'story-setup-inline',now()+interval '10 minutes',now(),now()
+INSERT INTO generation_jobs(id,story_id,timeline_id,expected_head_event_seq,config_revision_id,prompt_set_revision_id,status,provider_kind,provider_name,model_name,profile_name,attempt_count,max_attempts,available_at,lease_owner,lease_expires_at,heartbeat_at,started_at,action_hash)
+SELECT $1,$2,NULL,0,c.id,p.id,'running','story_llm',$3,$4,$5,1,1,now(),'story-setup-inline',now()+interval '10 minutes',now(),now(),$6
 FROM ai_active_config a
 JOIN ai_config_revisions c ON c.id=a.config_revision_id
 JOIN prompt_active_set pa ON pa.singleton=true
@@ -189,7 +191,7 @@ WHERE a.singleton=true
     SELECT 1 FROM generation_jobs active
     WHERE active.story_id=$2 AND active.timeline_id IS NULL AND active.status='running'
   )
-ON CONFLICT DO NOTHING`, gid, sid, provider, model, profile)
+ON CONFLICT DO NOTHING`, gid, sid, provider, model, profile, fmt.Sprintf("%x", sha256.Sum256(nil)))
 	if e != nil {
 		return e
 	}

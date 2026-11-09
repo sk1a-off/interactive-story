@@ -1,0 +1,42 @@
+{
+  "name": "durable-mutations",
+  "revision": 1,
+  "cases": [
+    {
+      "id": "consume-ration-01",
+      "category": "inventory_resource",
+      "action": "Съесть один из двух походных пайков, лежащих передо мной на столе.",
+      "expectedImportantFacts": ["Герой съедает один паёк; остаётся один"],
+      "validators": [{"kind": "journal_state"}],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}, {"eventType": "journal_entry_updated", "minimum": 1, "maximum": 1}],
+      "expectedMutations": [{"eventType": "journal_entry_updated", "entityId": "00000000-0000-4000-8000-000000000101", "status": "active", "quantity": 1}],
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1, "sceneNumber": 1, "nextBeatPosition": 2,
+        "sceneGoal": "Спокойный обед в безопасном помещении",
+        "previousBeatText": "Герой сел за стол. Перед ним лежали два его походных пайка. Он голоден; ничто не мешает поесть.",
+        "player": {"name": "Алекс", "age": 25},
+        "heroJournal": [{"id": "00000000-0000-4000-8000-000000000101", "name": "Походный паёк", "category": "item", "status": "active", "quantity": 2}]
+      }
+    },
+    {
+      "id": "open-door-01",
+      "category": "quest_progress",
+      "action": "Полностью открыть незапертую дверь архива, потянув ручку на себя.",
+      "expectedImportantFacts": ["Незапертая исправная дверь полностью открывается и цель завершается"],
+      "validators": [{"kind": "objective_state"}],
+      "goldenDurableDeltas": [{"eventType": "beat_committed", "minimum": 1, "maximum": 1}, {"eventType": "objective_updated", "minimum": 1, "maximum": 1}],
+      "expectedMutations": [{"eventType": "objective_updated", "entityId": "00000000-0000-4000-8000-000000000201", "status": "completed", "progress": 100}],
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1, "sceneNumber": 1, "nextBeatPosition": 2,
+        "sceneGoal": "Открыть дверь архива",
+        "previousBeatText": "Герой стоял у двери архива. Дверь не заперта, петли исправны. Ручка у него под рукой; препятствий нет.",
+        "player": {"name": "Алекс", "age": 25},
+        "objectives": [{"id": "00000000-0000-4000-8000-000000000201", "scope": "global", "kind": "quest", "questType": "main", "title": "Открыть дверь архива", "successCriteria": "Дверь архива полностью открыта", "status": "active", "progress": 0}]
+      }
+    }
+  ]
+}

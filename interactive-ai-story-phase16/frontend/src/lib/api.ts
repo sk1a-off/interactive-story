@@ -107,8 +107,8 @@ export const getDirector=(timelineId:string)=>json<DirectorView>(`/api/v1/timeli
 export const applyDirectorExact=(timelineId:string,expectedRevision:number,type:string,payload:Record<string,unknown>,note?:string)=>json(`/api/v1/timelines/${timelineId}/director/exact`,{method:'POST',body:JSON.stringify({expectedRevision,type,payload,note})})
 export const addDirectorInstruction=(timelineId:string,text:string,scope:string,priority:string)=>json(`/api/v1/timelines/${timelineId}/director/instructions`,{method:'POST',body:JSON.stringify({text,scope,priority})})
 export const getDirectorHistory=(timelineId:string)=>json<{entries:Array<Record<string,unknown>>}>(`/api/v1/timelines/${timelineId}/director/history`)
-export type DirectorAssistOperation={type:'upsert_character'|'archive_character'|'upsert_location'|'archive_location'|'upsert_objective'|'archive_objective'|'upsert_world_system'|'upsert_world_rule'|'archive_world_rule'|'update_world_resource';reference?:string;parentReference?:string;payload:Record<string,unknown>;note?:string}
-export type DirectorAssistResult={generationId:string;summary:string;operations:DirectorAssistOperation[]}
+export type DirectorAssistOperation={type:'update_character_state'|'set_stat'|'upsert_journal_entry'|'upsert_character'|'archive_character'|'upsert_location'|'archive_location'|'upsert_objective'|'archive_objective'|'upsert_world_system'|'upsert_world_rule'|'archive_world_rule'|'update_world_resource';reference?:string;parentReference?:string;payload:Record<string,unknown>;note?:string;before?:Record<string,unknown>}
+export type DirectorAssistResult={generationId:string;baseRevision?:number;summary:string;operations:DirectorAssistOperation[]}
 export const assistDirector=(timelineId:string,body:{instruction:string;section:string;selectedId?:string})=>json<DirectorAssistResult>(`/api/v1/timelines/${timelineId}/director/assist`,{method:'POST',body:JSON.stringify(body)})
 
 export type TimelineCard={id:string;storyId:string;name:string;status:string;parentTimelineId?:string;forkedFromSaveId?:string;headEventSeq:number}

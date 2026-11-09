@@ -148,17 +148,19 @@ type InstructionSource interface {
 }
 
 type Pipeline struct {
-	LLM             aiport.StoryLLM
-	MaxRepairs      int
-	Canon           CanonAppender
-	Instructions    InstructionSource
-	Targets         generationtarget.Source
-	Sink            Sink
-	Metrics         func(generationmetrics.Metrics)
-	ContextShadow   ShadowContext
-	Planner         TurnPlanner
-	Extractor       CanonExtractor
-	ProvisionalBeat bool
+	// JournalEvidenceIsolationV1 is experimental and disabled by default.
+	JournalEvidenceIsolationV1 bool
+	LLM                        aiport.StoryLLM
+	MaxRepairs                 int
+	Canon                      CanonAppender
+	Instructions               InstructionSource
+	Targets                    generationtarget.Source
+	Sink                       Sink
+	Metrics                    func(generationmetrics.Metrics)
+	ContextShadow              ShadowContext
+	Planner                    TurnPlanner
+	Extractor                  CanonExtractor
+	ProvisionalBeat            bool
 }
 
 func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (result []event.StoredEvent, runErr error) {
@@ -358,6 +360,9 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 			journalResult.Changes = nil
 		}
 		preparedChanges, prepareErr := prepareJournalEvidence(draft.Text, target.Journal, journalResult.Changes)
+		if p.JournalEvidenceIsolationV1 {
+			preparedChanges, prepareErr = prepareIsolatedJournalEvidence(draft.Text, target.Journal, journalResult.Changes)
+		}
 		if prepareErr != nil {
 			journalResult.Changes = nil
 		} else {
@@ -391,10 +396,15 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		}
 		preparedChanges, prepareErr := prepareObjectiveEvidence(draft.Text, target.Objectives, objectiveResult.Changes)
 		if prepareErr != nil {
-			objectiveResult.Changes = nil
-		} else {
-			objectiveResult.Changes = preparedChanges
+			preparedChanges, prepareErr = repairObjectiveEvidence(ctx, p.LLM, draft.Text, target.Objectives, objectiveResult.Changes)
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			if prepareErr != nil {
+				preparedChanges = nil
+			}
 		}
+		objectiveResult.Changes = preparedChanges
 		var validationErr error
 		objectiveEvents, normalizedChanges, validationErr = validateObjectiveChanges(target.Objectives, objectiveResult.Changes)
 		if validationErr != nil {

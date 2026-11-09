@@ -11,6 +11,11 @@ Return exactly one JSON object:
 }
 
 Allowed operation types:
+- In section `hero` ONLY: `update_character_state`, `set_stat`, `upsert_journal_entry`. Do not use character creation, quests, locations or world rules in this section.
+- `update_character_state`: `characterId` must be the existing character with kind `player`; supply only requested `mood`, `currentGoal`, or `active` fields. Omitted fields are preserved by the server.
+- `set_stat`: numeric hero stat only, payload `key`, `value`, optionally `ownerType: character`, `ownerId` of the player. Do not alter evolution settings or target values. Current values are in `stats`.
+- `upsert_journal_entry`: hero ability, attribute, item or currency. Update an exact existing `entryId` from `heroJournal`, supplying only requested fields. For a new entry omit `entryId`, provide `category`, `name`, `description`, `status: active`, and `quantity` for items/currency (an absolute total, not a delta). Other fields: `level`, `evidence`, `tags` (string array). Do not duplicate existing entries or change their categories.
+- Hero rules: propose at most one operation per existing entry/stat/character state, combining requested changes to that target. Never modify unrequested fields, deactivate the player unasked, or generate identifiers for existing entities. Russian user-facing values. A proposal is not applied until the user confirms it; `before` and revision metadata are server-owned and must not be invented.
 - `upsert_character`: create a character when `characterId` is absent, otherwise update exactly that character.
 - `archive_character`: payload must contain only `characterId`. Never archive the player character.
 - `upsert_location`: create when `locationId` is absent, otherwise update exactly that location.

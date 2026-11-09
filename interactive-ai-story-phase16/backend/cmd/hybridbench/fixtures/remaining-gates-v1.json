@@ -1,0 +1,69 @@
+{
+  "name": "remaining-gates", "revision": 1,
+  "cases": [
+    {
+      "id": "intention-only-01", "category": "no_false_progress",
+      "action": "Только вслух сформулировать намерение завтра закрепить обе повозки. Сейчас остаться сидеть, к повозкам и канатам не подходить и ничего не закреплять.",
+      "expectedImportantFacts": ["Намерение не становится выполненным действием; обе повозки остаются незакреплёнными", "Исходный прогресс остаётся 0"],
+      "validators": [{"kind":"objective_progress_unchanged"}],
+      "goldenDurableDeltas": [{"eventType":"beat_committed","minimum":1,"maximum":1}],
+      "target": {
+        "chapterId":"00000000-0000-4000-8000-000000000001", "sceneId":"00000000-0000-4000-8000-000000000002", "chapterNumber":1,"sceneNumber":1,"nextBeatPosition":2,
+        "player":{"name":"Алекс","age":25}, "sceneGoal":"Обсудить планы на завтра",
+        "previousBeatText":"Алекс сидит один на скамье вдали от двух незакреплённых повозок. Канаты лежат у повозок. Других людей здесь нет; никто не выполняет работу вместо него.",
+        "objectives":[{"id":"00000000-0000-4000-8000-000000000201","scope":"global","kind":"quest","questType":"main","title":"Закрепить обе повозки","successCriteria":"Обе повозки надёжно закреплены канатами.","status":"active","progress":0}]
+      }
+    },
+    {
+      "id":"failed-attempt-01", "category":"no_false_progress",
+      "action":"Один раз потянуть запертую дверь рукой, без инструментов. Убедившись, что она не поддаётся, отпустить ручку; иных способов открытия не предпринимать.",
+      "expectedImportantFacts":["Неудачная попытка не открывает дверь и не повышает прогресс", "Не появляются ключ, помощник или новая способность"],
+      "validators":[{"kind":"objective_progress_unchanged"}],
+      "goldenDurableDeltas":[{"eventType":"beat_committed","minimum":1,"maximum":1}],
+      "target":{
+        "chapterId":"00000000-0000-4000-8000-000000000001","sceneId":"00000000-0000-4000-8000-000000000002","chapterNumber":1,"sceneNumber":1,"nextBeatPosition":2,
+        "player":{"name":"Алекс","age":25},"sceneGoal":"Проверить состояние двери",
+        "previousBeatText":"Стальная дверь архива заперта исправным массивным засовом с другой стороны. Алекс один, без ключа и инструментов, обычный человек без магии. За дверью никого нет. Ручка не управляет засовом; обычной тягой рукой открыть дверь невозможно.",
+        "objectives":[{"id":"00000000-0000-4000-8000-000000000201","scope":"global","kind":"quest","questType":"main","title":"Открыть дверь архива","successCriteria":"Дверь архива полностью открыта.","status":"active","progress":0}]
+      }
+    },
+    {
+      "id":"historical-progress-01", "category":"no_false_progress",
+      "action":"Сидя на скамье, вспомнить, как вчера закрепил первую повозку. Сегодня ничего не закреплять и вторую повозку не трогать.",
+      "expectedImportantFacts":["Воспоминание не начисляет повторно уже учтённый прогресс", "Исходная цель остаётся active/50"],
+      "validators":[{"kind":"objective_progress_unchanged"}],
+      "goldenDurableDeltas":[{"eventType":"beat_committed","minimum":1,"maximum":1}],
+      "target":{
+        "chapterId":"00000000-0000-4000-8000-000000000001","sceneId":"00000000-0000-4000-8000-000000000002","chapterNumber":1,"sceneNumber":1,"nextBeatPosition":2,
+        "player":{"name":"Алекс","age":25},"sceneGoal":"Отдохнуть и вспомнить вчерашнюю работу",
+        "previousBeatText":"Вчера Алекс закрепил первую повозку; это уже учтено как 50 процентов общей цели. Первая по-прежнему закреплена, вторая остаётся незакреплённой. Сегодня Алекс один сидит на скамье и отдыхает. Никто не работает с повозками.",
+        "objectives":[{"id":"00000000-0000-4000-8000-000000000201","scope":"global","kind":"quest","questType":"main","title":"Закрепить обе повозки","successCriteria":"Обе повозки надёжно закреплены канатами.","status":"active","progress":50}]
+      }
+    },
+    {
+      "id":"scene-move-01","category":"scene_transition",
+      "action":"Покинуть завершённую встречу в трактире, пройти через город и начать следующую сцену у ворот архива. Остановиться у ворот, внутрь пока не входить.",
+      "expectedImportantFacts":["Старая сцена закрыта, новый Beat принадлежит новой сцене с позицией 1", "Нет повторения встречи; герой останавливается у ворот"],
+      "validators":[{"kind":"scene_transition"}],
+      "goldenDurableDeltas":[{"eventType":"beat_committed","minimum":1,"maximum":1}],
+      "target":{
+        "chapterId":"00000000-0000-4000-8000-000000000001","sceneId":"00000000-0000-4000-8000-000000000002","chapterNumber":1,"sceneNumber":1,"nextBeatPosition":4,
+        "player":{"name":"Алекс","age":25},"sceneGoal":"Завершённая встреча в трактире",
+        "previousBeatText":"Встреча в трактире закончилась: собеседник попрощался и ушёл, все вопросы обсуждены. Следующее место действия — ворота городского архива на другом конце города. Путь свободен, новых препятствий нет. Алекс стоит у выхода из трактира. Общая история поиска документов ещё продолжается."
+      }
+    },
+    {
+      "id":"ask-price-no-buy-01","category":"player_agency",
+      "action":"Только спросить торговца о цене карты. Кошелёк не доставать, ничего не покупать, карту не брать; дождаться ответа и оставить решение о покупке на следующий ход.",
+      "expectedImportantFacts":["Герой спрашивает цену и не совершает покупку", "Десять монет остаются у героя; карта не добавляется в инвентарь"],
+      "validators":[{"kind":"journal_state"}],
+      "goldenDurableDeltas":[{"eventType":"beat_committed","minimum":1,"maximum":1},{"eventType":"journal_entry_updated","minimum":0,"maximum":0},{"eventType":"journal_entry_created","minimum":0,"maximum":0}],
+      "target":{
+        "chapterId":"00000000-0000-4000-8000-000000000001","sceneId":"00000000-0000-4000-8000-000000000002","chapterNumber":1,"sceneNumber":1,"nextBeatPosition":2,
+        "player":{"name":"Алекс","age":25},"sceneGoal":"Узнать цену карты",
+        "previousBeatText":"Алекс остановился у прилавка торговца картами. В закрытом кошельке у него десять монет. Торговец готов ответить на вопрос, но денег ещё не получал, карту не передавал и дарить её не собирается. Никакой сделки не заключено.",
+        "heroJournal":[{"id":"00000000-0000-4000-8000-000000000101","name":"Монеты","category":"currency","status":"active","quantity":10}]
+      }
+    }
+  ]
+}

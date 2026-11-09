@@ -200,6 +200,7 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 			contextMode = "lossless-dedupe-v1"
 		}
 		pipeline.LLM = &observingLLM{base: pipeline.LLM, store: e.Attempts, logger: e.Logger, jobID: claimed.Job.ID, attemptNo: claimed.Reliability.AttemptCount, contextMode: contextMode}
+		rebindOptionalStageLLMs(&pipeline)
 	}
 	if e.RunMetrics != nil {
 		contextMode := e.ContextMode
@@ -231,4 +232,24 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 	}
 	_, err = pipeline.Run(ctx, claimed.Job.ID, action)
 	return err
+}
+
+func rebindOptionalStageLLMs(pipeline *Pipeline) {
+	if pipeline == nil || pipeline.LLM == nil {
+		return
+	}
+	switch planner := pipeline.Planner.(type) {
+	case LLMTurnPlanner:
+		planner.LLM = pipeline.LLM
+		pipeline.Planner = planner
+	case *LLMTurnPlanner:
+		planner.LLM = pipeline.LLM
+	}
+	switch extractor := pipeline.Extractor.(type) {
+	case LLMCanonExtractor:
+		extractor.LLM = pipeline.LLM
+		pipeline.Extractor = extractor
+	case *LLMCanonExtractor:
+		extractor.LLM = pipeline.LLM
+	}
 }

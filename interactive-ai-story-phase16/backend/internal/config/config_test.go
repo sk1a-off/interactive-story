@@ -2,6 +2,26 @@ package config
 
 import "testing"
 
+func TestFastStateSwitch(t *testing.T) {
+	for _, value := range []string{"", "false", "true"} {
+		t.Setenv("GENERATION_FAST_STATE_V1", value)
+		cfg, err := Load()
+		if err != nil || cfg.GenerationFastState != (value == "true") {
+			t.Fatalf("value=%q err=%v", value, err)
+		}
+	}
+}
+
+func TestJournalEvidenceIsolationSwitch(t *testing.T) {
+	for _, value := range []string{"", "false", "true"} {
+		t.Setenv("GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1", value)
+		cfg, err := Load()
+		if err != nil || cfg.GenerationJournalEvidenceIsolation != (value == "true") {
+			t.Fatalf("value=%q cfg=%v err=%v", value, cfg.GenerationJournalEvidenceIsolation, err)
+		}
+	}
+}
+
 func TestLoadDefaults(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	t.Setenv("HTTP_ADDR", "")

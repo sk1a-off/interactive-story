@@ -50,10 +50,12 @@ type AssistOperation struct {
 	Reference       string                     `json:"reference,omitempty"`
 	ParentReference string                     `json:"parentReference,omitempty"`
 	Payload         json.RawMessage            `json:"payload"`
+	Before          json.RawMessage            `json:"before,omitempty"`
 	Note            string                     `json:"note,omitempty"`
 }
 
 type AssistResult struct {
+	BaseRevision int64             `json:"baseRevision"`
 	GenerationID id.ID             `json:"generationId"`
 	Summary      string            `json:"summary"`
 	Operations   []AssistOperation `json:"operations"`
@@ -103,6 +105,7 @@ func (s Service) Assist(ctx context.Context, c AssistCommand) (AssistResult, err
 		return AssistResult{}, errors.New("director assistant provider unavailable")
 	}
 	input := map[string]any{"instruction": c.Instruction, "section": c.Section, "selectedId": c.SelectedID, "characters": view.Characters, "locations": view.Locations, "objectives": view.Objectives, "relationships": view.Relationships, "heroJournal": map[string]any{"abilities": view.Abilities, "attributes": view.Attributes, "inventory": view.Inventory}}
+	input["stats"] = view.Stats
 	var last error
 	for attempt := 0; attempt < 2; attempt++ {
 		if last != nil {
@@ -132,6 +135,7 @@ func (s Service) Assist(ctx context.Context, c AssistCommand) (AssistResult, err
 			return AssistResult{}, e
 		}
 		result.GenerationID = gid
+		result.BaseRevision = view.SemanticRevision
 		result.Summary = strings.TrimSpace(result.Summary)
 		if result.Summary == "" {
 			result.Summary = "Предложены адресные изменения живого мира."
@@ -146,13 +150,16 @@ func (s Service) Assist(ctx context.Context, c AssistCommand) (AssistResult, err
 
 func validAssistSection(v string) bool {
 	switch v {
-	case "overview", "characters", "locations", "objectives":
+	case "overview", "characters", "locations", "objectives", "hero":
 		return true
 	}
 	return false
 }
 
 func normalizeAssistOperations(result *AssistResult, section string, view directorrepo.View) error {
+	if section == "hero" {
+		return normalizeHeroAssist(result, view)
+	}
 	refs := map[string]string{}
 	for i := range result.Operations {
 		op := &result.Operations[i]

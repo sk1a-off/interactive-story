@@ -14,7 +14,7 @@ func TestCompleteRevisionAddsNewBuiltinRolesWithoutChangingExistingPrompts(t *te
 	prompts := map[string]string{}
 	settings := map[string]domain.RoleSettings{}
 	for _, role := range domain.Roles {
-		if role == "setup_assistant" {
+		if role == "setup_assistant" || role == "turn_planner" {
 			continue
 		}
 		prompts[role] = builtin.Prompts[role]
@@ -34,6 +34,9 @@ func TestCompleteRevisionAddsNewBuiltinRolesWithoutChangingExistingPrompts(t *te
 	}
 	if cmd.Prompts["setup_assistant"] == "" {
 		t.Fatal("new setup_assistant builtin prompt was not added")
+	}
+	if cmd.Prompts["turn_planner"] == "" || cmd.RoleSettings["turn_planner"] != domain.DefaultRoleSettings("turn_planner") {
+		t.Fatal("missing planner must receive its builtin prompt and unchanged runtime defaults")
 	}
 	if err = cmd.Validate(); err != nil {
 		t.Fatalf("upgraded revision must be complete: %v", err)

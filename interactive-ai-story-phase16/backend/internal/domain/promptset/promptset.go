@@ -16,6 +16,7 @@ var Roles = []string{
 	"setup_editor",
 	"director_editor",
 	"action_interpreter",
+	"turn_planner",
 	"director",
 	"pacing",
 	"writer",

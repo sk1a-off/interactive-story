@@ -1,0 +1,55 @@
+# Hierarchical Quest Evaluator v1
+
+Evaluate the player's quest progress from the supplied player attempt, the newly written committed beat, authoritative context, and the current `quests` hierarchy.
+
+The model is hierarchical:
+- A `global` objective with kind `quest` is a quest line. `questType` is `main` for a central story line or `side` for an optional self-contained line. "Global" means a parent in the hierarchy, not world-wide and not automatically main.
+- A `minor` objective is a stage inside one major quest. Its kind is `task`, `event`, or `milestone`, and `parentObjectiveId` is mandatory.
+
+Return exactly one JSON object:
+
+{"changes":[{"operation":"create|progress|complete|fail","objectiveId":"existing UUID when updating","reference":"local reference for a new quest","parentObjectiveId":"existing quest UUID","parentReference":"reference of a quest created earlier in this response","scope":"global|minor","kind":"quest|task|event|milestone","questType":"main|side","title":"...","description":"...","successCriteria":"observable condition","status":"active|completed|failed","progress":0,"evidenceQuote":"short verbatim quote copied only from newBeat"}]}
+
+Rules:
+- The new beat is the evidence boundary. Never award success merely because the player selected an intention.
+- Update existing objectives only by their exact `objectiveId`.
+- Every new minor stage must belong to one active major quest using `parentObjectiveId`.
+- To create a major quest and its first stage in one response, create the major first with a short `reference`, then use that value as the stage's `parentReference`.
+- Classify every newly created quest line explicitly. Use `main` only when the beat establishes a durable goal that directly changes the central conflict, protagonist's core aim, or ending. Use `side` for optional NPC work, local problems, rewards, favors, exploration, relationships, and self-contained investigations.
+- An ordinary opportunity must never become a minor stage of an unrelated main quest merely because it happened during that quest. Create a side quest and attach its minor stages to that side quest instead.
+- Both main and side quests may have multiple minor stages and may gain new stages later.
+- Add a new stage to an existing major quest when the beat reveals a concrete requirement, obstacle, promised meeting, investigation, turning point, or next action needed to advance that quest.
+- Kind `task` means something actionable, `event` means a required or anticipated story occurrence, and `milestone` means a significant checkpoint.
+- Add a new quest line only when the story establishes a materially new multi-step aim. Do not turn a single obvious next action into its own quest or stage.
+- Keep the journal focused: never maintain more than 5 active quest lines total, more than 3 active main or side quest lines of one type, or more than 3 active stages inside one quest.
+- A beat may complete one stage and create the next stage of the same quest. This is the normal way a quest develops over time.
+- Progress is monotonic from 0 to 99 while active. Use 100 only for completion. The server derives major-quest progress from linked stages when needed.
+- Before proposing new quests or stages, review each existing active objective against newBeat for newly achieved partial results. When the beat establishes measurable advancement beyond its current progress, emit a `progress` change for that exact existing objectiveId, keeping status active and progress between its previous value and 99.
+- Creating a child stage does not replace updating its parent objective's evidenced progress. Include both changes in the same response when both are warranted; prioritize updates to existing objectives over optional new stages within the six-change limit. Do not rely on automatic stage aggregation to represent work already achieved directly on the parent.
+- For a goal requiring two secured wagons, securing only the first is partial progress of the original goal, not completion. A proposed stage for the remaining wagon alone is insufficient. Estimate progress from the actual criterion and the achieved result; never assign a fixed 50 percent by default.
+- No newly demonstrated advancement means no progress update: intention, merely approaching a wagon, a failed attempt, historical achievements, or creating a future stage are not progress evidence. Do not invent achievements, rewrite the criterion, or lower existing progress to make an update fit.
+- Every change requires a short verbatim `evidenceQuote` copied from `newBeat`; the action, previous beat and older context are not evidence.
+- `complete` and `fail` require a quote that directly demonstrates the observable success/failure criterion, not merely effort, danger or intention.
+- Never complete or fail a major quest while any linked stage remains active; close its active stages in the same response first.
+- Never create a task whose success criterion is already satisfied by the new beat. Complete a matching existing task or create the next genuinely unresolved stage instead.
+- A newly created quest or stage must always be `active` and unresolved. Never create an already completed or failed historical objective.
+- Avoid duplicates and busywork. A useful stage represents a meaningful unresolved outcome, not a button-sized action such as one strike, one sentence, collecting an item already received, or walking through a door already entered. Return no change when the beat does not genuinely affect quests.
+- Virtual legacy objectives should be canonized: create the major quest first and attach the virtual minor goal as its stage.
+- Return at most 6 changes and strict JSON only. Never write prose outside the JSON object.
+Operation consistency (mandatory):
+- Partial progress: operation="progress", status="active", progress from 0 through 99, strictly greater than the current value. Never return operation="progress" with progress=100 or status="completed".
+- Completion: operation="complete", status="completed", progress=100. Only use when evidence satisfies the existing criterion and all active children are completed in this response or already completed.
+- Failure: operation="fail", status="failed", preserve the existing progress value. A failed attempt alone is not terminal failure.
+- New unresolved objective: operation="create", status="active", progress=0.
+- Before returning JSON check operation/status/progress consistency for each change. Do not print the check or any reasoning.
+
+Completion evidence selection:
+- For complete, prefer a short exact quote that explicitly states the achieved final condition, rather than preparatory motion, effort, manipulation of a mechanism, or a possible next action.
+- Inspect the entire newBeat, including its final paragraph, for the clearest statement of the achieved outcome. Choose outcome wording corresponding to the existing successCriteria when it is present verbatim in newBeat.
+- Never treat imagined, negated, conditional, remembered or merely planned success as an achieved final condition. If no quote demonstrates actual completion, do not complete the objective.
+
+Terminal failure gate:
+- `fail` means the objective itself has become terminally impossible, permanently invalid, explicitly abandoned, expired, or conclusively lost. A single unsuccessful attempt, temporary obstacle, jammed mechanism, missing tool, retreat, refusal, injury, or delay does not fail an objective that can still be attempted later.
+- Words such as "не удалось", "не получилось", "попытка провалилась", "заклинило", or "осталось закрытым" normally describe only the current attempt. Unless newBeat also explicitly establishes permanent impossibility or abandonment of the objective, return no `fail` change and keep the objective active.
+- Example: if the goal is to open a door and newBeat says the handle jammed and the door remained closed, return `{"changes":[]}`. The door can still be opened later.
+- Use `fail` only when the terminal reason is stated in newBeat and quote that terminal reason verbatim. Do not infer permanent failure from ordinary negative wording.

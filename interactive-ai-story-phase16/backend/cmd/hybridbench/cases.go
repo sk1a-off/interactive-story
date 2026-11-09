@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/local/interactive-ai-story/backend/internal/ports/generationtarget"
 	"os"
 	"strings"
 )
@@ -14,11 +15,14 @@ type goldenDelta struct {
 }
 
 type benchmarkCase struct {
-	ID                     string        `json:"id"`
-	Category               string        `json:"category"`
-	Action                 string        `json:"action"`
-	ExpectedImportantFacts []string      `json:"expectedImportantFacts"`
-	GoldenDurableDeltas    []goldenDelta `json:"goldenDurableDeltas"`
+	Target                 *generationtarget.Target `json:"target,omitempty"`
+	ExpectedMutations      []expectedMutation       `json:"expectedMutations,omitempty"`
+	Validators             []semanticValidator      `json:"validators,omitempty"`
+	ID                     string                   `json:"id"`
+	Category               string                   `json:"category"`
+	Action                 string                   `json:"action"`
+	ExpectedImportantFacts []string                 `json:"expectedImportantFacts"`
+	GoldenDurableDeltas    []goldenDelta            `json:"goldenDurableDeltas"`
 }
 
 type benchmarkCaseSet struct {
@@ -45,6 +49,19 @@ func loadCaseSet(path string) (benchmarkCaseSet, error) {
 			return benchmarkCaseSet{}, fmt.Errorf("invalid or duplicate case at index %d", index)
 		}
 		seen[item.ID] = true
+		for _, expectation := range item.ExpectedMutations {
+			if err := expectation.validate(); err != nil {
+				return benchmarkCaseSet{}, fmt.Errorf("case %s: %w", item.ID, err)
+			}
+		}
+		if item.Target != nil && (item.Target.SceneID.IsZero() || item.Target.ChapterID.IsZero() || item.Target.NextBeatPosition < 1) {
+			return benchmarkCaseSet{}, fmt.Errorf("case %s: invalid fixture target", item.ID)
+		}
+		for _, validator := range item.Validators {
+			if validator.Kind != "scene_transition" && validator.Kind != "journal_state" && validator.Kind != "objective_state" && validator.Kind != "objectives_remain_active" && validator.Kind != "objective_progress_unchanged" {
+				return benchmarkCaseSet{}, fmt.Errorf("case %s: unknown validator %q", item.ID, validator.Kind)
+			}
+		}
 	}
 	return set, nil
 }

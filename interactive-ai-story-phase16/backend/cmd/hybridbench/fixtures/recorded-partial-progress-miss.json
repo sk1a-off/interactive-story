@@ -1,0 +1,21 @@
+{
+  "source": "partial-progress-20260908-072820-63YckL/pair-1.json, runs[0], objective_created event; unrelated events omitted",
+  "events": [
+    {
+      "type": "objective_created",
+      "payload": {
+        "description": "Надёжно зафиксировать канатом второй фургон, оставшийся без удерживающих растяжек у покатого съезда.",
+        "evidence": "В десятке шагов позади сиротливо темнел второй фургон, брошенный у самого края покатого съезда без единой удерживающей растяжки или деревянного упора под колесами.",
+        "kind": "task",
+        "objectiveId": "288c52c2-90e0-4f63-a5d6-819357b9058d",
+        "parentObjectiveId": "00000000-0000-4000-8000-000000000201",
+        "progress": 0,
+        "questType": "main",
+        "scope": "minor",
+        "status": "active",
+        "successCriteria": "Вторая повозка надёжно закреплена канатом.",
+        "title": "Закрепить вторую повозку"
+      }
+    }
+  ]
+}

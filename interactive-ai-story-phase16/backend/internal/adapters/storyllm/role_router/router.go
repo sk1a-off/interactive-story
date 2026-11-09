@@ -17,24 +17,30 @@ var safeHybridFastRoles = map[string]struct{}{
 // Router keeps canon-affecting and prose roles on the quality model while
 // sending the small preparatory roles to the fast model.
 type Router struct {
-	fast     aiport.StoryLLM
-	quality  aiport.StoryLLM
-	identity aiport.ProviderIdentity
+	fastState bool
+	fast      aiport.StoryLLM
+	quality   aiport.StoryLLM
+	identity  aiport.ProviderIdentity
 }
 
 func NewSafeHybrid(fast, quality aiport.StoryLLM) (*Router, error) {
+	return NewSafeHybridWithFastState(fast, quality, false)
+}
+
+// NewSafeHybridWithFastState changes only journal evaluation routing.
+func NewSafeHybridWithFastState(fast, quality aiport.StoryLLM, enabled bool) (*Router, error) {
 	if fast == nil || quality == nil {
 		return nil, errors.New("safe hybrid requires fast and quality Story LLM clients")
 	}
 	identity := quality.Identity()
 	identity.Profile = "safe-hybrid"
-	return &Router{fast: fast, quality: quality, identity: identity}, nil
+	return &Router{fast: fast, quality: quality, identity: identity, fastState: enabled}, nil
 }
 
 func (r *Router) Identity() aiport.ProviderIdentity { return r.identity }
 
 func (r *Router) Generate(ctx context.Context, request aiport.StoryRequest) (aiport.StoryResponse, error) {
-	if _, ok := safeHybridFastRoles[request.Role]; ok {
+	if _, ok := safeHybridFastRoles[request.Role]; ok || (r.fastState && request.Role == "state_evaluator") {
 		response, err := r.fast.Generate(ctx, request)
 		if err == nil {
 			if response.Provider.Model == "" {

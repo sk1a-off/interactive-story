@@ -1,6 +1,6 @@
 {
   "name": "generation-workflow",
-  "revision": 1,
+  "revision": 3,
   "cases": [
     {
       "id": "conversation-01",
@@ -39,6 +39,7 @@
     },
     {
       "id": "quest-01",
+      "validators": [{"kind": "objective_state"}],
       "category": "quest_progress",
       "action": "Сделать следующий проверяемый шаг к активной цели, не объявляя её завершённой раньше времени.",
       "expectedImportantFacts": ["Цель завершается только при прямом выполнении success criteria"],
@@ -46,6 +47,7 @@
     },
     {
       "id": "inventory-01",
+      "validators": [{"kind": "journal_state"}],
       "category": "inventory_resource",
       "action": "Проверить имеющиеся ресурсы и использовать только один подходящий предмет, если он действительно доступен.",
       "expectedImportantFacts": ["Количество предмета меняется только при явном использовании в новом Beat"],
@@ -60,6 +62,7 @@
     },
     {
       "id": "scene-01",
+      "validators": [{"kind": "scene_transition"}],
       "category": "scene_transition",
       "action": "Завершить текущее локальное действие и перейти в логически следующую сцену.",
       "expectedImportantFacts": ["Новый Beat прикрепляется к новой сцене после transition"],

@@ -53,16 +53,26 @@ func (p LLMTurnPlanner) Plan(ctx context.Context, action PlayerAction, target ge
 	if json.Unmarshal(response.Output, &plan) != nil {
 		return TurnPlan{}, ErrMalformedProposal
 	}
-	plan.Intent = strings.TrimSpace(plan.Intent)
-	plan.ImmediateGoal = strings.TrimSpace(plan.ImmediateGoal)
-	if plan.Intent != "" && !intentPreservesAction(action.Text, plan.Intent) {
-		plan.Intent = strings.TrimSpace(action.Text)
-		plan.IntentFallbackUsed = true
-	}
+	plan = normalizeTurnPlan(action.Text, plan)
 	if err := validateTurnPlan(action.Text, plan); err != nil {
 		return TurnPlan{}, err
 	}
 	return plan, nil
+}
+
+func normalizeTurnPlan(action string, plan TurnPlan) TurnPlan {
+	plan.Intent = strings.TrimSpace(plan.Intent)
+	plan.ImmediateGoal = strings.TrimSpace(plan.ImmediateGoal)
+	intentFallback := plan.Intent != "" && !intentPreservesAction(action, plan.Intent)
+	if intentFallback {
+		plan.Intent = strings.TrimSpace(action)
+		// ImmediateGoal drives Writer as strongly as Intent. Once the planner
+		// has demonstrated agency drift, discard both pieces of narrative
+		// direction rather than preserving a hidden motive from the bad plan.
+		plan.ImmediateGoal = plan.Intent
+		plan.IntentFallbackUsed = true
+	}
+	return plan
 }
 
 func validateTurnPlan(action string, plan TurnPlan) error {

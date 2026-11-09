@@ -1,0 +1,54 @@
+{
+  "name": "evaluator-boundaries-v1",
+  "revision": 1,
+  "cases": [
+    {
+      "id": "boris-no-journal-item-01",
+      "category": "abstract_state_negative",
+      "action": "Познакомиться с Борисом, узнать его имя и договориться о будущих ремонтах.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {"name": "Алекс", "age": 25},
+        "sceneGoal": "Познакомиться с постоянным мастером",
+        "previousBeatText": "Алекс подошёл к кузнецу. Его зовут Борис, ему сорок лет, у него рыжая борода. Кузнец готов представиться и стать постоянным мастером по ремонту снаряжения Алекса.",
+        "heroJournal": [],
+        "initialCast": {"characters": []},
+        "world": {"locations": []}
+      },
+      "goldenDurableDeltas": [
+        {"eventType": "beat_committed", "minimum": 1, "maximum": 1},
+        {"eventType": "character_world_upserted", "minimum": 1, "maximum": 2},
+        {"eventType": "journal_entry_created", "minimum": 0, "maximum": 0},
+        {"eventType": "journal_entry_updated", "minimum": 0, "maximum": 0}
+      ]
+    },
+    {
+      "id": "lighthouse-no-journal-item-01",
+      "category": "abstract_state_negative",
+      "action": "Войти в Северный маяк и осмотреть его как постоянное убежище.",
+      "target": {
+        "chapterId": "00000000-0000-4000-8000-000000000001",
+        "sceneId": "00000000-0000-4000-8000-000000000002",
+        "chapterNumber": 1,
+        "sceneNumber": 1,
+        "nextBeatPosition": 2,
+        "player": {"name": "Алекс", "age": 25},
+        "sceneGoal": "Найти постоянное убежище",
+        "previousBeatText": "Алекс стоит перед открытой дверью Северного маяка — высокой белой каменной башни с красной металлической крышей. Внутри никого нет, здание безопасно и пригодно для постоянного убежища. Алекс может беспрепятственно войти.",
+        "heroJournal": [],
+        "initialCast": {"characters": []},
+        "world": {"locations": []}
+      },
+      "goldenDurableDeltas": [
+        {"eventType": "beat_committed", "minimum": 1, "maximum": 1},
+        {"eventType": "location_world_upserted", "minimum": 1, "maximum": 2},
+        {"eventType": "journal_entry_created", "minimum": 0, "maximum": 0},
+        {"eventType": "journal_entry_updated", "minimum": 0, "maximum": 0}
+      ]
+    }
+  ]
+}

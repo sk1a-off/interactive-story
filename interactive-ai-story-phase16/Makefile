@@ -1,9 +1,19 @@
 SHELL := /usr/bin/env bash
 
+# Read only the local planner switch; never source provider credentials as code.
+GENERATION_TURN_PLANNER_V1 ?= $(shell sed -n 's/^GENERATION_TURN_PLANNER_V1=//p' .env 2>/dev/null | tail -n 1)
+export GENERATION_TURN_PLANNER_V1
+GENERATION_PROVISIONAL_BEAT_V1 ?= $(shell sed -n 's/^GENERATION_PROVISIONAL_BEAT_V1=//p' .env 2>/dev/null | tail -n 1)
+export GENERATION_PROVISIONAL_BEAT_V1
+GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1 ?= $(shell sed -n 's/^GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1=//p' .env 2>/dev/null | tail -n 1)
+export GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1
+GENERATION_FAST_STATE_V1 ?= $(shell sed -n 's/^GENERATION_FAST_STATE_V1=//p' .env 2>/dev/null | tail -n 1)
+export GENERATION_FAST_STATE_V1
+
 .PHONY: dev db-up db-down migrate-up migrate-down backend-dev frontend-dev sqlc-generate backend-test frontend-test test lint build health
 
 dev:
-	docker compose -f deploy/docker-compose.yml up --build
+	docker compose --env-file .env -f deploy/docker-compose.yml up --build
 
 db-up:
 	docker compose -f deploy/docker-compose.yml up -d postgres

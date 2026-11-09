@@ -158,3 +158,34 @@ func TestAttemptAwareSinkOnlyPublishesFailedForFinalAttempt(t *testing.T) {
 		t.Fatalf("unexpected attempt phases: %#v", captured.updates)
 	}
 }
+
+type optionalStageBindingLLM struct{}
+
+func (*optionalStageBindingLLM) Identity() ai.ProviderIdentity {
+	return ai.ProviderIdentity{Kind: ai.KindStoryLLM, Provider: "test", Model: "observed"}
+}
+
+func (*optionalStageBindingLLM) Generate(context.Context, ai.StoryRequest) (ai.StoryResponse, error) {
+	return ai.StoryResponse{}, nil
+}
+
+func TestRebindOptionalStageLLMsUsesObservedPipelineClient(t *testing.T) {
+	oldLLM := &optionalStageBindingLLM{}
+	observedLLM := &optionalStageBindingLLM{}
+	pipeline := Pipeline{
+		LLM:       observedLLM,
+		Planner:   LLMTurnPlanner{LLM: oldLLM},
+		Extractor: LLMCanonExtractor{LLM: oldLLM},
+	}
+
+	rebindOptionalStageLLMs(&pipeline)
+
+	planner, ok := pipeline.Planner.(LLMTurnPlanner)
+	if !ok || planner.LLM != observedLLM {
+		t.Fatalf("planner did not use observed pipeline client: %#v", pipeline.Planner)
+	}
+	extractor, ok := pipeline.Extractor.(LLMCanonExtractor)
+	if !ok || extractor.LLM != observedLLM {
+		t.Fatalf("extractor did not use observed pipeline client: %#v", pipeline.Extractor)
+	}
+}

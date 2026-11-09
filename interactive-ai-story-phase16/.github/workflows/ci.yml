@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - name: Format
+        run: test -z "$(gofmt -l backend)"
+      - name: Vet
+        run: cd backend && go vet ./...
+      - name: Test
+        run: cd backend && go test ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm install --no-audit --no-fund
+        working-directory: frontend
+      - run: npm run typecheck
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm test -- --run
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+
+  migration-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: story
+          POSTGRES_USER: story
+          POSTGRES_PASSWORD: story
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U story -d story"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgres://story:story@localhost:5432/story?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+      - run: go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres "$DATABASE_URL" up
+        working-directory: backend
+      - run: go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres "$DATABASE_URL" status
+        working-directory: backend
+      - run: go test ./tests/postgres -count=1
+        working-directory: backend

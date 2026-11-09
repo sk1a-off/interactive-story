@@ -69,6 +69,22 @@ func TestSafeHybridRequiresBothClients(t *testing.T) {
 	}
 }
 
+func TestFastStateOnlyAddsStateRouting(t *testing.T) {
+	fast, quality := &recordingLLM{}, &recordingLLM{}
+	router, err := NewSafeHybridWithFastState(fast, quality, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, role := range []string{"state_evaluator", "writer", "world_evaluator", "quest_evaluator"} {
+		if _, err := router.Generate(context.Background(), aiport.StoryRequest{Role: role}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(fast.roles) != 1 || fast.roles[0] != "state_evaluator" || len(quality.roles) != 3 {
+		t.Fatalf("fast=%v quality=%v", fast.roles, quality.roles)
+	}
+}
+
 func TestSafeHybridFallsBackToQualityWhenFastModelFails(t *testing.T) {
 	fast := &recordingLLM{identity: aiport.ProviderIdentity{Model: "fast"}, err: errors.New("fast model unavailable")}
 	quality := &recordingLLM{identity: aiport.ProviderIdentity{Model: "quality"}}
