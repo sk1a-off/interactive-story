@@ -119,7 +119,9 @@
     if (result) result.textContent = '';
     job.textContent = JSON.stringify(jobPayload);
     job.dataset.version = String(Date.now());
-    setStatus(`claimed ${jobPayload.id}\ndelivered by scoped DOM mailbox`);
+    const count = jobPayload.count ?? 2;
+    const resolution = jobPayload.resolution || `${jobPayload.width || 768}x${jobPayload.height || 768}`;
+    setStatus(`claimed ${jobPayload.id}\n${resolution} · ${count} images\ndelivered by scoped DOM mailbox`);
   }
 
   async function heartbeat() {

@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -166,7 +167,7 @@ func registerImageRoutes(r chi.Router, a ImageApplication) {
 		}
 		writeJSON(w, 200, map[string]any{
 			"id": g.ID, "storyId": g.StoryID, "sceneId": g.SceneID, "prompt": g.Prompt, "negative": g.NegativePrompt,
-			"style": g.Style, "stylePrompt": g.StylePrompt, "styleNegativePrompt": g.StyleNegativePrompt, "resolution": "768x768", "width": g.Width, "height": g.Height, "count": g.ImageCount, "attempt": g.Attempts,
+			"style": g.Style, "stylePrompt": g.StylePrompt, "styleNegativePrompt": g.StyleNegativePrompt, "resolution": fmt.Sprintf("%dx%d", g.Width, g.Height), "width": g.Width, "height": g.Height, "count": g.ImageCount, "attempt": g.Attempts,
 		})
 	})
 	r.Post("/internal/image-worker/jobs/{generationId}/result", func(w http.ResponseWriter, req *http.Request) {

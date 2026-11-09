@@ -139,15 +139,13 @@ The page never fetches localhost; Violentmonkey owns localhost transport.
     try {
       if (typeof generateImage !== "function") throw new Error("generateImage is unavailable");
 
-      if (Number(job.count || 2) !== 2) throw new Error("Worker supports exactly two variants");
+      const count = job.count === undefined ? 2 : Number(job.count);
+      if (!Number.isInteger(count) || count < 1 || count > 4) throw new Error("Variant count must be an integer from 1 to 4");
       const options = generationOptions(job);
 
-      setStatus(`Generating ${job.id}\nDigital Painting · ${options.resolution} · 2 images`);
-      const [first, second] = await Promise.all([
-        generateImage({...options}),
-        generateImage({...options})
-      ]);
-      const images = await Promise.all([dataUrlOf(first), dataUrlOf(second)]);
+      setStatus(`Generating ${job.id}\nDigital Painting · ${options.resolution} · ${count} images`);
+      const generated = await Promise.all(Array.from({length: count}, () => generateImage({...options})));
+      const images = await Promise.all(generated.map(dataUrlOf));
       if (images.some(x => typeof x !== "string" || !x.startsWith("data:image/"))) {
         throw new Error("Perchance returned invalid image data");
       }

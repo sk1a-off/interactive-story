@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -105,6 +106,7 @@ func TestImageWorkerFailureRejectsMalformedJSON(t *testing.T) {
 
 type imageApplicationStub struct {
 	failCalls int
+	claimed   imagedomain.Generation
 }
 
 func (*imageApplicationStub) CreateForScene(context.Context, imageapp.CreateCommand) (imagedomain.View, error) {
@@ -119,8 +121,8 @@ func (*imageApplicationStub) CreateForParagraph(context.Context, imageapp.Paragr
 func (*imageApplicationStub) Get(context.Context, id.ID) (imagedomain.View, error) {
 	return imagedomain.View{}, errors.New("not implemented")
 }
-func (*imageApplicationStub) ClaimNext(context.Context, string) (imagedomain.Generation, error) {
-	return imagedomain.Generation{}, errors.New("not implemented")
+func (s *imageApplicationStub) ClaimNext(context.Context, string) (imagedomain.Generation, error) {
+	return s.claimed, nil
 }
 func (*imageApplicationStub) Complete(context.Context, id.ID, string, imageapp.WorkerResult) (imagedomain.View, error) {
 	return imagedomain.View{}, errors.New("not implemented")
@@ -134,3 +136,24 @@ func (*imageApplicationStub) WorkerStatus(context.Context) (imagerepo.WorkerStat
 	return imagerepo.WorkerStatus{}, nil
 }
 func (*imageApplicationStub) SelectImage(context.Context, id.ID, id.ID) error { return nil }
+
+func TestImageWorkerClaimReturnsPinnedOutputParameters(t *testing.T) {
+	t.Parallel()
+	app := &imageApplicationStub{claimed: imagedomain.Generation{Width: 512, Height: 768, ImageCount: 4}}
+	router := chi.NewRouter()
+	registerImageRoutes(router, app)
+	res := httptest.NewRecorder()
+	router.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/internal/image-worker/jobs/next?worker_id=test", nil))
+	var payload struct {
+		Resolution string `json:"resolution"`
+		Width      int    `json:"width"`
+		Height     int    `json:"height"`
+		Count      int    `json:"count"`
+	}
+	if err := json.Unmarshal(res.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if res.Code != http.StatusOK || payload.Resolution != "512x768" || payload.Width != 512 || payload.Height != 768 || payload.Count != 4 {
+		t.Fatalf("status=%d payload=%+v", res.Code, payload)
+	}
+}

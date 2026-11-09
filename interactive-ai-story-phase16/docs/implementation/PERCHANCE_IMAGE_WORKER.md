@@ -5,10 +5,10 @@ Current image baseline:
 - provider: `perchance_browser`
 - Perchance plugin: `text-to-image-plugin`
 - style: Digital Painting
-- resolution: 768×768
-- variants: 2
+- resolution: 768×768 (default), 512×768, or 768×512
+- variants: 1–4 (default: 2)
 - active browser jobs: 1
-- parallel images inside one job: 2
+- parallel images inside one job: the pinned variant count
 - lease: 5 minutes
 - max attempts: 3
 - result body limit: 40 MiB
@@ -22,7 +22,10 @@ Prompt assembly is deliberately layered:
 4. the browser worker trims and joins the layers without empty commas;
 5. reserved Perchance inline control tokens are removed from LLM output before a job is stored.
 
-The worker accepts validated `resolution`, `guidanceScale`, and `seed` fields for forward compatibility, but the current server contract remains two independent 768×768 variants with provider-random seeds.
+Each generation pins its width, height, and variant count from its AI revision.
+The worker receives `resolution`, `width`, `height`, and `count`, and returns the
+same number of image data URLs. Legacy jobs without `count` default to two.
+The existing `guidanceScale` and `seed` handling remains available.
 
 Successful image data is cached in the open runtime long enough to replay the same leased job after a temporary localhost upload failure. Provider failures are not cached, so the backend retry can genuinely call `generateImage()` again. Local result uploads use three bounded retries before releasing the browser-side job back to the durable backend lease.
 

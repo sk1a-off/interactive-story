@@ -24,6 +24,42 @@ async function waitForResult(element: Element, accept: (value: { images?: string
 }
 
 describe('Perchance runtime mailbox', () => {
+  test.each([
+    { count: 1, resolution: '512x768', expectedCount: 1 },
+    { count: 4, resolution: '768x512', expectedCount: 4 },
+    { count: undefined, resolution: '768x768', expectedCount: 2 },
+  ])('generates $expectedCount variants at $resolution', async ({ count, resolution, expectedCount }) => {
+    const dom = new JSDOM('<div id="go-perchance-job-mailbox"></div><div id="go-perchance-result-mailbox"></div>', {
+      runScripts: 'dangerously', url: 'https://worker.perchance.org/interactive-ai-story-worker',
+    })
+    openWindows.push(dom)
+    const calls: { resolution: string }[] = []
+    Object.defineProperty(dom.window, 'generateImage', { value: async (options: { resolution: string }) => {
+      calls.push(options)
+      return `data:image/png;base64,variant-${calls.length}`
+    } })
+    dom.window.eval(workerScript)
+    dom.window.document.getElementById('go-perchance-job-mailbox')!.textContent = JSON.stringify({ id: 'configured-job', prompt: 'a courier', count, resolution })
+    const result = await waitForResult(dom.window.document.getElementById('go-perchance-result-mailbox')!, value => value.images?.length === expectedCount)
+    expect(result.images).toHaveLength(expectedCount)
+    expect(calls).toHaveLength(expectedCount)
+    expect(calls.every(options => options.resolution === resolution)).toBe(true)
+  })
+
+  test.each([0, 5, 1.5])('rejects invalid count %s before calling provider', async count => {
+    const dom = new JSDOM('<div id="go-perchance-job-mailbox"></div><div id="go-perchance-result-mailbox"></div>', {
+      runScripts: 'dangerously', url: 'https://worker.perchance.org/interactive-ai-story-worker',
+    })
+    openWindows.push(dom)
+    let calls = 0
+    Object.defineProperty(dom.window, 'generateImage', { value: async () => { calls++; return 'data:image/png;base64,test' } })
+    dom.window.eval(workerScript)
+    dom.window.document.getElementById('go-perchance-job-mailbox')!.textContent = JSON.stringify({ id: 'invalid-job', prompt: 'a courier', count })
+    const result = await waitForResult(dom.window.document.getElementById('go-perchance-result-mailbox')!, value => Boolean(value.error))
+    expect(result.error).toContain('integer from 1 to 4')
+    expect(calls).toBe(0)
+  })
+
   test('retries provider failures and replays a successful result without regenerating', async () => {
     const dom = new JSDOM('<div id="go-perchance-job-mailbox"></div><div id="go-perchance-result-mailbox"></div>', {
       runScripts: 'dangerously',
