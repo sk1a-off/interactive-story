@@ -18,6 +18,7 @@ type Config struct {
 	LocalUsername                      string
 	MediaRoot                          string
 	MediaBaseURL                       string
+	ImageWorkerToken                   string
 	SecretStorePath                    string
 	OmniVoiceURL                       string
 	GenerationContextShadow            bool
@@ -42,6 +43,7 @@ func Load() (Config, error) {
 		LocalUsername:                      envOrDefault("LOCAL_USERNAME", "local"),
 		MediaRoot:                          envOrDefault("MEDIA_ROOT", "./data/generated"),
 		MediaBaseURL:                       envOrDefault("MEDIA_BASE_URL", "/media"),
+		ImageWorkerToken:                   strings.TrimSpace(os.Getenv("IMAGE_WORKER_TOKEN")),
 		SecretStorePath:                    envOrDefault("SECRET_STORE_PATH", "../data/secrets/provider-keys.json"),
 		OmniVoiceURL:                       envOrDefault("OMNIVOICE_BASE_URL", "http://127.0.0.1:6655"),
 		GenerationContextShadow:            envEnabled("GENERATION_CONTEXT_SHADOW_V1"),

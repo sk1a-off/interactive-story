@@ -1,24 +1,56 @@
 // ==UserScript==
 // @name         Interactive Story Perchance Transport
 // @namespace    local.interactive-story
-// @version      1.2.0
+// @version      1.3.0
 // @description  Localhost <-> dedicated Perchance worker via a scoped DOM mailbox.
 // @match        https://perchance.org/interactive-ai-story-worker*
 // @match        https://*.perchance.org/interactive-ai-story-worker*
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // @connect      127.0.0.1
+// @connect      localhost
 // @run-at       document-idle
 // ==/UserScript==
 (() => {
   'use strict';
 
-  const API = ['http:', '', '127.0.0.1:8787'].join('/');
+  const DEFAULT_API = ['http:', '', '127.0.0.1:8787'].join('/');
+  const API_SETTING = 'interactiveStoryApiBaseUrl';
+  const TOKEN_SETTING = 'interactiveStoryImageWorkerToken';
+  const normalizeAPI = value => String(value || DEFAULT_API).trim().replace(/\/+$/, '');
+  let API = normalizeAPI(GM_getValue(API_SETTING, DEFAULT_API));
+  let WORKER_TOKEN = String(GM_getValue(TOKEN_SETTING, '') || '').trim();
   const WORKER_ID = 'browser-local-1';
   const POLL_MS = 1500;
   const HEARTBEAT_MS = 10000;
   const ACTIVE_JOB_STALE_MS = 6 * 60 * 1000;
 
   if (location.pathname !== '/interactive-ai-story-worker') return;
+
+  GM_registerMenuCommand('Interactive Story: backend address', () => {
+    const next = window.prompt('Backend address, without a trailing slash:', API);
+    if (next === null) return;
+    const normalized = normalizeAPI(next);
+    try {
+      const parsed = new URL(normalized);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('unsupported protocol');
+    } catch (_) {
+      window.alert('Enter a valid http:// or https:// backend address.');
+      return;
+    }
+    GM_setValue(API_SETTING, normalized);
+    API = normalized;
+    window.location.reload();
+  });
+  GM_registerMenuCommand('Interactive Story: worker token', () => {
+    const next = window.prompt('Enter a new IMAGE_WORKER_TOKEN. Leave empty to disable the header:', '');
+    if (next === null) return;
+    WORKER_TOKEN = String(next).trim();
+    GM_setValue(TOKEN_SETTING, WORKER_TOKEN);
+    window.location.reload();
+  });
 
   let activeJob = null;
   let activeJobClaimedAt = 0;
@@ -58,6 +90,7 @@
         headers: {
           'Content-Type': 'application/json',
           'X-Image-Worker-ID': WORKER_ID,
+          ...(WORKER_TOKEN ? {'Authorization': `Bearer ${WORKER_TOKEN}`} : {}),
         },
         data: body === undefined ? undefined : JSON.stringify(body),
         timeout: 30000,

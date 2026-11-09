@@ -51,6 +51,24 @@ No CAPTCHA/Turnstile bypass is implemented. If Perchance requests manual verific
 
 The backend is bound to loopback by default (`127.0.0.1:8787`).
 
+## Backend address and optional authentication
+
+The userscript menu contains two settings:
+
+- **Interactive Story: backend address** — defaults to `http://127.0.0.1:8787`;
+- **Interactive Story: worker token** — optional and stored by Violentmonkey.
+
+Set `IMAGE_WORKER_TOKEN` for the backend and enter the same value in the
+userscript menu. When the environment variable is non-empty, every
+`/internal/image-worker/*` request without `Authorization: Bearer <token>` is
+rejected with HTTP 401. An empty environment variable preserves the local-only
+development behavior. The token is never placed in a URL or printed by the
+userscript.
+
+The installed userscript grants connections to `127.0.0.1` and `localhost`.
+If the backend uses another hostname, add that hostname to the userscript's
+`@connect` metadata before selecting it in the menu.
+
 ## Public endpoints
 
 - `POST /api/v1/stories/{storyID}/scenes/{sceneID}/images`

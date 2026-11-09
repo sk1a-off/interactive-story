@@ -44,6 +44,7 @@ services:
       STORY_LLM_MODEL: ${STORY_LLM_MODEL:-Vikhr-Nemo-12B-Instruct-R-21-09-24-Q5_K_M}
       STORY_LLM_PROFILE: ${STORY_LLM_PROFILE:-llamacpp-16k-kvq8}
       STORY_LLM_API_KEY: ${STORY_LLM_API_KEY:-}
+      IMAGE_WORKER_TOKEN: ${IMAGE_WORKER_TOKEN:-}
       SECRET_STORE_PATH: /data/secrets/provider-keys.json
     extra_hosts:
       - "host.docker.internal:host-gateway"

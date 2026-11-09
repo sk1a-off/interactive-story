@@ -26,6 +26,7 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("APP_ENV", "")
 	t.Setenv("HTTP_ADDR", "")
 	t.Setenv("DATABASE_URL", "")
+	t.Setenv("IMAGE_WORKER_TOKEN", " worker-secret ")
 	t.Setenv("SECRET_STORE_PATH", "")
 
 	cfg, err := Load()
@@ -40,5 +41,8 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if cfg.SecretStorePath != "../data/secrets/provider-keys.json" {
 		t.Fatalf("SecretStorePath = %q", cfg.SecretStorePath)
+	}
+	if cfg.ImageWorkerToken != "worker-secret" {
+		t.Fatalf("ImageWorkerToken was not loaded and trimmed")
 	}
 }

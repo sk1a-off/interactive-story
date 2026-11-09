@@ -248,6 +248,7 @@ func main() {
 	if closeDatabase != nil {
 		defer closeDatabase()
 	}
+	handler = httpapi.RequireImageWorkerToken(handler, cfg.ImageWorkerToken)
 
 	serveHandler := handler
 	if cfg.MediaRoot != "" {
