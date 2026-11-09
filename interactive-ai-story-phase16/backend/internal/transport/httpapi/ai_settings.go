@@ -18,6 +18,9 @@ type AISettingsApplication interface {
 }
 
 func registerAISettingsRoutes(r chi.Router, a AISettingsApplication) {
+	if memory, ok := a.(memorySettingsApplication); ok {
+		registerMemorySettingsRoutes(r, memory)
+	}
 	r.Get("/api/v1/settings/ai", func(w http.ResponseWriter, req *http.Request) {
 		v, e := a.List(req.Context())
 		if e != nil {

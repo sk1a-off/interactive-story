@@ -83,7 +83,7 @@ func TestMemoryOutboxIsAtomicScopedAndMonotonic(t *testing.T) {
 	if err = tx.QueryRow(ctx, `SELECT observed_event_seq FROM memory_index_state WHERE timeline_id=$1`, timeline).Scan(&cursor); err != nil || cursor != 2 {
 		t.Fatalf("snapshot regressed dirty cursor=%d error=%v", cursor, err)
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO memory_index_jobs(story_id,timeline_id,source_kind,source_event_id,source_event_seq) VALUES($1,$2,'event',$3,2) ON CONFLICT(source_event_id) DO NOTHING`, story, timeline, eventID); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO memory_index_jobs(story_id,timeline_id,source_kind,source_event_id,source_event_seq) VALUES($1,$2,'event',$3,2) ON CONFLICT DO NOTHING`, story, timeline, eventID); err != nil {
 		t.Fatal(err)
 	}
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM memory_index_jobs WHERE story_id=$1`, story).Scan(&count); err != nil || count != 2 {

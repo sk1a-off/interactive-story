@@ -20,7 +20,8 @@ type memoryQueueDB interface {
 type MemoryIndexQueue struct {
 	db memoryQueueDB
 	// Optional restriction for a story-specific worker or reindex run.
-	StoryID id.ID
+	StoryID       id.ID
+	IndexRevision int64
 }
 
 func NewMemoryIndexQueue(db memoryQueueDB) *MemoryIndexQueue { return &MemoryIndexQueue{db: db} }
@@ -45,7 +46,7 @@ func (q *MemoryIndexQueue) Claim(ctx context.Context, owner string, now time.Tim
  lease_owner=NULL,lease_token=NULL,lease_until=NULL,available_at=$1,
  completed_at=CASE WHEN attempts>=max_attempts THEN $1::timestamptz ELSE NULL END,
  last_error='lease expired'
- WHERE status='running' AND lease_until<=$1 AND (NULLIF($2,'')::uuid IS NULL OR story_id=NULLIF($2,'')::uuid)`, now, q.StoryID.String()); err != nil {
+ WHERE status='running' AND lease_until<=$1 AND COALESCE(index_revision,0)=$3 AND (NULLIF($2,'')::uuid IS NULL OR story_id=NULLIF($2,'')::uuid)`, now, q.StoryID.String(), q.IndexRevision); err != nil {
 		return repo.Job{}, err
 	}
 	var job repo.Job
@@ -53,19 +54,21 @@ func (q *MemoryIndexQueue) Claim(ctx context.Context, owner string, now time.Tim
  SELECT j.id FROM memory_index_jobs j
  JOIN timelines t ON t.id=j.timeline_id JOIN stories s ON s.id=j.story_id
  WHERE j.status='queued' AND j.available_at<=$1 AND j.attempts<j.max_attempts
+ AND COALESCE(j.index_revision,0)=$5
+ AND (j.index_revision IS NULL OR EXISTS(SELECT 1 FROM memory_index_profiles p WHERE p.revision=j.index_revision AND p.status IN ('building','serving')))
  AND (NULLIF($4,'')::uuid IS NULL OR j.story_id=NULLIF($4,'')::uuid)
  AND t.status<>'deleted' AND s.status<>'deleted'
- AND NOT EXISTS(SELECT 1 FROM memory_index_jobs active WHERE active.timeline_id=j.timeline_id AND active.status='running')
+ AND NOT EXISTS(SELECT 1 FROM memory_index_jobs active WHERE active.timeline_id=j.timeline_id AND active.index_revision IS NOT DISTINCT FROM j.index_revision AND active.status='running')
  AND NOT EXISTS(SELECT 1 FROM memory_index_jobs preceding WHERE preceding.timeline_id=j.timeline_id
-  AND preceding.status<>'completed'
+  AND preceding.index_revision IS NOT DISTINCT FROM j.index_revision AND preceding.status<>'completed'
   AND ROW(preceding.source_event_seq,preceding.created_at,preceding.id)<ROW(j.source_event_seq,j.created_at,j.id))
  ORDER BY j.created_at,j.id FOR UPDATE OF j SKIP LOCKED LIMIT 1
 )
 UPDATE memory_index_jobs j SET status='running',attempts=attempts+1,lease_owner=$2,lease_token=gen_random_uuid(),lease_until=$3,completed_at=NULL
 FROM candidate c WHERE j.id=c.id
 RETURNING j.id::text,j.story_id::text,j.timeline_id::text,j.source_kind,COALESCE(j.source_event_id,j.source_snapshot_id)::text,
- j.source_event_seq,j.attempts,j.max_attempts,j.lease_owner,j.lease_token::text,j.lease_until`, now, owner, now.Add(ttl), q.StoryID.String()).Scan(
-		&job.ID, &job.StoryID, &job.TimelineID, &job.SourceKind, &job.SourceID, &job.SourceEventSeq, &job.Attempts, &job.MaxAttempts, &job.LeaseOwner, &job.LeaseToken, &job.LeaseUntil)
+ j.source_event_seq,j.attempts,j.max_attempts,j.lease_owner,j.lease_token::text,j.lease_until,COALESCE(j.index_revision,0)`, now, owner, now.Add(ttl), q.StoryID.String(), q.IndexRevision).Scan(
+		&job.ID, &job.StoryID, &job.TimelineID, &job.SourceKind, &job.SourceID, &job.SourceEventSeq, &job.Attempts, &job.MaxAttempts, &job.LeaseOwner, &job.LeaseToken, &job.LeaseUntil, &job.IndexRevision)
 	if errors.Is(err, pgx.ErrNoRows) {
 		// Expired terminal jobs must remain recovered even if no new job exists.
 		if err = tx.Commit(ctx); err != nil {

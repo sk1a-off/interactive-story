@@ -51,6 +51,19 @@ type LLMPromptBuilder struct {
 	LLMFactory        StoryLLMFactory
 	Memory            *memorycontext.Service
 	MemoryCheckpoints imagegenerationrepo.MemoryCheckpointResolver
+	// Factory selects the image LLM and memory from the same AI revision.
+	ContextFactory func(context.Context) (ai.StoryLLM, id.ID, *memorycontext.Service, error)
+}
+
+func (b LLMPromptBuilder) resolve(ctx context.Context) (ai.StoryLLM, id.ID, *memorycontext.Service, error) {
+	if b.ContextFactory != nil {
+		return b.ContextFactory(ctx)
+	}
+	if b.LLMFactory == nil {
+		return nil, "", nil, errors.New("visual prompt LLM unavailable")
+	}
+	llm, pid, err := b.LLMFactory(ctx)
+	return llm, pid, b.Memory, err
 }
 
 type visualPromptResponse struct {
@@ -92,9 +105,13 @@ func clampParagraphAnchor(anchor, paragraphCount int) int {
 }
 
 func (b LLMPromptBuilder) Build(ctx context.Context, s imagegenerationrepo.SceneSource, force bool) (ImagePrompt, error) {
-	if b.LLMFactory == nil {
-		return ImagePrompt{}, errors.New("visual prompt LLM unavailable")
+	llm, pid, memory, err := b.resolve(ctx)
+	if err != nil {
+		return ImagePrompt{}, err
 	}
+	b.Memory = memory
+	b.ContextFactory = nil
+	b.LLMFactory = func(context.Context) (ai.StoryLLM, id.ID, error) { return llm, pid, nil }
 	return b.build(ctx, s, force, b.memoryContext(ctx, s))
 }
 
@@ -164,13 +181,13 @@ func (b LLMPromptBuilder) build(ctx context.Context, s imagegenerationrepo.Scene
 }
 
 func (b LLMPromptBuilder) BuildMoments(ctx context.Context, s imagegenerationrepo.SceneSource, forceAtLeastOne bool) ([]ImagePrompt, error) {
-	if b.LLMFactory == nil {
-		return nil, errors.New("visual prompt LLM unavailable")
-	}
-	llm, promptSetID, err := b.LLMFactory(ctx)
+	llm, promptSetID, mem, err := b.resolve(ctx)
 	if err != nil {
 		return nil, err
 	}
+	b.Memory = mem
+	b.ContextFactory = nil
+	b.LLMFactory = func(context.Context) (ai.StoryLLM, id.ID, error) { return llm, promptSetID, nil }
 	input := map[string]any{
 		"forceAtLeastOne": forceAtLeastOne,
 		"maxMoments":      2,
@@ -249,13 +266,11 @@ func (b LLMPromptBuilder) BuildForParagraph(ctx context.Context, s imagegenerati
 	if paragraph < 1 || paragraph > len(paragraphs) {
 		return ImagePrompt{}, ErrInvalidVisualPrompt
 	}
-	if b.LLMFactory == nil {
-		return ImagePrompt{}, errors.New("visual prompt LLM unavailable")
-	}
-	llm, promptSetID, err := b.LLMFactory(ctx)
+	llm, promptSetID, mem, err := b.resolve(ctx)
 	if err != nil {
 		return ImagePrompt{}, err
 	}
+	b.Memory = mem
 	input := map[string]any{
 		"forceIllustration":        true,
 		"targetParagraph":          map[string]any{"paragraph": paragraph, "text": paragraphs[paragraph-1]},

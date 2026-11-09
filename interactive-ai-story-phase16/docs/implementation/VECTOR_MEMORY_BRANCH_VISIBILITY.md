@@ -21,7 +21,11 @@ publication lag. Migration 00039 adds Russian FTS. Context Builder now has an
 opt-in branch-aware path that independently validates source provenance, scopes,
 embedding identity, and a separate memory budget. It is tested against the hybrid
 adapter. Optional hooks now pass its bounded supplement to director, writer,
-turn planner, and image prompts; server settings/startup do not inject them yet.
+turn planner, and image prompts. Runtime settings now enable these hooks and the
+background indexer explicitly; memory remains disabled by default. Only a fully
+built, owner/endpoint/model-scoped serving profile is selected. Reindexing builds
+a separate revision and keeps the prior serving revision until atomic promotion.
+See `MEMORY_RUNTIME_SETTINGS_2026-11-09.md` for runtime checks and setup.
 The removed lore guard and world-rule feature remain removed, and structured
 rule memories are excluded before ranking. See `MEMORY_ROLE_INPUTS_2026-11-09.md`
 for the role integration and current-checkout differences, and

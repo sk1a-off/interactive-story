@@ -7,6 +7,7 @@ import (
 	domain "github.com/local/interactive-ai-story/backend/internal/domain/aiconfig"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/ports/aiconfigrepo"
+	memrepo "github.com/local/interactive-ai-story/backend/internal/ports/memoryruntimerepo"
 	"github.com/local/interactive-ai-story/backend/internal/ports/secrets"
 	"strings"
 )
@@ -18,6 +19,10 @@ func SecretKey(revisionID id.ID) string { return "story_llm_api_key:" + revision
 type Service struct {
 	Repo    aiconfigrepo.Repository
 	Secrets secrets.Store
+	Memory  interface {
+		MemoryStatus(context.Context) (memrepo.Status, error)
+		MemoryReindex(context.Context) (memrepo.Status, error)
+	}
 }
 type UpdateRequest struct {
 	Config          domain.CreateRevisionCommand `json:"config"`
@@ -100,9 +105,22 @@ func (s Service) Activate(ctx context.Context, i id.ID) (domain.SafeView, error)
 func (s Service) safe(ctx context.Context, v domain.Revision, active bool) domain.SafeView {
 	var pub domain.PublicSettings
 	_ = json.Unmarshal(v.Settings, &pub)
-	pub = pub.WithImageDefaults()
+	pub = pub.WithImageDefaults().WithMemoryDefaults()
 	keyCount := len(CredentialKeys(ctx, s.Secrets, v.ID))
 	return domain.SafeView{ID: v.ID.String(), Revision: v.Revision, StoryLLM: v.StoryLLM, Embedding: v.Embedding, Image: v.Image, Public: pub, Active: active, StoryLLMSecretConfigured: keyCount > 0, StoryLLMSecretCount: keyCount}
+}
+
+func (s Service) MemoryStatus(ctx context.Context) (memrepo.Status, error) {
+	if s.Memory == nil {
+		return memrepo.Status{}, errors.New("memory runtime unavailable")
+	}
+	return s.Memory.MemoryStatus(ctx)
+}
+func (s Service) MemoryReindex(ctx context.Context) (memrepo.Status, error) {
+	if s.Memory == nil {
+		return memrepo.Status{}, errors.New("memory runtime unavailable")
+	}
+	return s.Memory.MemoryReindex(ctx)
 }
 
 func CredentialKeys(ctx context.Context, store secrets.Store, revisionID id.ID) []string {

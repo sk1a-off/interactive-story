@@ -25,6 +25,9 @@ import (
 	appgen "github.com/local/interactive-ai-story/backend/internal/application/generation"
 	appimagegen "github.com/local/interactive-ai-story/backend/internal/application/imagegeneration"
 	appjobs "github.com/local/interactive-ai-story/backend/internal/application/jobs"
+	"github.com/local/interactive-ai-story/backend/internal/application/memorycontext"
+	"github.com/local/interactive-ai-story/backend/internal/application/memoryindex"
+	"github.com/local/interactive-ai-story/backend/internal/application/memoryruntime"
 	appnarration "github.com/local/interactive-ai-story/backend/internal/application/narration"
 	appprompt "github.com/local/interactive-ai-story/backend/internal/application/promptset"
 	"github.com/local/interactive-ai-story/backend/internal/application/saves"
@@ -39,6 +42,8 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	"github.com/local/interactive-ai-story/backend/internal/observability"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
+	"github.com/local/interactive-ai-story/backend/internal/ports/memory"
+	indexrepo "github.com/local/interactive-ai-story/backend/internal/ports/memoryindexrepo"
 	"github.com/local/interactive-ai-story/backend/internal/transport/httpapi"
 )
 
@@ -105,6 +110,25 @@ func main() {
 			_ = secretStore.Set(context.Background(), appaiconfig.SecretKey(activeAtBoot.ID), cfg.StoryLLMAPIKey)
 		}
 		aiSettingsService := appaiconfig.Service{Repo: configRepo, Secrets: secretStore}
+		memoryState := pgadapter.NewMemoryRuntimeRepository(pool)
+		memoryState.OwnerID = ownerID
+		memoryRuntime := &memoryruntime.Controller{Configs: configRepo, State: memoryState, OwnerID: ownerID, DefaultEndpoint: cfg.EmbeddingBaseURL, Logger: logger,
+			Embeddings: func(rev domainconfig.Revision, endpoint string) (aiport.EmbeddingProvider, error) {
+				if rev.Embedding.Provider != "local_sentence_transformers" {
+					return nil, errors.New("unsupported embedding provider")
+				}
+				return localembeddings.New(endpoint, rev.Embedding.Model, nil)
+			},
+			Builder: func(e aiport.EmbeddingProvider, p memory.EmbeddingProfile) contextbuilder.Builder {
+				return contextbuilder.Builder{Embeddings: e, Memory: pgadapter.NewHybridMemoryRetriever(pool), Visibility: pgadapter.NewMemoryVisibilityResolver(pool), Profile: p, RetrievalTimeout: time.Second}
+			},
+			Worker: func(e aiport.EmbeddingProvider, p indexrepo.Profile) memoryindex.Worker {
+				queue := pgadapter.NewMemoryIndexQueue(pool)
+				queue.IndexRevision = p.Revision
+				return memoryindex.Worker{Queue: queue, Store: pgadapter.NewMemoryIndexStore(pool), Embeddings: e, Profile: p, Owner: fmt.Sprintf("memory-worker-%d", p.Revision)}
+			},
+		}
+		aiSettingsService.Memory = memoryRuntime
 		promptSettingsService := appprompt.Service{Repo: promptRepo}
 		storyClient := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (aiport.StoryLLM, error) {
 			var public domainconfig.PublicSettings
@@ -141,17 +165,17 @@ func main() {
 			}
 			return storyClient(ctx, rev, &promptRev)
 		}
-		imageStoryFactory := func(ctx context.Context) (aiport.StoryLLM, id.ID, error) {
+		imageStoryFactory := func(ctx context.Context) (aiport.StoryLLM, id.ID, *memorycontext.Service, error) {
 			rev, err := configRepo.Active(ctx)
 			if err != nil {
-				return nil, "", err
+				return nil, "", nil, err
 			}
 			promptRev, err := promptRepo.Active(ctx)
 			if err != nil {
-				return nil, "", err
+				return nil, "", nil, err
 			}
 			llm, err := storyClient(ctx, rev, &promptRev)
-			return llm, promptRev.ID, err
+			return llm, promptRev.ID, memoryRuntime.ForRevision(ctx, rev), err
 		}
 		setupRepo := pgadapter.NewSetupRepository(pool)
 		setupService := storysetup.Service{Repo: setupRepo, LLMFactory: storyFactory, Now: time.Now, OwnerID: story.UserID(ownerID)}
@@ -199,7 +223,7 @@ func main() {
 			if cfg.GenerationTurnPlanner {
 				planner = appgen.LLMTurnPlanner{LLM: llm}
 			}
-			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, Planner: planner, ProvisionalBeat: cfg.GenerationProvisionalBeat, JournalEvidenceIsolationV1: cfg.GenerationJournalEvidenceIsolation}, nil
+			return appgen.Pipeline{LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, Planner: planner, Memory: memoryRuntime.ForRevision(ctx, rev), ProvisionalBeat: cfg.GenerationProvisionalBeat, JournalEvidenceIsolationV1: cfg.GenerationJournalEvidenceIsolation}, nil
 		}
 		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}
 		imageStorage, storageErr := localimages.New(cfg.MediaRoot, cfg.MediaBaseURL)
@@ -208,7 +232,7 @@ func main() {
 			os.Exit(1)
 		}
 		imageGenerationRepo := pgadapter.NewImageGenerationRepository(pool)
-		imageService := appimagegen.Service{Repo: imageGenerationRepo, Configs: configRepo, Prompts: appimagegen.LLMPromptBuilder{LLMFactory: appimagegen.StoryLLMFactory(imageStoryFactory)}, Storage: imageStorage, Now: time.Now, LeaseTimeout: 5 * time.Minute, Logger: logger}
+		imageService := appimagegen.Service{Repo: imageGenerationRepo, Configs: configRepo, Prompts: appimagegen.LLMPromptBuilder{ContextFactory: imageStoryFactory, MemoryCheckpoints: imageGenerationRepo}, Storage: imageStorage, Now: time.Now, LeaseTimeout: 5 * time.Minute, Logger: logger}
 		narrationService, narrationErr := appnarration.NewService(cfg.OmniVoiceURL, nil)
 		if narrationErr != nil {
 			logger.Error("OmniVoice narration config invalid", "error", narrationErr)
@@ -242,6 +266,7 @@ func main() {
 				startRestarting(worker.Owner, func(runCtx context.Context) error { return worker.Run(runCtx, 250*time.Millisecond) })
 			}
 			startRestarting(promptWorker.Owner, func(runCtx context.Context) error { return promptWorker.Run(runCtx, 250*time.Millisecond) })
+			startRestarting("memory-worker", memoryRuntime.Run)
 		}
 		handler = httpapi.NewRouterWithApplicationsAndReadiness(saveService, gameRunner, setupService, setupRepo, readerRepo, directorService, aiSettingsService, promptSettingsService, imageService, narrationService, pool)
 	}

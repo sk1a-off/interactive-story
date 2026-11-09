@@ -99,9 +99,13 @@ func (s *MemoryIndexStore) Publish(ctx context.Context, job repo.Job, profile re
 	var status, owner, token string
 	var until *time.Time
 	var sourceSeq int64
-	if err = tx.QueryRow(ctx, `SELECT status,COALESCE(lease_owner,''),COALESCE(lease_token::text,''),lease_until,source_event_seq
- FROM memory_index_jobs WHERE id=$1 AND story_id=$2 AND timeline_id=$3 AND source_kind=$4 AND COALESCE(source_event_id,source_snapshot_id)=$5 FOR UPDATE`, job.ID, job.StoryID, job.TimelineID, job.SourceKind, job.SourceID).Scan(&status, &owner, &token, &until, &sourceSeq); err != nil {
+	var indexRevision int64
+	if err = tx.QueryRow(ctx, `SELECT status,COALESCE(lease_owner,''),COALESCE(lease_token::text,''),lease_until,source_event_seq,COALESCE(index_revision,0)
+ FROM memory_index_jobs WHERE id=$1 AND story_id=$2 AND timeline_id=$3 AND source_kind=$4 AND COALESCE(source_event_id,source_snapshot_id)=$5 FOR UPDATE`, job.ID, job.StoryID, job.TimelineID, job.SourceKind, job.SourceID).Scan(&status, &owner, &token, &until, &sourceSeq, &indexRevision); err != nil {
 		return err
+	}
+	if indexRevision != job.IndexRevision || (indexRevision > 0 && indexRevision != profile.Revision) {
+		return repo.ErrLeaseLost
 	}
 	if status == "completed" {
 		var matches bool
@@ -112,6 +116,15 @@ func (s *MemoryIndexStore) Publish(ctx context.Context, job repo.Job, profile re
 			return tx.Commit(ctx)
 		}
 		return repo.ErrLeaseLost
+	}
+	if indexRevision > 0 {
+		var matches bool
+		if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM memory_index_profiles WHERE revision=$1 AND provider_name=$2 AND model_name=$3 AND status IN ('building','serving'))`, indexRevision, profile.Provider, profile.Model).Scan(&matches); err != nil {
+			return err
+		}
+		if !matches {
+			return repo.ErrLeaseLost
+		}
 	}
 	if status != "running" || owner != job.LeaseOwner || token != job.LeaseToken.String() || until == nil || !until.After(now) || sourceSeq != job.SourceEventSeq {
 		return repo.ErrLeaseLost

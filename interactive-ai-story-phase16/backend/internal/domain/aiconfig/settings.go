@@ -46,9 +46,18 @@ type PublicSettings struct {
 	ImageEndpoint      string `json:"imageEndpoint"`
 	ImageResolution    string `json:"image_resolution"`
 	ImageCount         *int   `json:"image_count,omitempty"`
+	MemoryEnabled      bool   `json:"memoryEnabled"`
+	MemoryTopK         *int   `json:"memoryTopK,omitempty"`
+	MemoryTokenBudget  *int   `json:"memoryTokenBudget,omitempty"`
 }
 
 func (s PublicSettings) Validate() error {
+	if s.MemoryTopK != nil && (*s.MemoryTopK < 1 || *s.MemoryTopK > 100) {
+		return ErrInvalidPublicSettings
+	}
+	if s.MemoryTokenBudget != nil && (*s.MemoryTokenBudget < 256 || *s.MemoryTokenBudget > 8192) {
+		return ErrInvalidPublicSettings
+	}
 	if s.ImageResolution != "" && s.ImageResolution != "768x768" && s.ImageResolution != "512x768" && s.ImageResolution != "768x512" {
 		return ErrInvalidPublicSettings
 	}
@@ -81,8 +90,20 @@ func (s PublicSettings) WithImageDefaults() PublicSettings {
 }
 
 func (s PublicSettings) JSON() json.RawMessage {
-	b, _ := json.Marshal(s.WithImageDefaults())
+	b, _ := json.Marshal(s.WithImageDefaults().WithMemoryDefaults())
 	return b
+}
+
+func (s PublicSettings) WithMemoryDefaults() PublicSettings {
+	if s.MemoryTopK == nil {
+		n := 8
+		s.MemoryTopK = &n
+	}
+	if s.MemoryTokenBudget == nil {
+		n := 1024
+		s.MemoryTokenBudget = &n
+	}
+	return s
 }
 
 type CreateRevisionCommand struct {
@@ -93,6 +114,9 @@ type CreateRevisionCommand struct {
 }
 
 func (c CreateRevisionCommand) Validate() error {
+	if c.Public.MemoryEnabled && c.Embedding.Provider != "local_sentence_transformers" {
+		return ErrInvalidPublicSettings
+	}
 	if c.StoryLLM.Kind != aiport.KindStoryLLM || c.StoryLLM.Provider == "" || c.StoryLLM.Model == "" ||
 		c.Embedding.Kind != aiport.KindEmbedding || c.Embedding.Provider == "" || c.Embedding.Model == "" ||
 		c.Image.Kind != aiport.KindImage || c.Image.Provider == "" || c.Image.Model == "" {

@@ -27,6 +27,7 @@ type Job struct {
 	LeaseOwner     string
 	LeaseToken     id.ID
 	LeaseUntil     time.Time
+	IndexRevision  int64
 }
 
 type Queue interface {

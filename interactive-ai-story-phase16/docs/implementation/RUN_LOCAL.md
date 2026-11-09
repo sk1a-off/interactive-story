@@ -54,7 +54,7 @@ go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres
 cd ..
 ```
 
-Migrations currently run through `00039_memory_russian_search.sql`.
+Migrations currently run through `00040_memory_runtime_profiles.sql`.
 See `DEVELOPMENT.md` for the complete ordered list.
 
 ## 4. Start the Story LLM

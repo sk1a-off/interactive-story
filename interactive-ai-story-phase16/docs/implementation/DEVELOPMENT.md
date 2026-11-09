@@ -55,6 +55,29 @@ provider secret store. `.env.example` contains non-secret examples only.
 
 ## Verification
 
+### Optional story memory
+
+Apply migrations through 00040 before using memory. In AI Settings, enable story
+memory, choose top-k (1–100, default 8) and estimated memory tokens (256–8192,
+default 1024), then save a new revision. Older revisions default to disabled.
+`memoryEnabled`, `memoryTopK`, and `memoryTokenBudget` are public revision fields.
+The embedding endpoint uses the revision's `embeddingEndpoint`, falling back to
+`EMBEDDING_BASE_URL`. Memory currently supports `local_sentence_transformers`.
+
+`GET /api/v1/settings/memory` reports preparation/progress/failure and the serving
+revision. `POST /api/v1/settings/memory/reindex` accepts an empty JSON object,
+requires memory enabled, and requests a new background build. Concurrent requests
+reuse the current build. The old index remains serving until the new build
+finishes. A failed rebuild leaves the old serving profile in place.
+
+The controller polls settings; disabled memory makes no model calls. A setting
+change is observed at the next controller cycle and does not cancel an already
+running indexing attempt. Retrieval stays bounded and optional. See
+[`MEMORY_RUNTIME_SETTINGS_2026-11-09.md`](MEMORY_RUNTIME_SETTINGS_2026-11-09.md)
+for setup, scope, and verification limitations.
+
+### Standard checks
+
 Backend:
 
 ```bash
@@ -122,7 +145,7 @@ for the same branch/ref.
 ## Migration inventory
 
 Migrations are append-only. Never edit an already applied migration. The next
-migration after this inventory must be `00040_*`.
+migration after this inventory must be `00041_*`.
 
 ```text
 00001_extensions.sql
@@ -164,4 +187,5 @@ migration after this inventory must be `00040_*`.
 00037_memory_index_outbox.sql
 00038_memory_index_publication.sql
 00039_memory_russian_search.sql
+00040_memory_runtime_profiles.sql
 ```

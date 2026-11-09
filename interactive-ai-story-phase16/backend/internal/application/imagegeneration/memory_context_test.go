@@ -117,3 +117,17 @@ func TestVisualMemoryUsesBeatCheckpointAndSurvivesRepairsAndFallback(t *testing.
 		})
 	}
 }
+
+func TestImageContextFactoryIsPinnedAcrossMomentFallback(t *testing.T) {
+	valid := []byte(`{"shouldIllustrate":true,"importance":1,"visualSummary":"A traveler approaches the ancient stone tower at night","positivePrompt":"a traveler approaching an ancient stone tower at night under pale moonlight, cinematic fantasy illustration with detailed natural anatomy","negativePrompt":"text, captions"}`)
+	llm := &visualLLM{outputs: [][]byte{[]byte(`{"moments":[]}`), valid}}
+	calls := 0
+	b := LLMPromptBuilder{ContextFactory: func(context.Context) (ai.StoryLLM, id.ID, *memorycontext.Service, error) {
+		calls++
+		return llm, "pinned-prompt", nil, nil
+	}, LLMFactory: func(context.Context) (ai.StoryLLM, id.ID, error) { panic("legacy factory used") }}
+	out, err := b.BuildMoments(context.Background(), repo.SceneSource{Text: "Путник входит в башню."}, true)
+	if err != nil || calls != 1 || len(out) != 1 || out[0].PromptSetRevisionID != "pinned-prompt" {
+		t.Fatalf("factory repinned during fallback: calls=%d result=%+v error=%v", calls, out, err)
+	}
+}

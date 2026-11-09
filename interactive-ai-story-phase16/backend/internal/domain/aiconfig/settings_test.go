@@ -8,6 +8,31 @@ import (
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
 
+func TestMemorySettingsDefaultOffAndBounded(t *testing.T) {
+	defaults := (PublicSettings{}).WithMemoryDefaults()
+	if defaults.MemoryEnabled || *defaults.MemoryTopK != 8 || *defaults.MemoryTokenBudget != 1024 {
+		t.Fatal("unsafe memory defaults")
+	}
+	for _, n := range []int{0, -1, 101} {
+		s := PublicSettings{StoryLLMContext: 16384, MemoryTopK: &n}
+		if s.Validate() == nil {
+			t.Fatalf("top-k accepted %d", n)
+		}
+	}
+	for _, n := range []int{0, 255, 8193} {
+		s := PublicSettings{StoryLLMContext: 16384, MemoryTokenBudget: &n}
+		if s.Validate() == nil {
+			t.Fatalf("budget accepted %d", n)
+		}
+	}
+	for _, n := range []int{256, 1024, 8192} {
+		s := PublicSettings{StoryLLMContext: 16384, MemoryTokenBudget: &n}
+		if s.Validate() != nil {
+			t.Fatalf("valid budget rejected %d", n)
+		}
+	}
+}
+
 func TestImageSettingsValidationAndLegacyDefaults(t *testing.T) {
 	for _, resolution := range []string{"", "768x768", "512x768", "768x512"} {
 		for count := 1; count <= 4; count++ {
