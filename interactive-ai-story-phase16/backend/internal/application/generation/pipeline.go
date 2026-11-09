@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/local/interactive-ai-story/backend/internal/application/llmpolicy"
+	"github.com/local/interactive-ai-story/backend/internal/application/memorycontext"
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
@@ -158,6 +159,7 @@ type Pipeline struct {
 	Sink                       Sink
 	Metrics                    func(generationmetrics.Metrics)
 	ContextShadow              ShadowContext
+	Memory                     *memorycontext.Service
 	Planner                    TurnPlanner
 	Extractor                  CanonExtractor
 	ProvisionalBeat            bool
@@ -212,6 +214,9 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	contextNoWorld := contextWithout(target, "initialCast", "world")
 	contextNoJournal := contextWithout(target, "heroJournal")
 	quests := questHierarchy(target.Objectives)
+	// One bounded lookup is shared by planning and writing; repair requests
+	// reuse it without additional embedding calls.
+	retrievedMemory := p.memoryContext(ctx, a, target)
 	metrics.ContextBuildMS = time.Since(contextBuildStarted).Milliseconds()
 	if p.ContextShadow != nil {
 		shadowStarted := time.Now()
@@ -238,7 +243,13 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	var dir direction
 	var pacing pacingDecision
 	if p.Planner != nil {
-		plan, planErr := p.Planner.Plan(ctx, a, target, activeInstructions)
+		var plan TurnPlan
+		var planErr error
+		if planner, ok := p.Planner.(memoryTurnPlanner); ok && retrievedMemory != nil {
+			plan, planErr = planner.PlanWithMemory(ctx, a, target, activeInstructions, retrievedMemory)
+		} else {
+			plan, planErr = p.Planner.Plan(ctx, a, target, activeInstructions)
+		}
 		if planErr != nil {
 			return fail(planErr)
 		}
@@ -260,7 +271,9 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 			metrics.ActionIntentFallbackUsed = true
 		}
 		pub(PhaseDirecting, "", "")
-		if err := p.role(ctx, "director", "v1", map[string]any{"intent": in.Intent, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}, &dir); err != nil {
+		directorInput := map[string]any{"intent": in.Intent, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}
+		memorycontext.Attach(directorInput, retrievedMemory)
+		if err := p.role(ctx, "director", "v1", directorInput, &dir); err != nil {
 			return fail(err)
 		}
 		if dir.Goal == "" {
@@ -285,6 +298,7 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		Text string `json:"text"`
 	}
 	writerInput := map[string]any{"intent": in.Intent, "goal": dir.Goal, "pacing": pacing, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}
+	memorycontext.Attach(writerInput, retrievedMemory)
 	if err := p.role(ctx, "writer", "v1", writerInput, &draft); err != nil {
 		return fail(err)
 	}

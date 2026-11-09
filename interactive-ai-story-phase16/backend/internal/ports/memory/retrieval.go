@@ -28,6 +28,7 @@ type Query struct {
 	// retrieval remains available for callers that have not migrated yet.
 	Text    string
 	Profile EmbeddingProfile
+	Kinds   []string
 }
 type EmbeddingProfile struct {
 	Provider string

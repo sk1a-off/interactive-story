@@ -111,6 +111,22 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 	if len(sources) != 1 || len(sources[0].ExcludedParagraphs) != 1 || sources[0].ExcludedParagraphs[0] != 1 {
 		t.Fatalf("occupied anchor was not loaded for the visual director: %#v", sources)
 	}
+	if checkpoint, resolveErr := imageRepo.ResolveMemoryCheckpoint(ctx, storyID, timelineID, sceneID, beatID); resolveErr != nil || checkpoint != nil {
+		t.Fatalf("legacy beat inferred checkpoint: %v %v", checkpoint, resolveErr)
+	}
+	if _, err = pool.Exec(ctx, `UPDATE timelines SET head_event_seq=2 WHERE id=$1`, timelineID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, `INSERT INTO story_events(timeline_id,seq,event_type,payload) VALUES($1,1,'beat_committed',jsonb_build_object('beatId',$2::text)),($1,2,'player_action_attempted','{}')`, timelineID, beatID); err != nil {
+		t.Fatal(err)
+	}
+	if checkpoint, resolveErr := imageRepo.ResolveMemoryCheckpoint(ctx, storyID, timelineID, sceneID, beatID); resolveErr != nil || checkpoint == nil || *checkpoint != 1 {
+		t.Fatalf("beat checkpoint used future head: %v %v", checkpoint, resolveErr)
+	}
+	wrongStory, _ := id.New()
+	if checkpoint, resolveErr := imageRepo.ResolveMemoryCheckpoint(ctx, wrongStory, timelineID, sceneID, beatID); resolveErr != nil || checkpoint != nil {
+		t.Fatalf("foreign story checkpoint: %v %v", checkpoint, resolveErr)
+	}
 	if _, err = pool.Exec(ctx, `UPDATE image_generations SET status='failed',finished_at=now(),error_code='test' WHERE story_id=$1`, storyID); err != nil {
 		t.Fatal(err)
 	}

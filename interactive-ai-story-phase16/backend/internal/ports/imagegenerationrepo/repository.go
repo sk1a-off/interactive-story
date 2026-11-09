@@ -22,6 +22,8 @@ type SceneSource struct {
 	InitialCast, VisualBible             string
 	BeatPosition                         int
 	ExcludedParagraphs                   []int
+	// Nil for legacy/cloned beats without a local immutable commit event.
+	AtEventSeq *int64
 }
 type Repository interface {
 	LoadSceneSource(context.Context, id.ID, id.ID) (SceneSource, error)
@@ -36,6 +38,9 @@ type Repository interface {
 	Heartbeat(context.Context, string, *id.ID, time.Time) error
 	WorkerStatus(context.Context, time.Time) (WorkerStatus, error)
 	SelectImage(context.Context, id.ID, id.ID) error
+}
+type MemoryCheckpointResolver interface {
+	ResolveMemoryCheckpoint(context.Context, id.ID, id.ID, id.ID, id.ID) (*int64, error)
 }
 type WorkerStatus struct {
 	Connected          bool       `json:"connected"`

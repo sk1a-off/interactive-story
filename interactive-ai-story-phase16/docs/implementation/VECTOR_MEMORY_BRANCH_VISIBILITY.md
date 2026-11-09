@@ -20,7 +20,11 @@ vector/Russian lexical ranking, and suppresses branch state during profile-speci
 publication lag. Migration 00039 adds Russian FTS. Context Builder now has an
 opt-in branch-aware path that independently validates source provenance, scopes,
 embedding identity, and a separate memory budget. It is tested against the hybrid
-adapter but is not wired into live role inputs or runtime settings yet. See
+adapter. Optional hooks now pass its bounded supplement to director, writer,
+turn planner, and image prompts; server settings/startup do not inject them yet.
+The removed lore guard and world-rule feature remain removed, and structured
+rule memories are excluded before ranking. See `MEMORY_ROLE_INPUTS_2026-11-09.md`
+for the role integration and current-checkout differences, and
 `MEMORY_CONTEXT_BUILDER_2026-11-09.md` for these integration checks and
 `MEMORY_HYBRID_SEARCH_2026-11-09.md` for the search checks and boundaries, and
 `MEMORY_INDEX_PUBLICATION_2026-11-09.md` for publication checks.

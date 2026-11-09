@@ -10,6 +10,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/local/interactive-ai-story/backend/internal/application/memorycontext"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
@@ -47,7 +48,9 @@ type SceneParagraphPromptBuilder interface {
 type StoryLLMFactory func(context.Context) (ai.StoryLLM, id.ID, error)
 
 type LLMPromptBuilder struct {
-	LLMFactory StoryLLMFactory
+	LLMFactory        StoryLLMFactory
+	Memory            *memorycontext.Service
+	MemoryCheckpoints imagegenerationrepo.MemoryCheckpointResolver
 }
 
 type visualPromptResponse struct {
@@ -92,6 +95,13 @@ func (b LLMPromptBuilder) Build(ctx context.Context, s imagegenerationrepo.Scene
 	if b.LLMFactory == nil {
 		return ImagePrompt{}, errors.New("visual prompt LLM unavailable")
 	}
+	return b.build(ctx, s, force, b.memoryContext(ctx, s))
+}
+
+func (b LLMPromptBuilder) build(ctx context.Context, s imagegenerationrepo.SceneSource, force bool, supplement *memorycontext.Supplement) (ImagePrompt, error) {
+	if b.LLMFactory == nil {
+		return ImagePrompt{}, errors.New("visual prompt LLM unavailable")
+	}
 	llm, promptSetID, err := b.LLMFactory(ctx)
 	if err != nil {
 		return ImagePrompt{}, err
@@ -118,6 +128,7 @@ func (b LLMPromptBuilder) Build(ctx context.Context, s imagegenerationrepo.Scene
 		},
 	}
 	var out visualPromptResponse
+	memorycontext.Attach(input, supplement)
 	if err := generateVisualPrompt(ctx, llm, input, &out); err != nil {
 		return ImagePrompt{}, err
 	}
@@ -133,6 +144,7 @@ func (b LLMPromptBuilder) Build(ctx context.Context, s imagegenerationrepo.Scene
 			"previousInvalidOutput": out,
 			"instruction":           "Rewrite positivePrompt, negativePrompt and visualSummary in English only. Depict exactly one frozen cinematic frame. Do not include comic panels, speech bubbles, captions or multiple chronological moments.",
 		}
+		memorycontext.Attach(repair, supplement)
 		if err := generateVisualPrompt(ctx, llm, repair, &out); err != nil {
 			return ImagePrompt{}, err
 		}
@@ -175,6 +187,8 @@ func (b LLMPromptBuilder) BuildMoments(ctx context.Context, s imagegenerationrep
 		"initialCast":        jsonValue(s.InitialCast),
 		"visualBible":        jsonValue(s.VisualBible),
 	}
+	supplement := b.memoryContext(ctx, s)
+	memorycontext.Attach(input, supplement)
 	raw, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -221,7 +235,7 @@ func (b LLMPromptBuilder) BuildMoments(ctx context.Context, s imagegenerationrep
 		})
 	}
 	if forceAtLeastOne && len(out) == 0 && len(s.ExcludedParagraphs) == 0 {
-		one, err := b.Build(ctx, s, true)
+		one, err := b.build(ctx, s, true, supplement)
 		if err != nil {
 			return nil, err
 		}
@@ -251,6 +265,7 @@ func (b LLMPromptBuilder) BuildForParagraph(ctx context.Context, s imagegenerati
 		"instruction": "Create the prompt on demand for exactly the selected paragraph. Depict its best frozen visual instant. Do not move to another paragraph and do not turn spoken words into visible text.",
 	}
 	var out visualPromptResponse
+	memorycontext.Attach(input, b.memoryContext(ctx, s))
 	if err = generateParagraphVisualPrompt(ctx, llm, input, &out); err != nil {
 		return ImagePrompt{}, err
 	}

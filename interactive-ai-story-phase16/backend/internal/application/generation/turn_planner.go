@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/local/interactive-ai-story/backend/internal/application/memorycontext"
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 	"github.com/local/interactive-ai-story/backend/internal/ports/generationtarget"
@@ -37,11 +38,17 @@ type TurnPlanner interface {
 type LLMTurnPlanner struct{ LLM aiport.StoryLLM }
 
 func (p LLMTurnPlanner) Plan(ctx context.Context, action PlayerAction, target generationtarget.Target, instructions []narrative.DirectorInstruction) (TurnPlan, error) {
-	input, err := json.Marshal(map[string]any{
+	return p.PlanWithMemory(ctx, action, target, instructions, nil)
+}
+
+func (p LLMTurnPlanner) PlanWithMemory(ctx context.Context, action PlayerAction, target generationtarget.Target, instructions []narrative.DirectorInstruction, supplement *memorycontext.Supplement) (TurnPlan, error) {
+	payload := map[string]any{
 		"action": action.Text, "directorInstructions": instructions,
 		"quests": questHierarchy(target.Objectives), "heroJournal": target.Journal,
 		"context": contextWithout(target, "objectives", "heroJournal"),
-	})
+	}
+	memorycontext.Attach(payload, supplement)
+	input, err := json.Marshal(payload)
 	if err != nil {
 		return TurnPlan{}, err
 	}

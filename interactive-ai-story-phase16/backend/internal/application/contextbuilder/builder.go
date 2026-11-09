@@ -3,6 +3,7 @@ package contextbuilder
 import (
 	"context"
 	"errors"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -35,6 +36,7 @@ type Input struct {
 	// Nil keeps the legacy budget; branch-aware retrieval defaults to 1024.
 	// Zero disables retrieval without invoking dependencies.
 	MemoryTokenBudget *int
+	RetrievalKinds    []string
 }
 type Result struct {
 	// Authoritative state is deliberately separate and first-class; retrieval
@@ -109,7 +111,7 @@ func (b Builder) Build(ctx context.Context, in Input) (Result, error) {
 		out.RetrievalError = "memory retrieval cancelled"
 		return finish()
 	}
-	found, err := b.Memory.Search(ctx, memory.Query{StoryID: in.State.StoryID, TimelineID: in.State.TimelineID, OwnerType: in.OwnerType, OwnerID: in.OwnerID, AtEventSeq: in.State.HeadEventSeq, Vector: e.Vectors[0], Limit: in.RetrievalLimit, Text: in.QueryText, Profile: b.Profile})
+	found, err := b.Memory.Search(ctx, memory.Query{StoryID: in.State.StoryID, TimelineID: in.State.TimelineID, OwnerType: in.OwnerType, OwnerID: in.OwnerID, AtEventSeq: in.State.HeadEventSeq, Vector: e.Vectors[0], Limit: in.RetrievalLimit, Text: in.QueryText, Profile: b.Profile, Kinds: in.RetrievalKinds})
 	if err != nil {
 		out.RetrievalError = "memory search unavailable"
 		return finish()
@@ -122,6 +124,9 @@ func (b Builder) Build(ctx context.Context, in Input) (Result, error) {
 	// leaking sibling/foreign/invalid memories into an LLM context.
 	eligible := make([]memory.Memory, 0, len(found))
 	for _, item := range found {
+		if len(in.RetrievalKinds) > 0 && !slices.Contains(in.RetrievalKinds, item.Kind) {
+			continue
+		}
 		if branchAware && !allowsBranchMemory(plan, b.Profile, in, item) {
 			continue
 		}

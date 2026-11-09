@@ -71,7 +71,7 @@ func (r *HybridMemoryRetriever) Search(ctx context.Context, q memory.Query) ([]m
 	rows, err := r.q.Query(ctx, hybridMemorySQL,
 		q.StoryID.String(), id.ID(q.TimelineID).String(), string(q.OwnerType), q.OwnerID.String(), q.AtEventSeq,
 		q.Profile.Provider, q.Profile.Model, q.Profile.Revision,
-		timelines, after, at, vectorLiteral(q.Vector), q.Text, 4*q.Limit, q.Limit)
+		timelines, after, at, vectorLiteral(q.Vector), q.Text, 4*q.Limit, q.Limit, q.Kinds)
 	if err != nil {
 		return nil, err
 	}
@@ -102,6 +102,7 @@ WITH segments AS (
  WHERE m.story_id=$1::uuid
    AND m.embedding_provider=$6 AND m.embedding_model=$7 AND m.embedding_revision=$8
    AND m.source_key IS NOT NULL
+   AND (COALESCE(cardinality($16::text[]),0)=0 OR m.kind=ANY($16::text[]))
    AND m.owner_type=$3
    AND m.owner_id=CASE WHEN $3='timeline' THEN s.timeline_id ELSE $4::uuid END
    AND (

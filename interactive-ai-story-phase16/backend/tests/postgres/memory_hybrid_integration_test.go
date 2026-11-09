@@ -321,6 +321,26 @@ func TestHybridSearchBreaksEqualRanksByOriginalID(t *testing.T) {
 	}
 }
 
+func TestHybridSearchFiltersKindsBeforeEitherRankWindow(t *testing.T) {
+	f := newHybridFixture(t)
+	allowed := f.document(f.root, "allowed", "historical_beat", "без совпадений", 1, nil, hybridVector(0, 1))
+	f.exec(`UPDATE memory_embeddings SET kind='beat' WHERE id=$1`, allowed)
+	for i := range 12 {
+		blocked := f.document(f.root, fmt.Sprint("rule-", i), "historical_beat", "дракон дракон дракон", 1, nil, hybridVector(1, 0))
+		f.exec(`UPDATE memory_embeddings SET kind='world_rule' WHERE id=$1`, blocked)
+	}
+	q := f.query(f.root, 2)
+	q.Limit = 1
+	q.Kinds = []string{"beat"}
+	if rows := f.search(q); len(rows) != 1 || rows[0].ID != allowed {
+		t.Fatalf("forbidden kinds consumed rank window: %+v", rows)
+	}
+	q.Kinds = []string{"missing"}
+	if rows := f.search(q); len(rows) != 0 {
+		t.Fatal("unknown kind returned data")
+	}
+}
+
 type capturingMemoryQuerier struct {
 	tx   pgx.Tx
 	sql  string
