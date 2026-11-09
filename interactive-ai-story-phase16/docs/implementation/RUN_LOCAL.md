@@ -54,7 +54,7 @@ go run github.com/pressly/goose/v3/cmd/goose@v3.24.2 -dir db/migrations postgres
 cd ..
 ```
 
-Migrations currently run through `00037_memory_index_outbox.sql`.
+Migrations currently run through `00038_memory_index_publication.sql`.
 See `DEVELOPMENT.md` for the complete ordered list.
 
 ## 4. Start the Story LLM

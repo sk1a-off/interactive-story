@@ -12,8 +12,12 @@ immutable plans. PostgreSQL integration tests resolve real timeline/save-point
 edges inside a rolled-back fixture transaction. Existing search and Context
 Builder have not yet been switched to this plan. Migration 00037 now captures
 event/snapshot work transactionally; the queue implements ordered claims,
-recovery, retry, and lease-token fencing. Embedding execution, publication,
-hybrid ranking, and runtime memory settings remain subsequent work.
+recovery, retry, and lease-token fencing. Migration 00038 and the memory indexing
+worker now implement exact-checkpoint document extraction, batched embeddings,
+and atomic version publication. The worker is not started by the application
+yet. Hybrid ranking, retrieval integration, and runtime memory settings remain
+subsequent work. See `MEMORY_INDEX_PUBLICATION_2026-11-09.md` for executed checks
+and the current boundaries.
 
 ## Existing behavior verified in this checkout
 

@@ -122,7 +122,7 @@ for the same branch/ref.
 ## Migration inventory
 
 Migrations are append-only. Never edit an already applied migration. The next
-migration after this inventory must be `00038_*`.
+migration after this inventory must be `00039_*`.
 
 ```text
 00001_extensions.sql
@@ -162,4 +162,5 @@ migration after this inventory must be `00038_*`.
 00035_provisional_generation_updates.sql
 00036_perchance_image_dimensions.sql
 00037_memory_index_outbox.sql
+00038_memory_index_publication.sql
 ```
