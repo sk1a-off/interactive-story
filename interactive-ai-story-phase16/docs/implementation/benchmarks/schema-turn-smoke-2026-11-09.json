@@ -1,0 +1,621 @@
+{
+  "schemaSha256": "de8a0b02c92e592b55f46c8d191a1b4a7d6988f883d3f039efc342c644e626da",
+  "jsonSchema": true,
+  "Mode": "paired-full-turn-v1",
+  "Status": "measured",
+  "StartedAt": "2026-11-09T18:53:04.401160023Z",
+  "FinishedAt": "2026-11-09T18:56:11.86408807Z",
+  "Provider": "configured",
+  "ConfigID": "68c83eeb-d301-4db9-a58d-9a05a111eb4e",
+  "ConfigRevision": 26,
+  "PromptID": "905196f5-c502-4170-953a-c7f3aeaa9982",
+  "PromptRevision": 25,
+  "PromptSHA256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "FixtureSHA256": "23021e1d07bffa9404a856af915b93003c0b609df060b8763c8901ef94eac973",
+  "PrimaryModel": "antigravity-preview-05-2026",
+  "SafeHybrid": true,
+  "Planner": true,
+  "Provisional": true,
+  "FastState": true,
+  "JournalIsolation": true,
+  "Embedding": {
+    "kind": "embedding",
+    "provider": "fake",
+    "model": "deterministic-embedding-v1",
+    "profile": "test"
+  },
+  "Repeats": 1,
+  "Seed": 20261109,
+  "FixtureOwner": "dd7baaf4-87dd-44a0-b5a2-44b3c3aedb6d",
+  "CleanupVerified": true,
+  "Runs": [
+    {
+      "case": "conversation",
+      "repeat": 1,
+      "pair": "conversation/1",
+      "memory": false,
+      "order": 1,
+      "succeeded": true,
+      "elapsedMs": 107166.026684,
+      "draftReadyMs": 66061.189584,
+      "firstAvailableTextMs": 66061.190304,
+      "readyMs": 107166.025414,
+      "text": "— Мира, где именно начинается обещанный проход к башне? — спокойно спросил Илья, удерживая развернутую карту водовода и поправив полу синего дорожного плаща. — Снаружи площадь залита водой, и если уровень реки поднимется еще сильнее, береговой путь отрежет окончательно. Ты говорила, что архив позволит обойти опасные потоки.\n\nАрхивистка отвела взгляд от запертой внутренней двери и повернулась к спутнику. Её лицо оставалось сдержанным, а в движениях сквозила собранность человека, привыкшего беречь порядок и тишину среди древних свитков. Осторожно коснувшись пальцем бумаги, она указала на обозначенную на схеме каменную галерею, которая тянулась в обход затопленной каменной пристани. Мира заговорила ровно и негромко, однако в её голосе явственно прозвучала строгая решимость: путь к цели действительно существовал, но защита архива от разрушительной стихии оставалась для неё неизменным условием любого дальнейшего шага.\n\n— Начало прохода находится сразу за этой дверью, — проговорила она, жестом указывая на запертую массивную преграду. — В глубине короткого коридора начинается старый служебный водовод. Он сложен из крепкого тесаного камня и пролегает выше нынешней кромки паводка, ведя прямиком к подножию северной башни. Мы сумеем обойти затопленные участки поверху, но ты должен твердо помнить об осторожности. Шум снаружи лишь нарастает, и любая оплошность рискует впустить речные потоки в нижние помещения.\n\nОна добавила, что как только они переступят порог, тяжелую створку потребуется немедленно запереть за собой, надежно отсекая хранилище от сырости и возможного прорыва стихии. Илья внимательно выслушал её указания, мысленно сопоставил описанный подъем с чертежом на карте водовода и утвердительно кивнул. Расположение галереи и порядок действий были понятны без лишних расспросов; теперь оставалось лишь справиться с запором на двери архива и начать переход.",
+      "Words": 261,
+      "Paragraphs": 4,
+      "Choices": 4,
+      "calls": [
+        {
+          "responseFormat": "json_schema",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 0.138619,
+          "EndMS": 1437.850732,
+          "ElapsedMS": 1437.712113,
+          "InputTokens": 1231,
+          "OutputTokens": 209,
+          "InputBytes": 2231,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 2,
+          "role": "writer",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 1438.12181,
+          "EndMS": 66059.965212,
+          "ElapsedMS": 64621.843402,
+          "InputTokens": 6695,
+          "OutputTokens": 522,
+          "InputBytes": 2421,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 3,
+          "role": "quest_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 66061.269173,
+          "EndMS": 95125.684809,
+          "ElapsedMS": 29064.415636,
+          "InputTokens": 7233,
+          "OutputTokens": 231,
+          "InputBytes": 6022,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 66061.272473,
+          "EndMS": 67110.634883,
+          "ElapsedMS": 1049.36241,
+          "InputTokens": 2025,
+          "OutputTokens": 4,
+          "InputBytes": 5874,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 5,
+          "role": "world_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 66061.279933,
+          "EndMS": 107165.861325,
+          "ElapsedMS": 41104.581392,
+          "InputTokens": 6534,
+          "OutputTokens": 4,
+          "InputBytes": 5900,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 6,
+          "role": "choices",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 95126.029357,
+          "EndMS": 96488.922602,
+          "ElapsedMS": 1362.893245,
+          "InputTokens": 1963,
+          "OutputTokens": 187,
+          "InputBytes": 7299,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "stages": {
+        "queueWaitMs": 0,
+        "targetLoadMs": 0,
+        "contextBuildMs": 0,
+        "contextShadowMs": 0,
+        "shadowRetrievedCount": 0,
+        "choicesFallbackUsed": false,
+        "actionIntentFallbackUsed": false,
+        "plannerMs": 1437,
+        "writerMs": 64623,
+        "postWriterMs": 41104,
+        "validationMs": 0,
+        "commitMs": 0,
+        "unattributedMs": 2,
+        "totalMs": 107166,
+        "timeToFirstStoryTextMs": 66061,
+        "succeeded": true
+      },
+      "memoryDocuments": 0
+    },
+    {
+      "case": "conversation",
+      "repeat": 1,
+      "pair": "conversation/1",
+      "memory": true,
+      "order": 2,
+      "succeeded": true,
+      "elapsedMs": 80270.433536,
+      "draftReadyMs": 28508.517659,
+      "firstAvailableTextMs": 28508.518089,
+      "readyMs": 80270.432236,
+      "text": "— Прямо через эту дверь мы не пройдем, — спокойно произнес Илья, удерживая сухой лист карты перед собой. — Где именно начинается обещанный путь, Мира?\n\nАрхивистка шагнула ближе и указала пальцем на плотную сетку линий в нижней части листа, где галереи пересекались с каналом.\n\n— Здесь, через запасной вход со стороны водовода, — ответила она сдержанно. — Внутренняя дверь архива заперта на засов изнутри, чтобы прибывающая вода не добралась до нижних полок. Нам нужно пройти к помещению с медными трубами. Сразу за ним в каменную кладку врезана лестница, по которой можно безопасно подняться в обход затопленного яруса.\n\nИлья внимательно сверил ее слова с отметками на чертеже, запоминая точное расположение прохода к башне.",
+      "Words": 112,
+      "Paragraphs": 4,
+      "Choices": 4,
+      "calls": [
+        {
+          "responseFormat": "json_schema",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 3.721006,
+          "EndMS": 1487.974134,
+          "ElapsedMS": 1484.253128,
+          "InputTokens": 2067,
+          "OutputTokens": 214,
+          "InputBytes": 4549,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 3
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 2,
+          "role": "writer",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 1488.102043,
+          "EndMS": 28507.931113,
+          "ElapsedMS": 27019.82907,
+          "InputTokens": 7528,
+          "OutputTokens": 212,
+          "InputBytes": 4724,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 3
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 3,
+          "role": "quest_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 28508.591099,
+          "EndMS": 53790.919295,
+          "ElapsedMS": 25282.328196,
+          "InputTokens": 6920,
+          "OutputTokens": 210,
+          "InputBytes": 3867,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 4,
+          "role": "world_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 28508.598949,
+          "EndMS": 80270.321146,
+          "ElapsedMS": 51761.722197,
+          "InputTokens": 6224,
+          "OutputTokens": 4,
+          "InputBytes": 3760,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 5,
+          "role": "state_evaluator",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 28508.600729,
+          "EndMS": 29736.135736,
+          "ElapsedMS": 1227.535007,
+          "InputTokens": 1715,
+          "OutputTokens": 4,
+          "InputBytes": 3734,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_schema",
+          "sequence": 6,
+          "role": "choices",
+          "model": "gemini-3.5-flash-lite",
+          "StartMS": 53791.093754,
+          "EndMS": 55012.909993,
+          "ElapsedMS": 1221.816239,
+          "InputTokens": 1621,
+          "OutputTokens": 121,
+          "InputBytes": 4990,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "stages": {
+        "queueWaitMs": 0,
+        "targetLoadMs": 0,
+        "contextBuildMs": 3,
+        "contextShadowMs": 0,
+        "shadowRetrievedCount": 0,
+        "choicesFallbackUsed": false,
+        "actionIntentFallbackUsed": false,
+        "plannerMs": 1484,
+        "writerMs": 27020,
+        "postWriterMs": 51761,
+        "validationMs": 0,
+        "commitMs": 0,
+        "unattributedMs": 2,
+        "totalMs": 80270,
+        "timeToFirstStoryTextMs": 28508,
+        "succeeded": true
+      },
+      "memoryDocuments": 3
+    }
+  ],
+  "Summary": [
+    {
+      "memory": false,
+      "Runs": 1,
+      "Succeeded": 1,
+      "Failed": 0,
+      "FirstText": {
+        "count": 1,
+        "medianMs": 66061.190304,
+        "p95Ms": 66061.190304
+      },
+      "Ready": {
+        "count": 1,
+        "medianMs": 107166.025414,
+        "p95Ms": 107166.025414
+      },
+      "Total": {
+        "count": 1,
+        "medianMs": 107166.026684,
+        "p95Ms": 107166.026684
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 1963,
+          "OutputTokens": 187,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1362.893245,
+            "p95Ms": 1362.893245
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 7233,
+          "OutputTokens": 231,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 29064.415636,
+            "p95Ms": 29064.415636
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 2025,
+          "OutputTokens": 4,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1049.36241,
+            "p95Ms": 1049.36241
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 1231,
+          "OutputTokens": 209,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1437.712113,
+            "p95Ms": 1437.712113
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 6534,
+          "OutputTokens": 4,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 41104.581392,
+            "p95Ms": 41104.581392
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 6695,
+          "OutputTokens": 522,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 64621.843402,
+            "p95Ms": 64621.843402
+          }
+        }
+      ],
+      "memorySkipped": 0
+    },
+    {
+      "memory": true,
+      "Runs": 1,
+      "Succeeded": 1,
+      "Failed": 0,
+      "FirstText": {
+        "count": 1,
+        "medianMs": 28508.518089,
+        "p95Ms": 28508.518089
+      },
+      "Ready": {
+        "count": 1,
+        "medianMs": 80270.432236,
+        "p95Ms": 80270.432236
+      },
+      "Total": {
+        "count": 1,
+        "medianMs": 80270.433536,
+        "p95Ms": 80270.433536
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 1621,
+          "OutputTokens": 121,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1221.816239,
+            "p95Ms": 1221.816239
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 6920,
+          "OutputTokens": 210,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 25282.328196,
+            "p95Ms": 25282.328196
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 1715,
+          "OutputTokens": 4,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1227.535007,
+            "p95Ms": 1227.535007
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 2067,
+          "OutputTokens": 214,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 1484.253128,
+            "p95Ms": 1484.253128
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 6224,
+          "OutputTokens": 4,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 51761.722197,
+            "p95Ms": 51761.722197
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "InputTokens": 7528,
+          "OutputTokens": 212,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 27019.82907,
+            "p95Ms": 27019.82907
+          }
+        }
+      ],
+      "memorySkipped": 0
+    }
+  ],
+  "Notes": [
+    "Frozen synthetic targets only; configuration DB is read-only, credentials and user-story content are never reported.",
+    "Production Pipeline and Safe Hybrid routing are used. Memory-off/on pairs share the same initial target and action; generated prose can differ.",
+    "First available text is a draft-ready event when enabled, otherwise completion; client network/render time, durable queue, and real SQL Canon commit are excluded.",
+    "Per-role wall times overlap. HTTP POST/GET counts distinguish provider polling from role calls; extra HTTP requests are not automatically retries.",
+    "Reported usage belongs to logical response telemetry and can omit rejected/escalated calls. Zero tokens do not prove zero provider consumption.",
+    "Latency summaries use succeeded turns; failed elapsed times remain in per-run records. This does not validate literary quality or measure durable telemetry persistence.",
+    "Fake embeddings measure wiring only, not semantic memory quality."
+  ],
+  "paired": [
+    {
+      "pair": "conversation/1",
+      "FirstTextMS": -37552.672215,
+      "ReadyMS": -26895.59317800001,
+      "TotalMS": -26895.593148,
+      "InputTokens": 394,
+      "OutputTokens": -392,
+      "Words": -149
+    }
+  ]
+}

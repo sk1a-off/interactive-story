@@ -142,17 +142,17 @@ func main() {
 				return nil, errors.New("Google AI API key is not configured for the active AI revision")
 			}
 			if public.StoryLLMSafeHybrid {
-				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 1200 * time.Second, PromptSet: promptRev}, nil)
+				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 1200 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
 				if err != nil {
 					return nil, err
 				}
-				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 12 * time.Minute, PromptSet: promptRev}, nil)
+				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 12 * time.Minute, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
 				if err != nil {
 					return nil, err
 				}
 				return storyrouter.NewSafeHybridWithFastState(fast, quality, cfg.GenerationFastState)
 			}
-			return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: 120 * time.Second, PromptSet: promptRev}, nil)
+			return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: 120 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
 		}
 		storyFactory := func(ctx context.Context) (aiport.StoryLLM, error) {
 			rev, err := configRepo.Active(ctx)

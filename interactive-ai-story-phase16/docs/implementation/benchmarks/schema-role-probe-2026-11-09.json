@@ -1,0 +1,1303 @@
+{
+  "status": "measured",
+  "provider": "configured",
+  "configId": "68c83eeb-d301-4db9-a58d-9a05a111eb4e",
+  "configRevision": 26,
+  "promptSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "fixtureSha256": "f4d7d01f8c5556ab08ed547462dac52280a748fbbd9fe6b3318bef8413601eed",
+  "StartedAt": "2026-11-09T18:45:51.028036705Z",
+  "FinishedAt": "2026-11-09T18:51:59.804214147Z",
+  "repeats": 2,
+  "concurrency": 2,
+  "seed": 20261109,
+  "runs": [
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "84b91afabf54d5b9a60496f50299b89a3700b9414b16cff7c1761a1e2db6d07a",
+      "output": "{\"changes\":[{\"category\":\"item\",\"description\":\"Латунный ключ от двери архива\",\"evidenceQuote\":\"Мира передала Илье латунный ключ\",\"name\":\"Латунный ключ\",\"operation\":\"create\",\"quantity\":1,\"status\":\"active\",\"tags\":[\"ключ\"]}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00081,
+        "EndMS": 1438.857677,
+        "ElapsedMS": 1438.856867,
+        "InputTokens": 1536,
+        "OutputTokens": 57,
+        "InputBytes": 2558,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "turn_planner",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"immediateGoal\": \"Спокойно задать Мире вопрос о начале обещанного прохода и выслушать её ответ, не меняя текущего положения у запертой двери архива.\",\n  \"transition\": \"continue_scene\",\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"mood\": \"настороженное спокойствие\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\"\n  },\n  \"riskFlags\": []\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00142,
+        "EndMS": 1835.80202,
+        "ElapsedMS": 1835.8006,
+        "InputTokens": 1231,
+        "OutputTokens": 176,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "84b91afabf54d5b9a60496f50299b89a3700b9414b16cff7c1761a1e2db6d07a",
+      "output": "{\n  \"changes\": [\n    {\n      \"operation\": \"create\",\n      \"category\": \"item\",\n      \"name\": \"Латунный ключ\",\n      \"description\": \"Ключ от двери архива\",\n      \"quantity\": 1,\n      \"level\": \"обычный\",\n      \"status\": \"active\",\n      \"evidenceQuote\": \"Мира передала Илье латунный ключ\",\n      \"tags\": [\n        \"ключ\",\n        \"предмет\"\n      ]\n    }\n  ]\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00027,
+        "EndMS": 1039.945509,
+        "ElapsedMS": 1039.945239,
+        "InputTokens": 1536,
+        "OutputTokens": 123,
+        "InputBytes": 2558,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "turn_planner",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"chapter\": {\n    \"goal\": \"Найти безопасный путь к северной башне\",\n    \"title\": \"Архив у реки\",\n    \"tone\": \"grounded adventure\"\n  },\n  \"immediateGoal\": \"Илья спокойно спрашивает Миру о начале обещанного прохода, а она дает ответ.\",\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"riskFlags\": [],\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\",\n    \"mood\": \"настороженное спокойствие\"\n  },\n  \"transition\": \"continue_scene\"\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00083,
+        "EndMS": 1346.897663,
+        "ElapsedMS": 1346.896833,
+        "InputTokens": 1231,
+        "OutputTokens": 207,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "writer",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "0e7d9ea02da32cabacbf5285e1d57cf8b051c36022bc70d1081ec9ed96cad4e5",
+      "output": "{\"text\":\"— Если верить отметкам, старый сток должен уходить вправо от центрального свода, — негромко произнес Илья, придерживая пальцем край чертежа. — Где именно начинается проход к башне, Мира? Нам необходимо миновать нижний ярус прежде, чем уровень поднимется еще выше.\\n\\nАрхивистка повернулась к нему и указала на массивный засов перед ними. По ее словам, галерея водовода брала начало сразу за порогом: каменный коридор огибал книжные хранилища по верхнему карнизу и вел напрямую к основанию северной башни. Пока внутренние заслонки сдерживали речной напор, настил поверху оставался нетронут водой, но тянуть время было нельзя.\\n\\nИлья внимательно сопоставил ее слова со схемой на пергаменте. Направление совпадало с расчетами строителей, однако сырость и глухой плеск за кладкой напоминали, что внутри потребуется соблюдать крайнюю осторожность.\"}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "writer",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00068,
+        "EndMS": 29135.978978,
+        "ElapsedMS": 29135.978298,
+        "InputTokens": 6681,
+        "OutputTokens": 236,
+        "InputBytes": 2365,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "writer",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "0e7d9ea02da32cabacbf5285e1d57cf8b051c36022bc70d1081ec9ed96cad4e5",
+      "output": "{\"text\":\"— Где именно начинается галерея? — негромко спросил он, придерживая край листа от сырого сквозняка. — Если судить по отметкам водовода, русло за кладкой наполняется слишком быстро.\\n\\nМира обернулась от запертой двери, бросив сдержанный взгляд на чертеж. В вечернем полумраке её голос прозвучал ровно и сухо:\\n\\n— Спуск расположен прямо за этим порогом, в старом сводчатом коридоре. Дренажная ветка проходит выше основного потока и выводит к подошве башни в обход затопленной набережной. Только путь по ней свободен, пока вода не поднялась еще на фут.\\n\\nИлья перевел взгляд на массивные засовы, отделявшие их от прохода. Подозрения не рассеялись полностью, но направление казалось верным, и теперь оставалось лишь преодолеть запертый замок.\"}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "writer",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00064,
+        "EndMS": 23249.676785,
+        "ElapsedMS": 23249.676145,
+        "InputTokens": 6681,
+        "OutputTokens": 217,
+        "InputBytes": 2365,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "5508e99f4563c89cb0b02da82027ac39b6b8fdf549c42601e5cb515d2344e22a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"reference\":\"missing_archivist\",\"scope\":\"global\",\"kind\":\"quest\",\"questType\":\"side\",\"title\":\"Пропавший архивист\",\"description\":\"Мира попросила помочь найти пропавшего архивиста.\",\"successCriteria\":\"Пропавший архивист найден\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"},{\"operation\":\"create\",\"parentReference\":\"missing_archivist\",\"scope\":\"minor\",\"kind\":\"task\",\"title\":\"Разыскать пропавшего архивиста\",\"description\":\"Отыскать пропавшего архивиста по просьбе Миры.\",\"successCriteria\":\"Местонахождение пропавшего архивиста установлено\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00038,
+        "EndMS": 55394.981366,
+        "ElapsedMS": 55394.980986,
+        "InputTokens": 6735,
+        "OutputTokens": 186,
+        "InputBytes": 2675,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "e12d7d7ff0794c6a6299a9ae967961cf438a57859ff14b6e8bcb82648ad845b6",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00059,
+        "EndMS": 10801.817156,
+        "ElapsedMS": 10801.816566,
+        "InputTokens": 6701,
+        "OutputTokens": 4,
+        "InputBytes": 2463,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "e12d7d7ff0794c6a6299a9ae967961cf438a57859ff14b6e8bcb82648ad845b6",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00154,
+        "EndMS": 10607.855985,
+        "ElapsedMS": 10607.854445,
+        "InputTokens": 6701,
+        "OutputTokens": 4,
+        "InputBytes": 2463,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "5508e99f4563c89cb0b02da82027ac39b6b8fdf549c42601e5cb515d2344e22a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"reference\":\"side_missing_archivist\",\"scope\":\"global\",\"kind\":\"quest\",\"questType\":\"side\",\"title\":\"Пропавший архивист\",\"description\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\",\"successCriteria\":\"Пропавший архивист найден\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"},{\"operation\":\"create\",\"parentReference\":\"side_missing_archivist\",\"scope\":\"minor\",\"kind\":\"task\",\"title\":\"Разыскать пропавшего архивиста\",\"description\":\"Выяснить местонахождение пропавшего архивиста и найти его.\",\"successCriteria\":\"Пропавший архивист найден\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00039,
+        "EndMS": 42375.602951,
+        "ElapsedMS": 42375.602561,
+        "InputTokens": 6735,
+        "OutputTokens": 193,
+        "InputBytes": 2675,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "choices",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "9c6fd676c987e564ee7003ac394031a1c35a853460c5186283e38b01568c76b5",
+      "output": "{\"choices\":[\n  {\"id\":\"choice_1\",\"label\":\"Изучить пометку на карте вместе с Мирой\"},\n  {\"id\":\"choice_2\",\"label\":\"Осторожно прислушаться у запертой двери\"},\n  {\"id\":\"choice_3\",\"label\":\"Спросить архивистку о звуках с дальнего края пристани\"},\n  {\"id\":\"choice_4\",\"label\":\"Предложить немедленно открыть засов и проверить проход\"}\n]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "choices",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00039,
+        "EndMS": 1007.859871,
+        "ElapsedMS": 1007.859481,
+        "InputTokens": 1240,
+        "OutputTokens": 105,
+        "InputBytes": 3099,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "choices",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "9c6fd676c987e564ee7003ac394031a1c35a853460c5186283e38b01568c76b5",
+      "output": "{\"choices\":[{\"id\":\"choice_1\",\"label\":\"Внимательно изучить пометку на карте вместе с Мирой\"},{\"id\":\"choice_2\",\"label\":\"Осторожно прислушаться к звукам за запертой дверью\"},{\"id\":\"choice_3\",\"label\":\"Предложить проверить альтернативный проход у северной стены\"},{\"id\":\"choice_4\",\"label\":\"Попытаться бесшумно отодвинуть засов на двери\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "choices",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00041,
+        "EndMS": 1161.605925,
+        "ElapsedMS": 1161.605515,
+        "InputTokens": 1240,
+        "OutputTokens": 95,
+        "InputBytes": 3099,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "57ae429989bccd3b6d7d0542e0818af8ee1e4b160c3aa13c0f4c6fc933e4fa27",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00033,
+        "EndMS": 1273.988795,
+        "ElapsedMS": 1273.988465,
+        "InputTokens": 1502,
+        "OutputTokens": 4,
+        "InputBytes": 2346,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "57ae429989bccd3b6d7d0542e0818af8ee1e4b160c3aa13c0f4c6fc933e4fa27",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00032,
+        "EndMS": 777.820636,
+        "ElapsedMS": 777.820316,
+        "InputTokens": 1502,
+        "OutputTokens": 4,
+        "InputBytes": 2346,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "463d1489e26f1bf0286e9b7b1cd562f8950e7611df705ca54dbb2bca844e3ed3",
+      "output": "{\"changes\":[{\"type\":\"upsert_character\",\"characterId\":\"\",\"name\":\"Северин\",\"age\":18,\"role\":\"хранитель\",\"personality\":\"спокойный\",\"relationship\":\"старый знакомый Миры\",\"visualAnchorEn\":\"adult male archivist keeper\",\"mood\":\"спокойный\",\"currentGoal\":\"охранять архив\",\"evidenceQuote\":\"У двери стоял хранитель Северин, старый знакомый Миры.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00033,
+        "EndMS": 36741.227079,
+        "ElapsedMS": 36741.226749,
+        "InputTokens": 6050,
+        "OutputTokens": 89,
+        "InputBytes": 2609,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "b6c12c896c7eb5f80faf473edafe5a873ae6efce3bbc7d821b642605020b41a0",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00049,
+        "EndMS": 15180.139533,
+        "ElapsedMS": 15180.139043,
+        "InputTokens": 6016,
+        "OutputTokens": 4,
+        "InputBytes": 2397,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "inputSha256": "b6c12c896c7eb5f80faf473edafe5a873ae6efce3bbc7d821b642605020b41a0",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00039,
+        "EndMS": 14766.665013,
+        "ElapsedMS": 14766.664623,
+        "InputTokens": 6016,
+        "OutputTokens": 4,
+        "InputBytes": 2397,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "inputSha256": "463d1489e26f1bf0286e9b7b1cd562f8950e7611df705ca54dbb2bca844e3ed3",
+      "output": "{\"changes\":[{\"type\":\"upsert_character\",\"characterId\":\"\",\"name\":\"Северин\",\"age\":18,\"role\":\"хранитель\",\"personality\":\"спокойный\",\"relationship\":\"старый знакомый Миры\",\"visualAnchorEn\":\"adult male keeper\",\"mood\":\"спокойный\",\"currentGoal\":\"охранять архив\",\"evidenceQuote\":\"У двери стоял хранитель Северин, старый знакомый Миры.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00032,
+        "EndMS": 41800.825568,
+        "ElapsedMS": 41800.825248,
+        "InputTokens": 6050,
+        "OutputTokens": 87,
+        "InputBytes": 2609,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "writer",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "0e7d9ea02da32cabacbf5285e1d57cf8b051c36022bc70d1081ec9ed96cad4e5",
+      "output": "{\"text\":\"Илья перевел взгляд с развернутого листа на тяжелый засов, не делая лишних шагов к порогу. За толстой каменной кладкой монотонно плескалась речная вода, напоминая о затопленной площади снаружи. Стараясь не повышать голос, он спокойно обратился к спутнице:\\n— Где именно начинается обещанный ход, Мира? Если вода подобралась к нижним ярусам, нам незачем рисковать и спускаться вслепую.\\n\\nАрхивистка повернулась к нему, сдержанно указав рукой на запертые железные полотна.\\n— Проход берет начало сразу за этой дверью, — ответила она ровным голосом. — Там расположена внутренняя галерея, которая идет выше набережной и ведет прямо к северному направлению. Если уровень паводка не поднялся до верхнего карниза, мы обойдем затопленные залы поверху и выйдем к насыпи башни. Осталось лишь отпереть створ и проверить настил.\"}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "writer",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00027,
+        "EndMS": 21070.566187,
+        "ElapsedMS": 21070.565917,
+        "InputTokens": 6681,
+        "OutputTokens": 241,
+        "InputBytes": 2365,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "5508e99f4563c89cb0b02da82027ac39b6b8fdf549c42601e5cb515d2344e22a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"reference\":\"quest_missing_archivist\",\"scope\":\"global\",\"kind\":\"quest\",\"questType\":\"side\",\"title\":\"Поиски пропавшего архивиста\",\"description\":\"Мира попросила Илью найти пропавшего архивиста, и он согласился помочь.\",\"successCriteria\":\"Пропавший архивист найден\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"},{\"operation\":\"create\",\"reference\":\"task_find_archivist\",\"parentReference\":\"quest_missing_archivist\",\"scope\":\"minor\",\"kind\":\"task\",\"title\":\"Разыскать пропавшего архивиста\",\"description\":\"Отыскать следы или выяснить местонахождение пропавшего архивиста.\",\"successCriteria\":\"Местонахождение пропавшего архивиста установлено\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00085,
+        "EndMS": 22043.326676,
+        "ElapsedMS": 22043.325826,
+        "InputTokens": 6735,
+        "OutputTokens": 211,
+        "InputBytes": 2675,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "writer",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "0e7d9ea02da32cabacbf5285e1d57cf8b051c36022bc70d1081ec9ed96cad4e5",
+      "output": "{\"text\":\"Илья перевел взгляд с бумажного листа на каменную кладку вокруг запертой двери. В полумраке опускающегося вечера шум прибывающей реки казался особенно близким, и путник не стал торопить события, бережно придерживая карту водовода.\\n\\n— Где именно начинается обещанный проход, Мира? — негромко спросил он, стараясь звучать ровно и рассудительно. — Если паводок перехлестнет через внешнюю пристань, обратного пути не останется. Нам нужно точно знать, куда ведут эти переходы.\\n\\nАрхивистка на мгновение задержала руку на замке, проверяя прочность засова, а затем повернулась к нему со своей обычной сдержанностью. В ее голосе звучала лишь деловая собранность хранительницы, привыкшей оберегать архив от любой сырости:\\n\\n— Проход находится прямо за этой внутренней дверью. За ней идет каменная лестница к верхнему ярусу галереи, по которой можно выйти в сторону северной башни в обход затопленных стоков. Вода шумит в нижнем отводном канале, но сам коридор пока сух. Ключ у меня, и я отопру замок, как только ты будешь готов идти дальше.\"}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "writer",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00064,
+        "EndMS": 37697.414802,
+        "ElapsedMS": 37697.414162,
+        "InputTokens": 6681,
+        "OutputTokens": 293,
+        "InputBytes": 2365,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "b6c12c896c7eb5f80faf473edafe5a873ae6efce3bbc7d821b642605020b41a0",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00033,
+        "EndMS": 13997.706344,
+        "ElapsedMS": 13997.706014,
+        "InputTokens": 6016,
+        "OutputTokens": 4,
+        "InputBytes": 2397,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "b6c12c896c7eb5f80faf473edafe5a873ae6efce3bbc7d821b642605020b41a0",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00044,
+        "EndMS": 12840.547263,
+        "ElapsedMS": 12840.546823,
+        "InputTokens": 6016,
+        "OutputTokens": 4,
+        "InputBytes": 2397,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "84b91afabf54d5b9a60496f50299b89a3700b9414b16cff7c1761a1e2db6d07a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"category\":\"item\",\"name\":\"Латунный ключ\",\"description\":\"Ключ от двери архива\",\"quantity\":1,\"level\":\"1\",\"status\":\"active\",\"evidenceQuote\":\"Мира передала Илье латунный ключ\",\"tags\":[\"ключ\"]}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00025,
+        "EndMS": 849.186444,
+        "ElapsedMS": 849.186194,
+        "InputTokens": 1536,
+        "OutputTokens": 60,
+        "InputBytes": 2558,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "5508e99f4563c89cb0b02da82027ac39b6b8fdf549c42601e5cb515d2344e22a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"reference\":\"missing_archivist\",\"scope\":\"global\",\"kind\":\"quest\",\"questType\":\"side\",\"title\":\"Поиски пропавшего архивиста\",\"description\":\"Помочь Мире отыскать пропавшего архивиста.\",\"successCriteria\":\"Пропавший архивист найден\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"},{\"operation\":\"create\",\"parentReference\":\"missing_archivist\",\"scope\":\"minor\",\"kind\":\"task\",\"questType\":\"side\",\"title\":\"Найти пропавшего архивиста\",\"description\":\"Разыскать пропавшего архивиста по просьбе Миры.\",\"successCriteria\":\"Пропавший архивист обнаружен\",\"status\":\"active\",\"progress\":0,\"evidenceQuote\":\"Мира попросила найти пропавшего архивиста, и Илья согласился помочь.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00042,
+        "EndMS": 87740.831086,
+        "ElapsedMS": 87740.830666,
+        "InputTokens": 57502,
+        "OutputTokens": 271,
+        "InputBytes": 2675,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "turn_planner",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"chapter\": {\n    \"goal\": \"Найти безопасный путь к северной башне\",\n    \"title\": \"Архив у реки\",\n    \"tone\": \"grounded adventure\"\n  },\n  \"immediateGoal\": \"Спокойно спросить Миру о начале обещанного прохода и дождаться её ответа.\",\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"riskFlags\": [],\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\",\n    \"mood\": \"настороженное спокойствие\"\n  },\n  \"transition\": \"continue_scene\"\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00056,
+        "EndMS": 1680.123797,
+        "ElapsedMS": 1680.123237,
+        "InputTokens": 1231,
+        "OutputTokens": 209,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "turn_planner",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"immediateGoal\": \"Получить от Миры спокойный ответ с указанием на начало обещанного прохода.\",\n  \"transition\": \"continue_scene\",\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"mood\": \"настороженное спокойствие\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\"\n  },\n  \"riskFlags\": []\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00065,
+        "EndMS": 1032.491237,
+        "ElapsedMS": 1032.490587,
+        "InputTokens": 1231,
+        "OutputTokens": 159,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "57ae429989bccd3b6d7d0542e0818af8ee1e4b160c3aa13c0f4c6fc933e4fa27",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00088,
+        "EndMS": 962.451587,
+        "ElapsedMS": 962.450707,
+        "InputTokens": 1502,
+        "OutputTokens": 4,
+        "InputBytes": 2346,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "57ae429989bccd3b6d7d0542e0818af8ee1e4b160c3aa13c0f4c6fc933e4fa27",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00054,
+        "EndMS": 1194.344905,
+        "ElapsedMS": 1194.344365,
+        "InputTokens": 1502,
+        "OutputTokens": 4,
+        "InputBytes": 2346,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "84b91afabf54d5b9a60496f50299b89a3700b9414b16cff7c1761a1e2db6d07a",
+      "output": "{\"changes\":[{\"operation\":\"create\",\"category\":\"item\",\"name\":\"Латунный ключ\",\"description\":\"Латунный ключ от архива, полученный от Миры\",\"quantity\":1,\"level\":\"в наличии\",\"status\":\"active\",\"evidenceQuote\":\"Мира передала Илье латунный ключ, и он положил его в карман.\",\"tags\":[\"ключ\"]}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "state_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00068,
+        "EndMS": 55162.810259,
+        "ElapsedMS": 55162.809579,
+        "InputTokens": 13204,
+        "OutputTokens": 96,
+        "InputBytes": 2558,
+        "Repair": false,
+        "Failed": false,
+        "escalatedFrom": "gemini-3.5-flash-lite",
+        "HTTPPosts": 2,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          503,
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "choices",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "9c6fd676c987e564ee7003ac394031a1c35a853460c5186283e38b01568c76b5",
+      "output": "{\"choices\":[{\"id\":\"choice_1\",\"label\":\"Сверить пометку на карте с планом водовода\"},{\"id\":\"choice_2\",\"label\":\"Предложить Мире проверить запертую дверь архива\"},{\"id\":\"choice_3\",\"label\":\"Осторожно пройти к дальнему краю пристани на звук плеска\"},{\"id\":\"choice_4\",\"label\":\"Попытаться бесшумно открыть засов и заглянуть в проход\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "choices",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00194,
+        "EndMS": 1527.769539,
+        "ElapsedMS": 1527.767599,
+        "InputTokens": 1240,
+        "OutputTokens": 95,
+        "InputBytes": 3099,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "choices",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "9c6fd676c987e564ee7003ac394031a1c35a853460c5186283e38b01568c76b5",
+      "output": "{\n  \"choices\": [\n    {\n      \"id\": \"choice_1\",\n      \"label\": \"Обсудить с Мирой замеченную пометку на карте и возможный обходной путь\"\n    },\n    {\n      \"id\": \"choice_2\",\n      \"label\": \"Внимательно осмотреть запертую дверь и прислушаться к звукам за ней\"\n    },\n    {\n      \"id\": \"choice_3\",\n      \"label\": \"Сверить карту водовода с реальным расположением стен и проходов на пристани\"\n    },\n    {\n      \"id\": \"choice_4\",\n      \"label\": \"Осторожно обойти комнату по периметру в поисках другого выхода\"\n    }\n  ]\n}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "choices",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00691,
+        "EndMS": 1586.993184,
+        "ElapsedMS": 1586.986274,
+        "InputTokens": 1240,
+        "OutputTokens": 179,
+        "InputBytes": 3099,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "e12d7d7ff0794c6a6299a9ae967961cf438a57859ff14b6e8bcb82648ad845b6",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00047,
+        "EndMS": 12694.223105,
+        "ElapsedMS": 12694.222635,
+        "InputTokens": 6701,
+        "OutputTokens": 4,
+        "InputBytes": 2463,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "e12d7d7ff0794c6a6299a9ae967961cf438a57859ff14b6e8bcb82648ad845b6",
+      "output": "{\"changes\":[]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "quest_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00034,
+        "EndMS": 11015.935324,
+        "ElapsedMS": 11015.934984,
+        "InputTokens": 6701,
+        "OutputTokens": 4,
+        "InputBytes": 2463,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "inputSha256": "463d1489e26f1bf0286e9b7b1cd562f8950e7611df705ca54dbb2bca844e3ed3",
+      "output": "{\"changes\":[{\"type\":\"upsert_character\",\"characterId\":\"\",\"name\":\"Северин\",\"age\":18,\"role\":\"хранитель\",\"personality\":\"спокойный\",\"relationship\":\"старый знакомый Миры\",\"visualAnchorEn\":\"man in keeper robes\",\"mood\":\"спокойный\",\"currentGoal\":\"охранять архив\",\"evidenceQuote\":\"У двери стоял хранитель Северин, старый знакомый Миры.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.0005,
+        "EndMS": 54478.173831,
+        "ElapsedMS": 54478.173331,
+        "InputTokens": 6050,
+        "OutputTokens": 88,
+        "InputBytes": 2609,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "inputSha256": "463d1489e26f1bf0286e9b7b1cd562f8950e7611df705ca54dbb2bca844e3ed3",
+      "output": "{\"changes\":[{\"type\":\"upsert_character\",\"characterId\":\"\",\"name\":\"Северин\",\"age\":18,\"role\":\"хранитель\",\"personality\":\"спокойный\",\"relationship\":\"старый знакомый Миры\",\"visualAnchorEn\":\"adult male archive keeper\",\"mood\":\"спокойный\",\"currentGoal\":\"охранять архив\",\"evidenceQuote\":\"У двери стоял хранитель Северин, старый знакомый Миры.\"}]}",
+      "passed": true,
+      "call": {
+        "responseFormat": "json_schema",
+        "sequence": 1,
+        "role": "world_evaluator",
+        "model": "antigravity-preview-05-2026",
+        "StartMS": 0.00047,
+        "EndMS": 44821.698058,
+        "ElapsedMS": 44821.697588,
+        "InputTokens": 6050,
+        "OutputTokens": 88,
+        "InputBytes": 2609,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    }
+  ],
+  "summary": [
+    {
+      "case": "choices",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 1297.4228775000001,
+        "p95Ms": 1586.986274
+      }
+    },
+    {
+      "case": "choices",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 1344.686557,
+        "p95Ms": 1527.767599
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 10908.875775,
+        "p95Ms": 11015.934984
+      }
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 11651.038540000001,
+        "p95Ms": 12694.222635
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 32209.4641935,
+        "p95Ms": 42375.602561
+      }
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 71567.905826,
+        "p95Ms": 87740.830666
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 1234.166415,
+        "p95Ms": 1273.988465
+      }
+    },
+    {
+      "case": "state_evaluator/negative",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 870.1355115,
+        "p95Ms": 962.450707
+      }
+    },
+    {
+      "case": "state_evaluator/positive",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 944.5657165,
+        "p95Ms": 1039.945239
+      }
+    },
+    {
+      "case": "state_evaluator/positive",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 3,
+      "latency": {
+        "count": 2,
+        "medianMs": 28300.833223,
+        "p95Ms": 55162.809579
+      }
+    },
+    {
+      "case": "turn_planner",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 1434.1455935,
+        "p95Ms": 1835.8006
+      }
+    },
+    {
+      "case": "turn_planner",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 1513.510035,
+        "p95Ms": 1680.123237
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 14010.342933,
+        "p95Ms": 15180.139043
+      }
+    },
+    {
+      "case": "world_evaluator/negative",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 14382.1853185,
+        "p95Ms": 14766.664623
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 48139.4992895,
+        "p95Ms": 54478.173331
+      }
+    },
+    {
+      "case": "world_evaluator/positive",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 40781.4621685,
+        "p95Ms": 44821.697588
+      }
+    },
+    {
+      "case": "writer",
+      "schema": false,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 22160.121031000002,
+        "p95Ms": 23249.676145
+      }
+    },
+    {
+      "case": "writer",
+      "schema": true,
+      "Runs": 2,
+      "Passed": 2,
+      "Fallbacks": 0,
+      "HTTPPosts": 2,
+      "latency": {
+        "count": 2,
+        "medianMs": 33416.69623,
+        "p95Ms": 37697.414162
+      }
+    }
+  ],
+  "notes": [
+    "Frozen synthetic role inputs captured from the production pipeline with a scripted writer. Provider configuration is read-only; no user stories, database fixtures or Canon writes.",
+    "Two concurrent paired workers; schema/object order alternates per case across repeats. Logical provider usage can omit rejected calls. Physical requests and effective formats are retained.",
+    "Checks cover required core fields, four unique choices, nonempty positive mutations, no negative mutations and verbatim beat evidence. These are not complete semantic or literary acceptance.",
+    "Role latency excludes the full pipeline, queue, SQL commits and browser rendering. Successful shape/evidence checks alone do not establish a speed or quality improvement."
+  ]
+}

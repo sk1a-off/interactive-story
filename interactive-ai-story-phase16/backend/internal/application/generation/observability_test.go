@@ -78,3 +78,19 @@ func TestObservingLLMTelemetryFailureDoesNotFailGeneration(t *testing.T) {
 		t.Fatalf("telemetry failure leaked into generation: %v", err)
 	}
 }
+
+type schemaFallbackFake struct{ observedFake }
+
+func (f schemaFallbackFake) Generate(context.Context, aiport.StoryRequest) (aiport.StoryResponse, error) {
+	return aiport.StoryResponse{Output: []byte(`{}`), SchemaFallback: true, ResponseFormat: "json_object"}, nil
+}
+func TestObservingLLMRecordsExplicitSchemaFallbackAsOneProtocolRetry(t *testing.T) {
+	store := &callStore{}
+	llm := &observingLLM{base: schemaFallbackFake{}, store: store}
+	if _, err := llm.Generate(context.Background(), aiport.StoryRequest{Role: "writer"}); err != nil {
+		t.Fatal(err)
+	}
+	if len(store.calls) != 1 || store.calls[0].RetryCount != 1 || store.calls[0].RepairCount != 0 {
+		t.Fatal("schema fallback conflated with repair or lost")
+	}
+}

@@ -47,18 +47,22 @@ func (l *observingLLM) Generate(ctx context.Context, request aiport.StoryRequest
 	}
 	recordCtx, cancelRecord := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 	defer cancelRecord()
+	schemaRetries := 0
+	if response.SchemaFallback {
+		schemaRetries = 1
+	}
 	recordErr := l.store.Record(recordCtx, generationattempts.Call{
 		GenerationJobID: l.jobID, AttemptNo: l.attemptNo, CallSequence: sequence,
 		Role: request.Role, ContractVersion: request.PromptVersion, ContextMode: l.contextMode,
 		Provider: provider, LatencyMS: latencyMS,
 		InputTokens: response.InputTokens, OutputTokens: response.OutputTokens,
-		RepairCount: repairCount, EscalatedFrom: response.EscalatedFrom, ErrorText: errorText,
+		RepairCount: repairCount, RetryCount: schemaRetries, EscalatedFrom: response.EscalatedFrom, ErrorText: errorText,
 	})
 	if recordErr != nil && l.logger != nil {
 		l.logger.Warn("generation call telemetry write failed", "generation_id", l.jobID, "role", request.Role, "error", recordErr)
 	}
 	if l.logger != nil {
-		l.logger.InfoContext(ctx, "generation role timing", "generation_id", l.jobID, "attempt", l.attemptNo, "sequence", sequence, "role", request.Role, "model", provider.Model, "elapsed_ms", latencyMS, "input_tokens", response.InputTokens, "output_tokens", response.OutputTokens, "repair", repairCount > 0, "succeeded", callErr == nil)
+		l.logger.InfoContext(ctx, "generation role timing", "generation_id", l.jobID, "attempt", l.attemptNo, "sequence", sequence, "role", request.Role, "model", provider.Model, "elapsed_ms", latencyMS, "input_tokens", response.InputTokens, "output_tokens", response.OutputTokens, "response_format", response.ResponseFormat, "schema_fallback", response.SchemaFallback, "repair", repairCount > 0, "succeeded", callErr == nil)
 	}
 	return response, callErr
 }

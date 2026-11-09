@@ -40,6 +40,7 @@ type PublicSettings struct {
 	StoryLLMEndpoint   string `json:"storyLlmEndpoint"`
 	StoryLLMContext    int    `json:"storyLlmContext"`
 	StoryLLMKVDType    string `json:"storyLlmKvDType"`
+	StoryLLMJSONSchema bool   `json:"storyLlmJsonSchema"`
 	StoryLLMSafeHybrid bool   `json:"storyLlmSafeHybrid"`
 	WorldRulesSafeMode bool   `json:"worldRulesSafeMode"`
 	EmbeddingEndpoint  string `json:"embeddingEndpoint"`

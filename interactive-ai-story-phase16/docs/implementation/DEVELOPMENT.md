@@ -85,6 +85,12 @@ and [measured results](TURN_BASELINE_RESULTS_2026-11-09.md).
 Offline dependency/critical-path analysis is available through
 `cmd/llmbench -turn-schedule-report <report.json> -output <analysis.json>`; see
 [the parallelism audit](PARALLEL_DEPENDENCY_AUDIT_2026-11-09.md).
+Optional role response schemas use the immutable `storyLlmJsonSchema` AI setting
+(default false), shown as “Стабильный формат ответов”. Protocol fallback and the
+live paired experiment are documented in
+[RESPONSE_SCHEMAS_2026-11-09.md](RESPONSE_SCHEMAS_2026-11-09.md).
+`cmd/llmbench -schema-bench` compares frozen object/schema role pairs;
+`-turn-bench -turn-json-schema` checks the same format through the full pipeline.
 Runtime recorded timing is available through
 `GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
 

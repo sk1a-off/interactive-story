@@ -1,0 +1,9 @@
+{
+  "schemaSha256": "de8a0b02c92e592b55f46c8d191a1b4a7d6988f883d3f039efc342c644e626da",
+  "fixtureSha256": "f4d7d01f8c5556ab08ed547462dac52280a748fbbd9fe6b3318bef8413601eed",
+  "roleProbeSha256": "bd0dfb798299a2c5de755ee1e4850b0fc8149a398c0f6d426c404cbd2d968ce9",
+  "notes": [
+    "Role probe started before the schema fingerprint metadata field was added. Schema definitions and timed request payloads were unchanged; original role evidence is preserved byte-for-byte.",
+    "The subsequently captured fake report fingerprints the same schema definitions and has identical frozen input fixtures. The full-turn schema smoke also records this fingerprint."
+  ]
+}

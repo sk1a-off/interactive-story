@@ -39,7 +39,7 @@ import (
 )
 
 type turnBenchmarkOptions struct {
-	Enabled, Planner, Provisional, FastState, JournalIsolation                                bool
+	Enabled, Planner, Provisional, FastState, JournalIsolation, JSONSchema                    bool
 	Provider, ConfigDSN, FixtureDSN, SecretStore, EmbeddingProvider, EmbeddingEndpoint, Cases string
 	Repeats                                                                                   int
 	Seed                                                                                      int64
@@ -57,6 +57,7 @@ func registerTurnBenchmarkFlags(f *flag.FlagSet) *turnBenchmarkOptions {
 	f.StringVar(&o.Cases, "turn-cases", "", "comma-separated frozen case IDs; empty selects all")
 	f.IntVar(&o.Repeats, "turn-repeats", 2, "paired repeats per case; alternate arm order")
 	f.Int64Var(&o.Seed, "turn-seed", 20261109, "seed for reproducible case order")
+	f.BoolVar(&o.JSONSchema, "turn-json-schema", false, "opt in to role response schemas; current runtime settings are unchanged")
 	f.BoolVar(&o.Planner, "turn-planner", false, "use the existing turn planner")
 	f.BoolVar(&o.Provisional, "turn-provisional", false, "measure existing draft-ready preview events")
 	f.BoolVar(&o.FastState, "turn-fast-state", false, "existing Safe Hybrid journal routing")
@@ -98,6 +99,8 @@ func (t turnTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 type turnRoleCall struct {
+	ResponseFormat                         string `json:"responseFormat,omitempty"`
+	SchemaFallback                         bool   `json:"schemaFallback,omitempty"`
 	Sequence                               int    `json:"sequence"`
 	Role                                   string `json:"role"`
 	Model                                  string `json:"model"`
@@ -134,7 +137,7 @@ func (o *turnObserver) Generate(ctx context.Context, r ai.StoryRequest) (ai.Stor
 	if model == "" {
 		model = o.base.Identity().Model
 	}
-	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses}
+	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, ResponseFormat: response.ResponseFormat, SchemaFallback: response.SchemaFallback, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses}
 	var input struct {
 		Memory struct {
 			Evidence []json.RawMessage `json:"evidence"`
@@ -188,6 +191,8 @@ type turnBenchmarkRun struct {
 	MemoryDocuments            int                       `json:"memoryDocuments"`
 }
 type turnBenchmarkReport struct {
+	SchemaSHA256                                      string `json:"schemaSha256,omitempty"`
+	JSONSchema                                        bool   `json:"jsonSchema"`
 	Mode, Status                                      string
 	StartedAt, FinishedAt                             time.Time
 	Provider                                          string
@@ -362,7 +367,7 @@ func turnBenchmarkModel(o turnBenchmarkOptions, rev aiconfig.Revision, prompt pr
 		return nil, errors.New("invalid AI settings")
 	}
 	client := func(model, profile string, timeout time.Duration) (ai.StoryLLM, error) {
-		return storyllm.New(storyllm.Config{BaseURL: settings.StoryLLMEndpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: model, Profile: profile, Timeout: timeout, PromptSet: &prompt}, &http.Client{Timeout: timeout, Transport: turnTransport{base: http.DefaultTransport}})
+		return storyllm.New(storyllm.Config{BaseURL: settings.StoryLLMEndpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: model, Profile: profile, Timeout: timeout, PromptSet: &prompt, JSONSchema: o.JSONSchema}, &http.Client{Timeout: timeout, Transport: turnTransport{base: http.DefaultTransport}})
 	}
 	if settings.StoryLLMSafeHybrid {
 		fast, err := client(aiconfig.Gemini35FlashLiteModel, "safe-hybrid-fast", 20*time.Minute)
@@ -379,7 +384,7 @@ func turnBenchmarkModel(o turnBenchmarkOptions, rev aiconfig.Revision, prompt pr
 }
 
 func runTurnBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
-	r := turnBenchmarkReport{Mode: "paired-full-turn-v1", Status: "failed", StartedAt: time.Now().UTC(), Provider: o.Provider, Planner: o.Planner, Provisional: o.Provisional, FastState: o.FastState, JournalIsolation: o.JournalIsolation, Repeats: o.Repeats, Seed: o.Seed, Notes: []string{
+	r := turnBenchmarkReport{SchemaSHA256: storyllm.ResponseSchemaFingerprint(), JSONSchema: o.JSONSchema, Mode: "paired-full-turn-v1", Status: "failed", StartedAt: time.Now().UTC(), Provider: o.Provider, Planner: o.Planner, Provisional: o.Provisional, FastState: o.FastState, JournalIsolation: o.JournalIsolation, Repeats: o.Repeats, Seed: o.Seed, Notes: []string{
 		"Frozen synthetic targets only; configuration DB is read-only, credentials and user-story content are never reported.",
 		"Production Pipeline and Safe Hybrid routing are used. Memory-off/on pairs share the same initial target and action; generated prose can differ.",
 		"First available text is a draft-ready event when enabled, otherwise completion; client network/render time, durable queue, and real SQL Canon commit are excluded.",

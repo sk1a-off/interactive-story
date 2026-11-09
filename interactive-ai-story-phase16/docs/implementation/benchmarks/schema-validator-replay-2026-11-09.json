@@ -1,0 +1,177 @@
+{
+  "sourceSha256": "bd0dfb798299a2c5de755ee1e4850b0fc8149a398c0f6d426c404cbd2d968ce9",
+  "rows": [
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 2
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 2
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 1,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 1,
+      "schema": false,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 2
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "world_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "quest_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 2
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "state_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "state_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "quest_evaluator/negative",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 0
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 2,
+      "schema": false,
+      "passed": true,
+      "mutations": 1
+    },
+    {
+      "case": "world_evaluator/positive",
+      "repeat": 2,
+      "schema": true,
+      "passed": true,
+      "mutations": 1
+    }
+  ],
+  "notes": [
+    "Offline replay of live evaluator outputs through production Pipeline validation and in-memory Canon capture; no new provider requests or SQL writes.",
+    "The other roles are scripted. Frozen positive/negative mutation counts do not validate all semantic content, branch leakage, or literary quality."
+  ]
+}

@@ -40,6 +40,10 @@ type StoryResponse struct {
 	OutputTokens  int64
 	Provider      ProviderIdentity
 	EscalatedFrom string
+	// ResponseFormat is the effective wire format. Fallback is a bounded protocol
+	// retry, separate from structured_repair and model escalation.
+	ResponseFormat string
+	SchemaFallback bool
 }
 type StoryLLM interface {
 	Identity() ProviderIdentity

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/local/interactive-ai-story/backend/internal/domain/promptset"
@@ -19,14 +20,15 @@ import (
 )
 
 type Config struct {
-	BaseURL   string
-	APIKey    string
-	APIKeys   []string
-	Model     string
-	Profile   string
-	Provider  string
-	Timeout   time.Duration
-	PromptSet *promptset.Revision
+	BaseURL    string
+	APIKey     string
+	APIKeys    []string
+	Model      string
+	Profile    string
+	Provider   string
+	Timeout    time.Duration
+	PromptSet  *promptset.Revision
+	JSONSchema bool
 }
 
 var providerKeyCursor = struct {
@@ -35,11 +37,12 @@ var providerKeyCursor = struct {
 }{values: map[string]int{}}
 
 type Client struct {
-	cfg          Config
-	http         *http.Client
-	identity     aiport.ProviderIdentity
-	prompts      map[string]string
-	roleSettings map[string]promptset.RoleSettings
+	cfg               Config
+	http              *http.Client
+	identity          aiport.ProviderIdentity
+	prompts           map[string]string
+	roleSettings      map[string]promptset.RoleSettings
+	schemaUnsupported atomic.Bool
 }
 
 func New(cfg Config, hc *http.Client) (*Client, error) {
@@ -104,7 +107,13 @@ type message struct {
 	Content string `json:"content"`
 }
 type responseFormat struct {
-	Type string `json:"type"`
+	Type       string              `json:"type"`
+	JSONSchema *jsonSchemaEnvelope `json:"json_schema,omitempty"`
+}
+type jsonSchemaEnvelope struct {
+	Name   string         `json:"name"`
+	Strict bool           `json:"strict"`
+	Schema map[string]any `json:"schema"`
 }
 type chatResponse struct {
 	Choices []struct {
@@ -126,8 +135,9 @@ type interactionRequest struct {
 }
 
 type interactionResponseFormat struct {
-	Type     string `json:"type"`
-	MIMEType string `json:"mime_type"`
+	Type     string         `json:"type"`
+	MIMEType string         `json:"mime_type"`
+	Schema   map[string]any `json:"schema,omitempty"`
 }
 
 type interactionResponse struct {
@@ -208,9 +218,22 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 		maxTokens = req.MaxTokens
 	}
 
+	var schema map[string]any
+	if c.cfg.JSONSchema && !c.schemaUnsupported.Load() {
+		schemaRole := role
+		if role == "structured_repair" {
+			var target struct {
+				Role string `json:"role"`
+			}
+			if json.Unmarshal(req.Input, &target) == nil {
+				schemaRole = target.Role
+			}
+		}
+		schema = roleSchema(schemaRole)
+	}
 	system := contract + "\n\nReturn exactly one JSON object and nothing else. Do not wrap it in Markdown or code fences. Do not include chain-of-thought or hidden reasoning."
 	if c.cfg.Provider == "google_gemini" && isAntigravity(c.cfg.Model) {
-		return c.generateAntigravity(ctx, system, req.Input)
+		return c.generateAntigravity(ctx, system, req.Input, schema)
 	}
 	chat := chatRequest{
 		Model:          c.cfg.Model,
@@ -223,13 +246,23 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if c.cfg.Provider == "google_gemini" {
 		chat.ReasoningEffort = googleReasoningEffort(c.cfg.Model)
 	}
+	if schema != nil {
+		chat.ResponseFormat = responseFormat{Type: "json_schema", JSONSchema: &jsonSchemaEnvelope{Name: role + "_v1", Schema: schema}}
+	}
 	body, err := json.Marshal(chat)
 	if err != nil {
 		return aiport.StoryResponse{}, err
 	}
 	raw, err := c.doWithCredentialRotation(ctx, body)
+	fallback := schema != nil && errors.Is(err, errSchemaUnsupported)
+	if fallback {
+		c.schemaUnsupported.Store(true)
+		chat.ResponseFormat = responseFormat{Type: "json_object"}
+		body, _ = json.Marshal(chat)
+		raw, err = c.doWithCredentialRotation(ctx, body)
+	}
 	if err != nil {
-		return aiport.StoryResponse{}, err
+		return aiport.StoryResponse{ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback}, err
 	}
 	var decoded chatResponse
 	if err = json.Unmarshal(raw, &decoded); err != nil {
@@ -242,23 +275,31 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: finish_reason=%s content_chars=%d", aiport.ErrInvalidOutput, decoded.Choices[0].FinishReason, len([]rune(decoded.Choices[0].Message.Content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity()}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback}, nil
 }
 
-func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte) (aiport.StoryResponse, error) {
-	body, err := json.Marshal(interactionRequest{
+func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte, schema map[string]any) (aiport.StoryResponse, error) {
+	payload := interactionRequest{
 		Agent:             c.cfg.Model,
 		Environment:       "remote",
 		Input:             string(input),
 		SystemInstruction: system + " Do not use tools; answer from the supplied story context only.",
-		ResponseFormat:    interactionResponseFormat{Type: "text", MIMEType: "application/json"},
-	})
+		ResponseFormat:    interactionResponseFormat{Type: "text", MIMEType: "application/json", Schema: schema},
+	}
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return aiport.StoryResponse{}, err
 	}
 	raw, err := c.doAntigravityWithCredentialRotation(ctx, body)
+	fallback := schema != nil && errors.Is(err, errSchemaUnsupported)
+	if fallback {
+		c.schemaUnsupported.Store(true)
+		payload.ResponseFormat.Schema = nil
+		body, _ = json.Marshal(payload)
+		raw, err = c.doAntigravityWithCredentialRotation(ctx, body)
+	}
 	if err != nil {
-		return aiport.StoryResponse{}, err
+		return aiport.StoryResponse{SchemaFallback: fallback}, err
 	}
 	var decoded interactionResponse
 	if err = json.Unmarshal(raw, &decoded); err != nil {
@@ -272,7 +313,11 @@ func (c *Client) generateAntigravity(ctx context.Context, system string, input [
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: interaction_content_chars=%d", aiport.ErrInvalidOutput, len([]rune(content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens, Provider: c.Identity()}, nil
+	format := "json_object"
+	if schema != nil && !fallback {
+		format = "json_schema"
+	}
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens, Provider: c.Identity(), ResponseFormat: format, SchemaFallback: fallback}, nil
 }
 
 func lastModelOutputText(response interactionResponse) string {
@@ -342,6 +387,9 @@ func (c *Client) doWithCredentialRotation(ctx context.Context, body []byte) ([]b
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			if embeddedStatus, found := embeddedGoogleErrorStatus(raw); found {
 				lastStatus = embeddedStatus
+				if schemaUnsupported(embeddedStatus, raw) {
+					return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
+				}
 				if !c.shouldRotateCredential(embeddedStatus, raw) {
 					return nil, fmt.Errorf("%w: embedded provider status %d", aiport.ErrUnavailable, embeddedStatus)
 				}
@@ -352,6 +400,9 @@ func (c *Client) doWithCredentialRotation(ctx context.Context, body []byte) ([]b
 			return raw, nil
 		}
 		lastStatus = resp.StatusCode
+		if schemaUnsupported(resp.StatusCode, raw) {
+			return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
+		}
 		if !c.shouldRotateCredential(resp.StatusCode, raw) {
 			return nil, fmt.Errorf("%w: status %d", aiport.ErrUnavailable, resp.StatusCode)
 		}
@@ -402,6 +453,9 @@ func (c *Client) doAntigravityWithCredentialRotation(ctx context.Context, body [
 			return raw, nil
 		}
 		lastStatus = resp.StatusCode
+		if schemaUnsupported(resp.StatusCode, raw) {
+			return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
+		}
 		if !c.shouldRotateCredential(resp.StatusCode, raw) {
 			return nil, fmt.Errorf("%w: status %d", aiport.ErrUnavailable, resp.StatusCode)
 		}

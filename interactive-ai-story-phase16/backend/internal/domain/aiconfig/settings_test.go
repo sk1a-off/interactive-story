@@ -118,3 +118,17 @@ func TestSafeHybridRequiresGoogleAntigravityAsQualityModel(t *testing.T) {
 		t.Fatalf("safe hybrid accepted for a local provider: %v", err)
 	}
 }
+
+func TestJSONSchemaSettingsLegacyOffAndRoundTrip(t *testing.T) {
+	var legacy PublicSettings
+	if err := json.Unmarshal([]byte(`{"storyLlmContext":16384}`), &legacy); err != nil || legacy.StoryLLMJSONSchema {
+		t.Fatal("legacy schema mode changed")
+	}
+	for _, enabled := range []bool{false, true} {
+		legacy.StoryLLMJSONSchema = enabled
+		var decoded PublicSettings
+		if json.Unmarshal(legacy.JSON(), &decoded) != nil || decoded.StoryLLMJSONSchema != enabled {
+			t.Fatal("schema setting lost")
+		}
+	}
+}
