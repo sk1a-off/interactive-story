@@ -1,0 +1,125 @@
+{
+  "status": "measured",
+  "acceptancePassed": true,
+  "provider": "configured",
+  "model": "gemini-3.5-flash-lite",
+  "configId": "68c83eeb-d301-4db9-a58d-9a05a111eb4e",
+  "configRevision": 26,
+  "promptSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "fixtureSha256": "04700eb5fcbea4db80afc3227c8a576415b9973423c469720cb2eac8407c8ea7",
+  "StartedAt": "2026-11-09T19:09:53.752291429Z",
+  "FinishedAt": "2026-11-09T19:09:56.523242474Z",
+  "repeats": 1,
+  "concurrency": 2,
+  "seed": 20261109,
+  "runs": [
+    {
+      "case": "planner/conversation",
+      "repeat": 1,
+      "effort": "low",
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"immediateGoal\": \"Спокойно обратиться к Мире с вопросом о начале обещанного прохода и получить от неё разъяснение.\",\n  \"transition\": \"continue_scene\",\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"mood\": \"настороженное спокойствие\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\"\n  },\n  \"riskFlags\": []\n}",
+      "passed": true,
+      "mutations": 0,
+      "call": {
+        "reasoningEffort": "low",
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00041,
+        "EndMS": 1385.569496,
+        "ElapsedMS": 1385.569086,
+        "InputTokens": 1231,
+        "OutputTokens": 165,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    },
+    {
+      "case": "planner/conversation",
+      "repeat": 1,
+      "effort": "minimal",
+      "inputSha256": "d40a8047222c1c254e8bb3385b98fa49415faec29894c94ad5159771b6fc01d4",
+      "output": "{\n  \"intent\": \"Спокойно спросить Миру, где начинается обещанный проход, и выслушать её ответ.\",\n  \"immediateGoal\": \"Илья спокойно обращается к Мире с вопросом о начале прохода, а она указывает на нужный путь или дает разъяснения.\",\n  \"transition\": \"continue_scene\",\n  \"scene\": {\n    \"goal\": \"Разобраться с проходом через архив\",\n    \"mood\": \"настороженное спокойствие\",\n    \"locationId\": \"00000000-0000-4000-8000-000000008003\"\n  },\n  \"riskFlags\": []\n}",
+      "passed": true,
+      "mutations": 0,
+      "call": {
+        "reasoningEffort": "minimal",
+        "responseFormat": "json_object",
+        "sequence": 1,
+        "role": "turn_planner",
+        "model": "gemini-3.5-flash-lite",
+        "StartMS": 0.00042,
+        "EndMS": 1384.546312,
+        "ElapsedMS": 1384.545892,
+        "InputTokens": 1231,
+        "OutputTokens": 168,
+        "InputBytes": 2231,
+        "Repair": false,
+        "Failed": false,
+        "HTTPPosts": 1,
+        "HTTPGets": 0,
+        "TransportFailures": 0,
+        "HTTPStatuses": [
+          200
+        ],
+        "memoryDocuments": 0
+      }
+    }
+  ],
+  "summary": [
+    {
+      "case": "planner/conversation",
+      "effort": "low",
+      "Runs": 1,
+      "Passed": 1,
+      "ProviderFailed": 0,
+      "ValidationFailed": 0,
+      "HTTPPosts": 1,
+      "reasoningUsageReported": 0,
+      "InputTokens": 1231,
+      "OutputTokens": 165,
+      "ReportedReasoningTokens": 0,
+      "latency": {
+        "count": 1,
+        "medianMs": 1385.569086,
+        "p95Ms": 1385.569086
+      }
+    },
+    {
+      "case": "planner/conversation",
+      "effort": "minimal",
+      "Runs": 1,
+      "Passed": 1,
+      "ProviderFailed": 0,
+      "ValidationFailed": 0,
+      "HTTPPosts": 1,
+      "reasoningUsageReported": 0,
+      "InputTokens": 1231,
+      "OutputTokens": 168,
+      "ReportedReasoningTokens": 0,
+      "latency": {
+        "count": 1,
+        "medianMs": 1384.545892,
+        "p95Ms": 1384.545892
+      }
+    }
+  ],
+  "notes": [
+    "Frozen synthetic fast-role inputs; configuration and credential store are read-only. No database fixtures, Canon SQL writes or active-setting changes.",
+    "Paired low/minimal requests share exact inputs, prompt revision, model and JSON-object format. Two concurrent workers; within-case order reverses each repeat.",
+    "Direct current Flash-Lite route, with no Safe Hybrid quality fallback to hide unsupported settings or inflate a different model's timing. Requests are capped at 60 seconds.",
+    "Checks include exact-four distinct choices, planner agency/transition validation and production Pipeline/Canon replay for state mutations. Not a general literary or continuity quality gate.",
+    "Latency summaries include failed calls. Missing reasoning-token usage remains null/absent, not zero. Accepted wire parameters do not prove the provider used a specific internal thinking budget.",
+    "Antigravity agent/writer reasoning depth is not exposed in the documented agent configuration and is not changed or benchmarked here. Full-turn queue/SQL/browser time is excluded."
+  ]
+}

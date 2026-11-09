@@ -91,6 +91,10 @@ live paired experiment are documented in
 [RESPONSE_SCHEMAS_2026-11-09.md](RESPONSE_SCHEMAS_2026-11-09.md).
 `cmd/llmbench -schema-bench` compares frozen object/schema role pairs;
 `-turn-bench -turn-json-schema` checks the same format through the full pipeline.
+Reasoning controls have a dedicated `cmd/llmbench -reasoning-bench` experiment
+using frozen low/minimal pairs and explicit failure accounting. Current runtime
+defaults were retained; see
+[REASONING_EFFORT_2026-11-09.md](REASONING_EFFORT_2026-11-09.md).
 Runtime recorded timing is available through
 `GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
 

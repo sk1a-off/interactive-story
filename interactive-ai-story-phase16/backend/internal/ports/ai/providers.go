@@ -44,6 +44,9 @@ type StoryResponse struct {
 	// retry, separate from structured_repair and model escalation.
 	ResponseFormat string
 	SchemaFallback bool
+	// nil distinguishes unreported reasoning usage from a reported zero.
+	ReasoningEffort string
+	ReasoningTokens *int64
 }
 type StoryLLM interface {
 	Identity() ProviderIdentity

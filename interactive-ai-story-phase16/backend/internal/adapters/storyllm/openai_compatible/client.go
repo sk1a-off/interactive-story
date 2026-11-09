@@ -20,15 +20,16 @@ import (
 )
 
 type Config struct {
-	BaseURL    string
-	APIKey     string
-	APIKeys    []string
-	Model      string
-	Profile    string
-	Provider   string
-	Timeout    time.Duration
-	PromptSet  *promptset.Revision
-	JSONSchema bool
+	BaseURL             string
+	APIKey              string
+	APIKeys             []string
+	Model               string
+	Profile             string
+	Provider            string
+	Timeout             time.Duration
+	PromptSet           *promptset.Revision
+	JSONSchema          bool
+	RoleReasoningEffort map[string]string
 }
 
 var providerKeyCursor = struct {
@@ -56,6 +57,14 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	if cfg.Provider == "" {
 		cfg.Provider = "openai_compatible"
 	}
+	if err := validateReasoningOverrides(cfg.Provider, cfg.Model, cfg.RoleReasoningEffort); err != nil {
+		return nil, err
+	}
+	overrides := map[string]string{}
+	for role, effort := range cfg.RoleReasoningEffort {
+		overrides[role] = effort
+	}
+	cfg.RoleReasoningEffort = overrides
 	cfg.APIKeys = normalizedKeys(cfg.APIKeys, cfg.APIKey)
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 120 * time.Second
@@ -121,8 +130,9 @@ type chatResponse struct {
 		FinishReason string  `json:"finish_reason"`
 	} `json:"choices"`
 	Usage struct {
-		PromptTokens     int64 `json:"prompt_tokens"`
-		CompletionTokens int64 `json:"completion_tokens"`
+		PromptTokens      int64           `json:"prompt_tokens"`
+		CompletionTokens  int64           `json:"completion_tokens"`
+		CompletionDetails json.RawMessage `json:"completion_tokens_details"`
 	} `json:"usage"`
 }
 
@@ -245,6 +255,9 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	}
 	if c.cfg.Provider == "google_gemini" {
 		chat.ReasoningEffort = googleReasoningEffort(c.cfg.Model)
+		if effort := c.cfg.RoleReasoningEffort[role]; effort != "" {
+			chat.ReasoningEffort = effort
+		}
 	}
 	if schema != nil {
 		chat.ResponseFormat = responseFormat{Type: "json_schema", JSONSchema: &jsonSchemaEnvelope{Name: role + "_v1", Schema: schema}}
@@ -275,7 +288,7 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: finish_reason=%s content_chars=%d", aiport.ErrInvalidOutput, decoded.Choices[0].FinishReason, len([]rune(decoded.Choices[0].Message.Content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback, ReasoningEffort: chat.ReasoningEffort, ReasoningTokens: reportedReasoningTokens(decoded.Usage.CompletionDetails)}, nil
 }
 
 func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte, schema map[string]any) (aiport.StoryResponse, error) {

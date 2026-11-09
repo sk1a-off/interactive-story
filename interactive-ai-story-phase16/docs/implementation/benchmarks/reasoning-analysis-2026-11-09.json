@@ -1,0 +1,111 @@
+{
+  "sourceSha256": "a1ff778164c8d55451afa81a2faaa9e48ae425a9dc4377f1de18b1141226c18d",
+  "logicalCalls": 192,
+  "acceptancePassed": false,
+  "physicalStatuses": {
+    "200": 161,
+    "503": 30,
+    "429": 47,
+    "403": 8
+  },
+  "terminalFailureStatuses": {
+    "503": 30,
+    "429": 1
+  },
+  "paired": {
+    "total": 96,
+    "bothPassed": 68,
+    "excludedUnavailable": 28,
+    "medianMinimalMinusLowMs": -39.24070500000005,
+    "bootstrap95Ms": [
+      -112.87439800000004,
+      141.850727
+    ],
+    "bootstrapSamples": 5000,
+    "seed": 20261109,
+    "method": "Hierarchical case-cluster then within-case paired resampling; eligible successful pairs only. Eight fixed scenario cases, not independent story populations; outages can bias eligibility."
+  },
+  "arms": [
+    {
+      "effort": "low",
+      "attempted": 96,
+      "passed": 80,
+      "providerFailed": 16,
+      "validationFailed": 0,
+      "successfulLatencyMedianMs": 963.569544,
+      "reasoningUsageReported": 0
+    },
+    {
+      "effort": "minimal",
+      "attempted": 96,
+      "passed": 81,
+      "providerFailed": 15,
+      "validationFailed": 0,
+      "successfulLatencyMedianMs": 1012.291121,
+      "reasoningUsageReported": 0
+    }
+  ],
+  "cases": [
+    {
+      "case": "choices",
+      "eligiblePairs": 4,
+      "medianMinimalMinusLowMs": 125.86919150000006,
+      "lowPassed": 6,
+      "minimalPassed": 10
+    },
+    {
+      "case": "planner/conversation",
+      "eligiblePairs": 6,
+      "medianMinimalMinusLowMs": 139.07778099999996,
+      "lowPassed": 9,
+      "minimalPassed": 8
+    },
+    {
+      "case": "planner/danger",
+      "eligiblePairs": 10,
+      "medianMinimalMinusLowMs": -66.03924000000006,
+      "lowPassed": 11,
+      "minimalPassed": 11
+    },
+    {
+      "case": "planner/inspection",
+      "eligiblePairs": 5,
+      "medianMinimalMinusLowMs": 7.385639999999967,
+      "lowPassed": 8,
+      "minimalPassed": 7
+    },
+    {
+      "case": "state/intention",
+      "eligiblePairs": 12,
+      "medianMinimalMinusLowMs": -28.47297500000002,
+      "lowPassed": 12,
+      "minimalPassed": 12
+    },
+    {
+      "case": "state/observation",
+      "eligiblePairs": 12,
+      "medianMinimalMinusLowMs": -150.54003300000005,
+      "lowPassed": 12,
+      "minimalPassed": 12
+    },
+    {
+      "case": "state_evaluator/negative",
+      "eligiblePairs": 12,
+      "medianMinimalMinusLowMs": -35.751194999999996,
+      "lowPassed": 12,
+      "minimalPassed": 12
+    },
+    {
+      "case": "state_evaluator/positive",
+      "eligiblePairs": 7,
+      "medianMinimalMinusLowMs": 336.5304769999999,
+      "lowPassed": 10,
+      "minimalPassed": 9
+    }
+  ],
+  "notes": [
+    "No runtime setting or model routing changed. Unknown reasoning usage was not converted to zero.",
+    "Successful paired timing is conditional on availability; failed requests remain explicit in the source and its all-call latency summaries.",
+    "No output quality improvement or full-turn speed improvement established."
+  ]
+}
