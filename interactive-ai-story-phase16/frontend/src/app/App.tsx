@@ -10,6 +10,7 @@ import { SETUP_COMPONENT_ORDER, setupComponentDescription, setupComponentOrderIn
 import { SetupAssistant } from './SetupAssistant'
 import { DirectorWorkspace } from './DirectorWorkspace'
 import { Narrator, SpeakerIcon, type NarrationStartRequest } from './Narrator'
+import { IllustrationMoment } from './IllustrationMoment'
 import '../styles/app.css'
 
 function NewStory() {
@@ -123,16 +124,6 @@ function splitParagraphs(text:string){
 }
 function ImageIcon(){
  return <svg className="paragraph-action-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.6"/><path d="m5 17 4.5-4 3.2 2.8 2.4-2.2L19 17"/></svg>
-}
-function IllustrationMoment({images,index}:{images:{id:string;status:string;sourceBeatId?:string;images:Array<{id:string;variant:number;url:string}>};index:number}){
- return <section className="illustration-moment inline-illustration" data-generation-id={images.id}>
-  <header><span className="eyebrow">Иллюстрация {index+1}</span></header>
-  <div className="illustration-variants">
-   {(images.status==='pending'||images.status==='running')&&<><div className="scene-image-skeleton">Генерируется вариант 1…</div><div className="scene-image-skeleton">Генерируется вариант 2…</div></>}
-   {images.status==='done'&&images.images.map((im,position)=><figure className="scene-image-card" key={im.id}><img src={im.url} alt={`Иллюстрация ${index+1}, изображение ${position+1}`}/></figure>)}
-   {images.status==='failed'&&<div className="scene-image-failed"><p>Не удалось сгенерировать эту иллюстрацию.</p></div>}
-  </div>
- </section>
 }
 function ObjectivePanel({objectives,abilities,attributes,inventory,currencies,heroStats,onCollapse}:{objectives:import('../lib/api').Objective[];abilities:import('../lib/api').JournalEntry[];attributes:import('../lib/api').JournalEntry[];inventory:import('../lib/api').JournalEntry[];currencies:import('../lib/api').JournalEntry[];heroStats:import('../lib/api').HeroStat[];onCollapse:()=>void}){
  const [tab,setTab]=useState<'quests'|'hero'>(objectives.length?'quests':'hero')
@@ -276,7 +267,7 @@ function Reader(){
   </section>
   {pendingGeneration?.provisionalText&&<section className="provisional-beat" aria-label="Предварительный текст продолжения"><span>Черновик · ещё не сохранён в истории</span>{splitParagraphs(pendingGeneration.provisionalText).map((paragraph,index)=><p key={`provisional-${pendingGeneration.provisionalRevision??0}-${index}`}>{paragraph}</p>)}</section>}
   {generations.length===0&&<div className="scene-image-empty"><p>{regenerate.isPending?'Ставлю иллюстрацию сцены в очередь…':'Иллюстрация подготавливается в фоновой очереди.'}</p></div>}
-  <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации · 2 варианта'}</button></div>
+  <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации'}</button></div>
   {regenerate.error&&<p className="error scene-image-error">{regenerate.error.message}</p>}
   {paragraphImage.error&&<p className="error scene-image-error">{paragraphImage.error.message}</p>}
   {busy
@@ -338,6 +329,8 @@ function AISettings(){
  const active=q.data?.revisions.find(x=>x.active)
  const [storyProvider,setStoryProvider]=useState('openai_compatible');const [storyModel,setStoryModel]=useState('');const [storyEndpoint,setStoryEndpoint]=useState('');const [safeHybrid,setSafeHybrid]=useState(false);const [apiKeysText,setApiKeysText]=useState('');const [showApiKey,setShowApiKey]=useState(false)
  const [imageProvider,setImageProvider]=useState('manual');const [imageModel,setImageModel]=useState('manual-v1')
+ const [imageResolution,setImageResolution]=useState('768x768');const [imageCount,setImageCount]=useState(2)
+ useEffect(()=>{if(!active)return;setImageResolution(active.public.image_resolution??'768x768');setImageCount(active.public.image_count??2)},[active])
  useEffect(()=>{if(!active)return;setStoryProvider(active.storyLlm.provider);setStoryModel(active.storyLlm.model);setStoryEndpoint(active.public.storyLlmEndpoint);setSafeHybrid(Boolean(active.public.storyLlmSafeHybrid));setImageProvider(active.image.provider);setImageModel(active.image.model)},[active])
  const googleAI=storyProvider==='google_gemini'
  const selectedGoogleModel=googleStoryModels.find(model=>model.id===storyModel)??googleStoryModels[3]
@@ -349,7 +342,7 @@ function AISettings(){
    storyLlm:{kind:'story_llm',provider:storyProvider,model:storyModel,profile:safeHybrid?'google-ai-safe-hybrid':googleAI?'google-ai-rotating':active?.storyLlm.provider==='openai_compatible'?active.storyLlm.profile:'llamacpp-local'},
    embedding:active?.embedding??{kind:'embedding',provider:'local_sentence_transformers',model:'deepvk/USER2-small',profile:'cpu'},
    image:{kind:'image',provider:imageProvider,model:imageModel,profile:active?.image.profile||''},
-   public:{storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,worldRulesSafeMode:false,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||''}
+   public:{storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,worldRulesSafeMode:active?.public.worldRulesSafeMode??false,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||'',image_resolution:imageResolution,image_count:imageCount}
  },storyLlmApiKeys:enteredKeys.length?enteredKeys:undefined,activate:true}),onSuccess:()=>{setApiKeysText('');qc.invalidateQueries({queryKey:['ai-settings']})}})
  const activate=useMutation({mutationFn:activateAIRevision,onSuccess:()=>qc.invalidateQueries({queryKey:['ai-settings']})})
  return <main className="settings-screen"><header className="director-header"><button className="ghost" onClick={()=>nav(-1)}>← Назад</button><strong>AI Providers</strong></header><section className="settings-content">
@@ -369,8 +362,13 @@ function AISettings(){
      <p className="provider-notice"><strong>Бесплатный tier имеет квоты.</strong> Доступность и лимиты различаются по моделям; при исчерпании квоты backend последовательно пробует следующий сохранённый ключ.</p><a className="provider-key-link" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer">Получить API key в Google AI Studio ↗</a>
     </div>:<><label>Story LLM model<input value={storyModel} onChange={e=>setStoryModel(e.target.value)} placeholder="Имя модели llama.cpp"/></label><label>Story LLM endpoint<input value={storyEndpoint} onChange={e=>setStoryEndpoint(e.target.value)} placeholder="http://127.0.0.1:8081"/></label></>}
     <label>{googleAI?'Google AI API keys':'API keys'} <span className="muted tiny">{active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?`сохранено ключей: ${active.storyLlmSecretCount||1} · значения скрыты`:keyRequired?'нужно указать для включения Google AI':googleAI?'не настроены':'необязательно'}</span><span className="secret-input"><textarea rows={googleAI?5:2} className={showApiKey?'secret-multiline':'secret-multiline masked'} value={apiKeysText} onChange={e=>setApiKeysText(e.target.value)} autoComplete="off" spellCheck={false} placeholder={active.storyLlm.provider===storyProvider&&active.storyLlmSecretConfigured?'оставьте пустым, чтобы сохранить текущий набор':googleAI?'по одному ключу на строку':'необязательно'}/><button className="ghost" type="button" onClick={()=>setShowApiKey(value=>!value)} aria-label={showApiKey?'Скрыть API keys':'Показать API keys'}>{showApiKey?'Скрыть':'Показать'}</button></span><small className="muted">Ключи хранятся только на компьютере с backend и используются по очереди. В PostgreSQL и обратно в браузер они не возвращаются.</small></label>
-    <label>Image provider<input value={imageProvider} onChange={e=>setImageProvider(e.target.value)}/></label>
-    <label>Image model<input value={imageModel} onChange={e=>setImageModel(e.target.value)}/></label>
+    <fieldset className="image-output-settings"><legend>Изображения</legend>
+     <label>Image provider<input value={imageProvider} onChange={e=>setImageProvider(e.target.value)}/></label>
+     <label>Image model<input value={imageModel} onChange={e=>setImageModel(e.target.value)}/></label>
+     <label>Разрешение изображений<select value={imageResolution} onChange={e=>setImageResolution(e.target.value)}><option value="768x768">768 × 768 — квадрат</option><option value="512x768">512 × 768 — вертикальный кадр</option><option value="768x512">768 × 512 — горизонтальный кадр</option></select></label>
+     <label>Число вариантов<select value={imageCount} onChange={e=>setImageCount(Number(e.target.value))}>{[1,2,3,4].map(count=><option value={count} key={count}>{count}</option>)}</select></label>
+     <small className="muted">Один вариант генерируется быстрее. Настройки применятся только к новым иллюстрациям.</small>
+    </fieldset>
     <button className="primary" disabled={!storyModel.trim()||(googleAI&&!storyEndpoint.trim())||keyRequired||create.isPending} onClick={()=>create.mutate()}>{create.isPending?'Сохраняю…':safeHybrid?'Сохранить и включить безопасный гибрид':googleAI?'Сохранить и включить выбранную модель':'Сохранить и включить локальную модель'}</button>
     {keyRequired&&<p className="muted tiny">Чтобы включить Google AI, вставьте API key из Google AI Studio.</p>}
     {create.error&&<p className="error">{create.error.message}</p>}

@@ -25,6 +25,9 @@ type ImageGeneration struct {
 	MomentIndex     int          `json:"momentIndex"`
 	AnchorParagraph int          `json:"anchorParagraph,omitempty"`
 	Status          string       `json:"status"`
+	Width           int          `json:"width"`
+	Height          int          `json:"height"`
+	ImageCount      int          `json:"imageCount"`
 	Images          []SceneImage `json:"images"`
 	SelectedImageID *id.ID       `json:"selectedImageId,omitempty"`
 }

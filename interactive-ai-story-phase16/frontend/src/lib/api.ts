@@ -68,7 +68,7 @@ export type StoryListItem = {
   createdAt:string; updatedAt:string;
 }
 export type StartResult = { timeline:{ ID:string; Name:string }; sceneId:string; beatId:string; imageGenerationId?:string }
-export type SceneBeat={id:string;position:number;text:string;paragraphs?:string[]}; export type SceneImage={id:string;variant:number;url:string}; export type SceneImageGeneration={id:string;sceneId:string;sourceBeatId?:string;momentIndex:number;anchorParagraph?:number;status:'pending'|'running'|'done'|'failed';images:SceneImage[];selectedImageId?:string}; export type ChoiceSet={beatId:string;choices:string[]}
+export type SceneBeat={id:string;position:number;text:string;paragraphs?:string[]}; export type SceneImage={id:string;variant:number;url:string}; export type SceneImageGeneration={id:string;sceneId:string;sourceBeatId?:string;momentIndex:number;anchorParagraph?:number;status:'pending'|'running'|'done'|'failed';images:SceneImage[];selectedImageId?:string;width?:number;height?:number;imageCount?:number}; export type ChoiceSet={beatId:string;choices:string[]}
 export type Objective={id:string;parentObjectiveId?:string;scope:'global'|'minor';kind:'quest'|'task'|'event'|'milestone';questType?:'main'|'side';title:string;description?:string;successCriteria:string;status:'active'|'completed'|'failed';progress:number;evidence?:string}
 export type JournalEntry={id:string;category:'ability'|'attribute'|'item'|'currency';name:string;description?:string;quantity?:number;level?:string;status:'active'|'inactive';evidence?:string;tags?:string[]}
 export type HeroStat={key:string;valueType:string;value:unknown;name?:string}
@@ -121,7 +121,7 @@ export const previewSave=(saveId:string)=>json<{save:SaveCard;eventSeq:number;st
 export const forkSave=(saveId:string,newTimelineName:string)=>json<TimelineCard>(`/api/v1/saves/${saveId}/restore`,{method:'POST',body:JSON.stringify({mode:'fork',newTimelineName})})
 
 export type ProviderIdentity={kind:string;provider:string;model:string;profile:string}
-export type AIConfigView={id:string;revision:number;storyLlm:ProviderIdentity;embedding:ProviderIdentity;image:ProviderIdentity;public:{storyLlmEndpoint:string;storyLlmContext:number;storyLlmKvDType:string;storyLlmSafeHybrid:boolean;worldRulesSafeMode:boolean;embeddingEndpoint:string;imageEndpoint:string};active:boolean;storyLlmSecretConfigured:boolean;storyLlmSecretCount:number}
+export type AIConfigView={id:string;revision:number;storyLlm:ProviderIdentity;embedding:ProviderIdentity;image:ProviderIdentity;public:{storyLlmEndpoint:string;storyLlmContext:number;storyLlmKvDType:string;storyLlmSafeHybrid:boolean;worldRulesSafeMode:boolean;embeddingEndpoint:string;imageEndpoint:string;image_resolution?:string;image_count?:number};active:boolean;storyLlmSecretConfigured:boolean;storyLlmSecretCount:number}
 export const listAISettings=()=>json<{revisions:AIConfigView[]}>('/api/v1/settings/ai')
 export const createAIRevision=(body:{config:{storyLlm:ProviderIdentity;embedding:ProviderIdentity;image:ProviderIdentity;public:AIConfigView['public']};storyLlmApiKey?:string;storyLlmApiKeys?:string[];activate:boolean})=>json<AIConfigView>('/api/v1/settings/ai/revisions',{method:'POST',body:JSON.stringify(body)})
 export const activateAIRevision=(id:string)=>json<AIConfigView>(`/api/v1/settings/ai/revisions/${id}/activate`,{method:'POST',body:'{}'})

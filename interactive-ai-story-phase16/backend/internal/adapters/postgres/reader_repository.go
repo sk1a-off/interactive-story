@@ -285,7 +285,7 @@ ORDER BY s.key`, tid, v.StoryID)
 			selectedImageID = &parsed
 		}
 	}
-	genRows, ge := r.pool.Query(ctx, `SELECT id,scene_id,COALESCE(source_beat_id::text,''),moment_index,COALESCE(anchor_paragraph,0),status
+	genRows, ge := r.pool.Query(ctx, `SELECT id,scene_id,COALESCE(source_beat_id::text,''),moment_index,COALESCE(anchor_paragraph,0),status,width,height,image_count
  FROM image_generations
  WHERE scene_id=$1 AND story_id=$2
  ORDER BY created_at,moment_index`, v.SceneID, v.StoryID)
@@ -297,7 +297,7 @@ ORDER BY s.key`, tid, v.StoryID)
 	for genRows.Next() {
 		var gen readerrepo.ImageGeneration
 		var sourceBeat string
-		if e = genRows.Scan(&gen.ID, &gen.SceneID, &sourceBeat, &gen.MomentIndex, &gen.AnchorParagraph, &gen.Status); e != nil {
+		if e = genRows.Scan(&gen.ID, &gen.SceneID, &sourceBeat, &gen.MomentIndex, &gen.AnchorParagraph, &gen.Status, &gen.Width, &gen.Height, &gen.ImageCount); e != nil {
 			return v, e
 		}
 		if sourceBeat != "" {

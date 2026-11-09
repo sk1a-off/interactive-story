@@ -11,6 +11,7 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/bootstrap"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	domain "github.com/local/interactive-ai-story/backend/internal/domain/imagegeneration"
+	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 	repo "github.com/local/interactive-ai-story/backend/internal/ports/imagegenerationrepo"
 )
@@ -148,5 +149,12 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 		if _, err = imageRepo.Complete(ctx, generation.ID, "settings-test", images, time.Now()); err != nil {
 			t.Fatalf("repeated result must be idempotent: %v", err)
 		}
+	}
+	current, err := pgadapter.NewReaderRepository(pool).Current(ctx, timeline.ID(timelineID))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if current.ImageGeneration == nil || current.ImageGeneration.Width != 512 || current.ImageGeneration.Height != 768 || current.ImageGeneration.ImageCount != 4 || len(current.ImageGeneration.Images) != 4 {
+		t.Fatalf("reader lost pinned output settings: %+v", current.ImageGeneration)
 	}
 }

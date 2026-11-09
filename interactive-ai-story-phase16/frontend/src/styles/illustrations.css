@@ -1,0 +1,6 @@
+.illustration-moment .illustration-variants.single { grid-template-columns: minmax(0, 1fr); }
+.illustration-moment .scene-image-card { align-self: start; }
+.illustration-moment .scene-image-card img { height: auto; aspect-ratio: auto; object-fit: contain; }
+.illustration-moment .scene-image-skeleton { min-height: 0; }
+.image-output-settings { display: grid; gap: 16px; min-width: 0; margin: 0; border: 1px solid #3a414d; border-radius: 14px; padding: 18px; }
+.image-output-settings select { width: 100%; min-height: 44px; }
