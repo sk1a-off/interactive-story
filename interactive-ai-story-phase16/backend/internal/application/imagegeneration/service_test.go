@@ -165,6 +165,37 @@ func TestCreateForScenePinsPerchanceConfigAndSquareTwoImages(t *testing.T) {
 	}
 }
 
+func TestEveryImageCreationPathPinsOutputSettings(t *testing.T) {
+	for _, path := range []string{"scene", "paragraph", "automatic"} {
+		t.Run(path, func(t *testing.T) {
+			configs := &upgradeCfgRepo{active: config()}
+			configs.active.Settings = []byte(`{"image_resolution":"512x768","image_count":4}`)
+			rp := &fakeRepo{src: repo.SceneSource{StoryID: xid("000000000010"), SceneID: xid("000000000011"), BeatID: xid("000000000013"), Text: "Над затопленной площадью медленно поднялся огромный механический маяк, и холодный синий свет отразился в окнах, воде и лицах замерших людей."}}
+			svc := Service{Repo: rp, Configs: configs, Prompts: DeterministicPromptBuilder{}}
+			var err error
+			switch path {
+			case "scene":
+				_, err = svc.CreateForScene(context.Background(), CreateCommand{StoryID: rp.src.StoryID, SceneID: rp.src.SceneID, Trigger: domain.Manual})
+			case "paragraph":
+				_, err = svc.CreateForParagraph(context.Background(), ParagraphCommand{StoryID: rp.src.StoryID, SceneID: rp.src.SceneID, BeatID: rp.src.BeatID, Paragraph: 1})
+			case "automatic":
+				_, err = svc.Schedule(context.Background(), rp.src.StoryID, rp.src.SceneID)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			pinned := rp.view.Generation
+			configs.active.Settings = []byte(`{"image_resolution":"768x512","image_count":1}`)
+			if pinned.Width != 512 || pinned.Height != 768 || pinned.ImageCount != 4 || pinned.ConfigRevisionID != configs.active.ID {
+				t.Fatalf("output settings not pinned: %+v", pinned)
+			}
+			if pinned.Provider.Profile != "digital-painting-768x768x2" {
+				t.Fatal("historical provider identity must remain intact; dimensions come from pinned fields")
+			}
+		})
+	}
+}
+
 func TestCreateForSceneUpgradesLegacyLocalImageProvider(t *testing.T) {
 	legacy := config()
 	legacy.Image = ai.ProviderIdentity{Kind: ai.KindImage, Provider: "manual", Model: "manual-v1"}

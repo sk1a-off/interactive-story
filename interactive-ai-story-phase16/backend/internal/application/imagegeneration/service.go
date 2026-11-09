@@ -114,12 +114,40 @@ func (s Service) CreateForScene(ctx context.Context, c CreateCommand) (out domai
 		return domain.View{}, e
 	}
 	g.MomentIndex = momentIndex
+	if e = pinImageSettings(&g, cfg); e != nil {
+		return domain.View{}, e
+	}
 	g.AnchorParagraph = prompt.AnchorParagraph
 	g.PromptSetRevisionID = prompt.PromptSetRevisionID
 	if e = s.Repo.Create(ctx, g); e != nil {
 		return domain.View{}, e
 	}
 	return domain.View{Generation: g, Images: []domain.Image{}}, nil
+}
+
+func pinImageSettings(g *domain.Generation, cfg aiconfig.Revision) error {
+	var settings aiconfig.PublicSettings
+	if len(cfg.Settings) > 0 {
+		if err := json.Unmarshal(cfg.Settings, &settings); err != nil {
+			return fmt.Errorf("decode image settings: %w", err)
+		}
+	}
+	settings = settings.WithImageDefaults()
+	switch settings.ImageResolution {
+	case "768x768":
+		g.Width, g.Height = 768, 768
+	case "512x768":
+		g.Width, g.Height = 512, 768
+	case "768x512":
+		g.Width, g.Height = 768, 512
+	default:
+		return aiconfig.ErrInvalidPublicSettings
+	}
+	if *settings.ImageCount < 1 || *settings.ImageCount > 4 {
+		return aiconfig.ErrInvalidPublicSettings
+	}
+	g.ImageCount = *settings.ImageCount
+	return nil
 }
 
 func (s Service) activePerchanceConfig(ctx context.Context) (aiconfig.Revision, error) {
@@ -365,6 +393,9 @@ func (s Service) createPromptGeneration(ctx context.Context, storyID, sceneID id
 		return domain.View{}, err
 	}
 	g.MomentIndex = momentIndex
+	if err = pinImageSettings(&g, cfg); err != nil {
+		return domain.View{}, err
+	}
 	g.AnchorParagraph = prompt.AnchorParagraph
 	g.PromptSetRevisionID = prompt.PromptSetRevisionID
 	if err = s.Repo.Create(ctx, g); err != nil {
@@ -451,6 +482,9 @@ func (s Service) scheduleAutomaticMoments(ctx context.Context, storyID, sceneID,
 			return created, newErr
 		}
 		g.MomentIndex = momentIndex
+		if newErr = pinImageSettings(&g, cfg); newErr != nil {
+			return created, newErr
+		}
 		g.AnchorParagraph = moment.AnchorParagraph
 		g.PromptSetRevisionID = moment.PromptSetRevisionID
 		if createErr := s.Repo.Create(ctx, g); createErr != nil {

@@ -70,6 +70,8 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 			t.Fatal(createErr)
 		}
 		generation.AnchorParagraph = 1
+		generation.Width = 512
+		generation.ImageCount = 4
 		return generation
 	}
 
@@ -88,6 +90,17 @@ func TestImageGenerationAnchorClaimIsAtomicAndFailedAnchorIsReusable(t *testing.
 	}
 	if !errors.Is(conflict, repo.ErrAnchorOccupied) {
 		t.Fatalf("duplicate anchor returned the wrong error: %v", conflict)
+	}
+	var width, height, count int
+	var resolution string
+	if err = pool.QueryRow(ctx, `SELECT width,height,image_count,provider_metadata->>'resolution' FROM image_generations WHERE story_id=$1`, storyID).Scan(&width, &height, &count, &resolution); err != nil {
+		t.Fatal(err)
+	}
+	if width != 512 || height != 768 || count != 4 || resolution != "512x768" {
+		t.Fatalf("stored output: %dx%d count=%d metadata=%s", width, height, count, resolution)
+	}
+	if _, err = pool.Exec(ctx, `UPDATE image_generations SET image_count=1 WHERE story_id=$1`, storyID); err == nil {
+		t.Fatal("stored generation parameters must remain immutable")
 	}
 
 	sources, err := imageRepo.LoadSceneSources(ctx, storyID, sceneID)

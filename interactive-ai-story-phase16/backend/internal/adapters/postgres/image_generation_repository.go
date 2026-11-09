@@ -196,7 +196,7 @@ func (r *ImageGenerationRepository) Create(ctx context.Context, g domain.Generat
  id,story_id,scene_id,source_beat_id,moment_index,anchor_paragraph,config_revision_id,prompt_set_revision_id,provider_name,model_name,profile_name,
  prompt,negative_prompt,style,style_prompt,style_negative_prompt,width,height,image_count,trigger_kind,status,attempts,max_attempts,available_at,provider_metadata,created_at)
  VALUES($1,$2,$3,$4,$5,NULLIF($6,0),$7,NULLIF($8,'')::uuid,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'pending',0,$21,$22,
- jsonb_build_object('provider',$9::text,'prompt_set_revision_id',NULLIF($8,''),'moment_index',$5::smallint,'anchor_paragraph',NULLIF($6,0),'style',$14::text,'style_prompt',$15::text,'style_negative_prompt',$16::text,'resolution','768x768','count',$19::smallint),$23)`,
+ jsonb_build_object('provider',$9::text,'prompt_set_revision_id',NULLIF($8,''),'moment_index',$5::smallint,'anchor_paragraph',NULLIF($6,0),'style',$14::text,'style_prompt',$15::text,'style_negative_prompt',$16::text,'resolution',($17::integer)::text || 'x' || ($18::integer)::text,'count',$19::smallint),$23)`,
 		g.ID, g.StoryID, g.SceneID, sourceBeat, g.MomentIndex, g.AnchorParagraph, g.ConfigRevisionID, g.PromptSetRevisionID, g.Provider.Provider, g.Provider.Model, g.Provider.Profile,
 		g.Prompt, g.NegativePrompt, g.Style, g.StylePrompt, g.StyleNegativePrompt, g.Width, g.Height, g.ImageCount, g.Trigger, g.MaxAttempts, g.AvailableAt, g.CreatedAt)
 	if e != nil {
