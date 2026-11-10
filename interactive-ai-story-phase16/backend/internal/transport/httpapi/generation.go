@@ -68,19 +68,41 @@ func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
 			after, _ = strconv.ParseInt(req.Header.Get("Last-Event-ID"), 10, 64)
 		}
 		last := after
+		var lastDraft int64
+		emit := func(u appgen.Update) bool {
+			if u.Sequence > 0 && u.Sequence <= last {
+				return false
+			}
+			if u.Phase == appgen.PhaseDraftStreaming {
+				if u.Revision <= lastDraft {
+					return false
+				}
+				lastDraft = u.Revision
+			}
+			if (u.Phase == appgen.PhaseRetrying || u.Phase == appgen.PhaseDraftReady || u.Phase == appgen.PhaseDraftReplaced) && u.Revision > lastDraft {
+				lastDraft = u.Revision
+			}
+			if u.Sequence > last {
+				last = u.Sequence
+			}
+			raw, _ := json.Marshal(u)
+			if u.Sequence > 0 {
+				fmt.Fprintf(w, "event: generation\nid: %d\ndata: %s\n\n", u.Sequence, raw)
+			} else {
+				fmt.Fprintf(w, "event: generation\ndata: %s\n\n", raw)
+			}
+			flusher.Flush()
+			return true
+		}
 		history, err := app.Replay(req.Context(), gid, after)
 		if err != nil {
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 		for _, u := range history {
-			if u.Sequence <= last {
+			if !emit(u) {
 				continue
 			}
-			last = u.Sequence
-			raw, _ := json.Marshal(u)
-			fmt.Fprintf(w, "event: generation\nid: %d\ndata: %s\n\n", u.Sequence, raw)
-			flusher.Flush()
 			if u.Phase == appgen.PhaseCompleted || u.Phase == appgen.PhaseFailed {
 				return
 			}
@@ -98,13 +120,9 @@ func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
 					return
 				}
 				for _, u := range history {
-					if u.Sequence <= last {
+					if !emit(u) {
 						continue
 					}
-					last = u.Sequence
-					raw, _ := json.Marshal(u)
-					fmt.Fprintf(w, "event: generation\nid: %d\ndata: %s\n\n", u.Sequence, raw)
-					flusher.Flush()
 					if u.Phase == appgen.PhaseCompleted || u.Phase == appgen.PhaseFailed {
 						return
 					}
@@ -113,15 +131,9 @@ func registerGenerationRoutes(r chi.Router, app GenerationApplication) {
 				if !ok {
 					return
 				}
-				if u.Sequence > 0 && u.Sequence <= last {
+				if !emit(u) {
 					continue
 				}
-				if u.Sequence > last {
-					last = u.Sequence
-				}
-				raw, _ := json.Marshal(u)
-				fmt.Fprintf(w, "event: generation\nid: %d\ndata: %s\n\n", u.Sequence, raw)
-				flusher.Flush()
 				if u.Phase == appgen.PhaseCompleted || u.Phase == appgen.PhaseFailed {
 					return
 				}

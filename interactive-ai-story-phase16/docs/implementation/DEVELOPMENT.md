@@ -99,6 +99,11 @@ Prefix-cache telemetry distinguishes reported zero from unavailable usage in bot
 chat completions and Interactions. `cmd/llmbench -cache-bench` compares current
 and experimental static-first JSON inputs without changing runtime ordering.
 See [PREFIX_CACHE_2026-11-10.md](PREFIX_CACHE_2026-11-10.md).
+Optional writer streaming uses immutable `storyLlmStreamWriter` (default false),
+shown as “Показывать текст во время генерации”. Transient snapshots bypass SQL;
+final text and durable replay retain their existing path. See
+[WRITER_STREAMING_2026-11-10.md](WRITER_STREAMING_2026-11-10.md) and
+`cmd/llmbench -writer-stream-bench` for protocol and live-smoke details.
 Runtime recorded timing is available through
 `GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
 

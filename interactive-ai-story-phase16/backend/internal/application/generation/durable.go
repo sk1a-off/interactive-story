@@ -142,10 +142,20 @@ func (r *DurableRunner) Subscribe(g id.ID) (<-chan Update, func()) {
 }
 
 func (r *DurableRunner) Replay(ctx context.Context, g id.ID, after int64) ([]Update, error) {
-	if r.Updates == nil {
-		return nil, nil
+	var history []Update
+	if r.Updates != nil {
+		var err error
+		history, err = r.Updates.List(ctx, g, after)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return r.Updates.List(ctx, g, after)
+	if r.Hub != nil {
+		if draft, ok := r.Hub.LatestDraft(g); ok {
+			history = append(history, draft)
+		}
+	}
+	return history, nil
 }
 func (r *DurableRunner) Cancel(ctx context.Context, g id.ID) error {
 	return r.Queue.RequestCancel(ctx, g, time.Now().UTC())
@@ -168,11 +178,18 @@ type DurableExecutor struct {
 type attemptAwareSink struct {
 	Sink
 	retryRemaining bool
+	revisionBase   int64
 }
 
 func (s attemptAwareSink) Publish(ctx context.Context, update Update) {
+	if update.Provisional {
+		update.Revision += s.revisionBase
+	}
 	if update.Phase == PhaseFailed && s.retryRemaining {
 		update.Phase = PhaseRetrying
+		if s.revisionBase > 0 {
+			update.Revision = s.revisionBase + 999999
+		}
 	}
 	if s.Sink != nil {
 		s.Sink.Publish(ctx, update)
@@ -228,7 +245,7 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 			metrics.ContextMode = contextMode
 			metrics.QueueWaitMS = queueWait
 			if e.Logger != nil {
-				e.Logger.InfoContext(ctx, "generation attempt timing", "generation_id", claimed.Job.ID, "attempt", claimed.Reliability.AttemptCount, "queue_wait_ms", queueWait, "writer_ready_ms", metrics.TimeToFirstStoryTextMS, "pipeline_total_ms", metrics.TotalMS, "succeeded", metrics.Succeeded)
+				e.Logger.InfoContext(ctx, "generation attempt timing", "generation_id", claimed.Job.ID, "attempt", claimed.Reliability.AttemptCount, "queue_wait_ms", queueWait, "writer_ready_ms", metrics.TimeToFirstStoryTextMS, "first_stream_text_ms", metrics.FirstStreamTextMS, "pipeline_total_ms", metrics.TotalMS, "succeeded", metrics.Succeeded)
 			}
 			recordCtx, cancelRecord := context.WithTimeout(context.WithoutCancel(ctx), 2*time.Second)
 			defer cancelRecord()
@@ -237,10 +254,14 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 			}
 		}
 	}
+	revisionBase := int64(0)
+	if pipeline.StreamWriter {
+		revisionBase = int64(claimed.Reliability.AttemptCount) * 1000000
+	}
 	if e.Sink != nil {
-		pipeline.Sink = attemptAwareSink{Sink: e.Sink, retryRemaining: claimed.Reliability.AttemptCount < claimed.Reliability.MaxAttempts}
+		pipeline.Sink = attemptAwareSink{Sink: e.Sink, retryRemaining: claimed.Reliability.AttemptCount < claimed.Reliability.MaxAttempts, revisionBase: revisionBase}
 	} else {
-		pipeline.Sink = attemptAwareSink{Sink: e.Hub, retryRemaining: claimed.Reliability.AttemptCount < claimed.Reliability.MaxAttempts}
+		pipeline.Sink = attemptAwareSink{Sink: e.Hub, retryRemaining: claimed.Reliability.AttemptCount < claimed.Reliability.MaxAttempts, revisionBase: revisionBase}
 	}
 	_, err = pipeline.Run(ctx, claimed.Job.ID, action)
 	return err

@@ -15,7 +15,7 @@ type PersistedSink struct {
 }
 
 func (s PersistedSink) Publish(ctx context.Context, u Update) {
-	if s.Store != nil {
+	if s.Store != nil && u.Phase != PhaseDraftStreaming {
 		stored, e := s.Store.Append(ctx, u)
 		if e == nil {
 			u = stored

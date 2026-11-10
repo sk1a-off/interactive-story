@@ -8,14 +8,26 @@ import (
 )
 
 type Hub struct {
-	mu   sync.RWMutex
-	subs map[id.ID]map[chan Update]struct{}
+	mu     sync.RWMutex
+	subs   map[id.ID]map[chan Update]struct{}
+	drafts map[id.ID]Update
 }
 
-func NewHub() *Hub { return &Hub{subs: map[id.ID]map[chan Update]struct{}{}} }
+func NewHub() *Hub {
+	return &Hub{subs: map[id.ID]map[chan Update]struct{}{}, drafts: map[id.ID]Update{}}
+}
 func (h *Hub) Publish(_ context.Context, u Update) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if h.drafts == nil {
+		h.drafts = map[id.ID]Update{}
+	}
+	if u.Phase == PhaseDraftStreaming {
+		h.drafts[u.GenerationID] = u
+	}
+	if u.Phase == PhaseDraftReady || u.Phase == PhaseDraftReplaced || u.Phase == PhaseCompleted || u.Phase == PhaseFailed || u.Phase == PhaseRetrying {
+		delete(h.drafts, u.GenerationID)
+	}
 	for ch := range h.subs[u.GenerationID] {
 		select {
 		case ch <- u:
@@ -47,4 +59,12 @@ func (h *Hub) Subscribe(g id.ID, buffer int) (<-chan Update, func()) {
 		})
 	}
 	return ch, cancel
+}
+
+// LatestDraft is process-local replay only; token snapshots never enter Canon or SQL.
+func (h *Hub) LatestDraft(g id.ID) (Update, bool) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	u, ok := h.drafts[g]
+	return u, ok
 }

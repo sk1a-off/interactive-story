@@ -37,19 +37,20 @@ func IsSupportedGoogleStoryModel(model string) bool {
 }
 
 type PublicSettings struct {
-	StoryLLMEndpoint   string `json:"storyLlmEndpoint"`
-	StoryLLMContext    int    `json:"storyLlmContext"`
-	StoryLLMKVDType    string `json:"storyLlmKvDType"`
-	StoryLLMJSONSchema bool   `json:"storyLlmJsonSchema"`
-	StoryLLMSafeHybrid bool   `json:"storyLlmSafeHybrid"`
-	WorldRulesSafeMode bool   `json:"worldRulesSafeMode"`
-	EmbeddingEndpoint  string `json:"embeddingEndpoint"`
-	ImageEndpoint      string `json:"imageEndpoint"`
-	ImageResolution    string `json:"image_resolution"`
-	ImageCount         *int   `json:"image_count,omitempty"`
-	MemoryEnabled      bool   `json:"memoryEnabled"`
-	MemoryTopK         *int   `json:"memoryTopK,omitempty"`
-	MemoryTokenBudget  *int   `json:"memoryTokenBudget,omitempty"`
+	StoryLLMEndpoint     string `json:"storyLlmEndpoint"`
+	StoryLLMContext      int    `json:"storyLlmContext"`
+	StoryLLMKVDType      string `json:"storyLlmKvDType"`
+	StoryLLMStreamWriter bool   `json:"storyLlmStreamWriter"`
+	StoryLLMJSONSchema   bool   `json:"storyLlmJsonSchema"`
+	StoryLLMSafeHybrid   bool   `json:"storyLlmSafeHybrid"`
+	WorldRulesSafeMode   bool   `json:"worldRulesSafeMode"`
+	EmbeddingEndpoint    string `json:"embeddingEndpoint"`
+	ImageEndpoint        string `json:"imageEndpoint"`
+	ImageResolution      string `json:"image_resolution"`
+	ImageCount           *int   `json:"image_count,omitempty"`
+	MemoryEnabled        bool   `json:"memoryEnabled"`
+	MemoryTopK           *int   `json:"memoryTopK,omitempty"`
+	MemoryTokenBudget    *int   `json:"memoryTokenBudget,omitempty"`
 }
 
 func (s PublicSettings) Validate() error {

@@ -33,6 +33,9 @@ type StoryRequest struct {
 	// particular request. Zero keeps the configured role default.
 	MaxTokens int
 	Repair    bool
+	// OnText opts writer calls into streaming. Values are cumulative decoded
+	// top-level text snapshots; empty retracts a draft. Never serialize callbacks.
+	OnText func(string) `json:"-"`
 }
 type StoryResponse struct {
 	Output        []byte
@@ -49,6 +52,9 @@ type StoryResponse struct {
 	ReasoningTokens *int64
 	// Cached input is a provider-reported subset; missing is not a measured zero.
 	CachedInputTokens *int64
+	Streamed          bool
+	StreamFallback    bool
+	ProtocolRetries   int
 }
 type StoryLLM interface {
 	Identity() ProviderIdentity

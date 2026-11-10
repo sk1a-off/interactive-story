@@ -1,0 +1,14 @@
+{
+  "sourceSha256": "97278f45ed819fd40340bb08407b55a1a0f2b2753c5e8cd339c7d6fe79d84f9a",
+  "scope": "One frozen conversation pair; production Pipeline, live writer, scripted other roles, in-memory Canon capture. No browser/SQL timing.",
+  "bufferedFirstTextMs": 33393.055789,
+  "bufferedWriterReadyMs": 33393.055859,
+  "streamFirstTextMs": 36480.218152,
+  "streamWriterReadyMs": 39609.588178,
+  "streamLeadBeforeOwnCompletionMs": 3129.370025999997,
+  "streamSnapshots": 12,
+  "notes": [
+    "This is mechanism/compatibility evidence, not proof of a faster model or a reliable before/after latency improvement.",
+    "The streamed first text arrived later than the buffered first text in this single pair; both generated prose and provider execution vary."
+  ]
+}

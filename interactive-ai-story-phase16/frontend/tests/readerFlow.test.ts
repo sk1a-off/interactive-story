@@ -43,3 +43,24 @@ describe('provisional reader updates', () => {
     expect(applyGenerationUpdate('timeline-a', draft, { generationId: 'generation-a', phase: 'finalizing' })).toMatchObject({ phase: 'finalizing', provisionalText: 'Новый текст' })
   })
 })
+
+describe('streaming draft snapshots',()=>{
+ const pending={generationId:'g',fromBeatId:'old',fromHeadEventSeq:1,phase:'writing',createdAt:1}
+ test('replaces cumulative text and accepts an explicit reset',()=>{
+  const first=applyGenerationUpdate('t',pending,{phase:'draft_streaming',generationId:'g',provisional:true,revision:1000001,textDelta:'Начало'})
+  const second=applyGenerationUpdate('t',first,{phase:'draft_streaming',provisional:true,revision:1000002,textDelta:'Начало и конец'})
+  expect(second?.provisionalText).toBe('Начало и конец')
+  const reset=applyGenerationUpdate('t',second,{phase:'draft_streaming',provisional:true,revision:1000003})
+  expect(reset?.provisionalText).toBeUndefined()
+  const ready=applyGenerationUpdate('t',reset,{phase:'draft_replaced',provisional:true,revision:1000004,textDelta:'Исправленный итог'})
+  expect(ready?.provisionalText).toBe('Исправленный итог')
+ })
+ test('retry clears old text and prevents delayed snapshots from returning',()=>{
+  const first=applyGenerationUpdate('t',pending,{phase:'draft_streaming',provisional:true,revision:1000004,textDelta:'Старый'})
+  const retry=applyGenerationUpdate('t',first,{phase:'retrying',revision:1999999})
+  expect(retry?.provisionalText).toBeUndefined()
+  expect(applyGenerationUpdate('t',retry,{phase:'draft_streaming',provisional:true,revision:1000005,textDelta:'Запоздавший'})).toBe(retry)
+  const next=applyGenerationUpdate('t',retry,{phase:'draft_streaming',provisional:true,revision:2000001,textDelta:'Новый'})
+  expect(next?.provisionalText).toBe('Новый')
+ })
+})

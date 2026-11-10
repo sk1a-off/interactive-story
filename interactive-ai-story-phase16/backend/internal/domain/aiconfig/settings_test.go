@@ -132,3 +132,17 @@ func TestJSONSchemaSettingsLegacyOffAndRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestWriterStreamingLegacyOffAndRoundTrip(t *testing.T) {
+	var legacy PublicSettings
+	if json.Unmarshal([]byte(`{"storyLlmContext":16384}`), &legacy) != nil || legacy.StoryLLMStreamWriter {
+		t.Fatal("legacy streaming changed")
+	}
+	for _, enabled := range []bool{false, true} {
+		legacy.StoryLLMStreamWriter = enabled
+		var decoded PublicSettings
+		if json.Unmarshal(legacy.JSON(), &decoded) != nil || decoded.StoryLLMStreamWriter != enabled {
+			t.Fatal("streaming setting lost")
+		}
+	}
+}

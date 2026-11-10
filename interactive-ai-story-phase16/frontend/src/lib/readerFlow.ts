@@ -45,10 +45,16 @@ export function applyGenerationUpdate(
   if (!pending || !pending.generationId) return pending
   if (update.generationId && update.generationId !== pending.generationId) return pending
   if (update.timelineId && update.timelineId !== timelineId) return pending
-  if (update.phase === 'draft_ready' || update.phase === 'draft_replaced') {
+  if (update.phase === 'retrying' || update.phase === 'failed') {
+    const revision = Math.max(pending.provisionalRevision ?? 0, update.revision ?? 0)
+    const barrier = update.phase === 'retrying' && revision >= 1000000 ? (Math.floor(revision / 1000000) + 1) * 1000000 : revision
+    return { ...pending, phase: update.phase, provisionalText: undefined, provisionalRevision: barrier }
+  }
+  if (update.phase === 'draft_streaming' || update.phase === 'draft_ready' || update.phase === 'draft_replaced') {
     const revision = update.revision ?? 0
-    if (!update.provisional || !update.textDelta?.trim() || revision < (pending.provisionalRevision ?? 0)) return pending
-    return { ...pending, phase: update.phase, provisionalText: update.textDelta, provisionalRevision: revision }
+    if (!update.provisional || revision < (pending.provisionalRevision ?? 0)) return pending
+    if (update.phase !== 'draft_streaming' && !update.textDelta?.trim()) return pending
+    return { ...pending, phase: update.phase, provisionalText: update.textDelta || undefined, provisionalRevision: revision }
   }
   return { ...pending, phase: update.phase }
 }

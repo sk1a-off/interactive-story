@@ -38,12 +38,13 @@ var providerKeyCursor = struct {
 }{values: map[string]int{}}
 
 type Client struct {
-	cfg               Config
-	http              *http.Client
-	identity          aiport.ProviderIdentity
-	prompts           map[string]string
-	roleSettings      map[string]promptset.RoleSettings
-	schemaUnsupported atomic.Bool
+	cfg                  Config
+	http                 *http.Client
+	identity             aiport.ProviderIdentity
+	prompts              map[string]string
+	roleSettings         map[string]promptset.RoleSettings
+	schemaUnsupported    atomic.Bool
+	streamingUnsupported atomic.Bool
 }
 
 func New(cfg Config, hc *http.Client) (*Client, error) {
@@ -103,13 +104,15 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 func (c *Client) Identity() aiport.ProviderIdentity { return c.identity }
 
 type chatRequest struct {
-	Model           string         `json:"model"`
-	Messages        []message      `json:"messages"`
-	Temperature     float64        `json:"temperature"`
-	TopP            float64        `json:"top_p"`
-	MaxTokens       int            `json:"max_tokens,omitempty"`
-	ReasoningEffort string         `json:"reasoning_effort,omitempty"`
-	ResponseFormat  responseFormat `json:"response_format"`
+	Stream          bool            `json:"stream,omitempty"`
+	StreamOptions   map[string]bool `json:"stream_options,omitempty"`
+	Model           string          `json:"model"`
+	Messages        []message       `json:"messages"`
+	Temperature     float64         `json:"temperature"`
+	TopP            float64         `json:"top_p"`
+	MaxTokens       int             `json:"max_tokens,omitempty"`
+	ReasoningEffort string          `json:"reasoning_effort,omitempty"`
+	ResponseFormat  responseFormat  `json:"response_format"`
 }
 type message struct {
 	Role    string `json:"role"`
@@ -138,6 +141,7 @@ type chatResponse struct {
 }
 
 type interactionRequest struct {
+	Stream            bool                      `json:"stream,omitempty"`
 	Agent             string                    `json:"agent"`
 	Environment       string                    `json:"environment"`
 	Input             string                    `json:"input"`
@@ -245,7 +249,14 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	}
 	system := contract + "\n\nReturn exactly one JSON object and nothing else. Do not wrap it in Markdown or code fences. Do not include chain-of-thought or hidden reasoning."
 	if c.cfg.Provider == "google_gemini" && isAntigravity(c.cfg.Model) {
-		return c.generateAntigravity(ctx, system, req.Input, schema)
+		if role == "writer" && req.OnText != nil && !c.streamingUnsupported.Load() {
+			return c.generateWriterStream(ctx, req, system, schema, chatRequest{}, true)
+		}
+		response, err := c.generateAntigravity(ctx, system, req.Input, schema)
+		if role == "writer" && req.OnText != nil {
+			response.StreamFallback = true
+		}
+		return response, err
 	}
 	chat := chatRequest{
 		Model:          c.cfg.Model,
@@ -263,6 +274,9 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	}
 	if schema != nil {
 		chat.ResponseFormat = responseFormat{Type: "json_schema", JSONSchema: &jsonSchemaEnvelope{Name: role + "_v1", Schema: schema}}
+	}
+	if role == "writer" && req.OnText != nil && !c.streamingUnsupported.Load() {
+		return c.generateWriterStream(ctx, req, system, schema, chat, false)
 	}
 	body, err := json.Marshal(chat)
 	if err != nil {
@@ -290,7 +304,7 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: finish_reason=%s content_chars=%d", aiport.ErrInvalidOutput, decoded.Choices[0].FinishReason, len([]rune(decoded.Choices[0].Message.Content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback, ReasoningEffort: chat.ReasoningEffort, ReasoningTokens: reportedReasoningTokens(decoded.Usage.CompletionDetails), CachedInputTokens: reportedCachedTokens(decoded.Usage.PromptDetails)}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback, ReasoningEffort: chat.ReasoningEffort, ReasoningTokens: reportedReasoningTokens(decoded.Usage.CompletionDetails), CachedInputTokens: reportedCachedTokens(decoded.Usage.PromptDetails), StreamFallback: role == "writer" && req.OnText != nil}, nil
 }
 
 func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte, schema map[string]any) (aiport.StoryResponse, error) {

@@ -99,6 +99,9 @@ func (t turnTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 type turnRoleCall struct {
+	Streamed                               bool   `json:"streamed,omitempty"`
+	StreamFallback                         bool   `json:"streamFallback,omitempty"`
+	ProtocolRetries                        int    `json:"protocolRetries,omitempty"`
 	CachedInputTokens                      *int64 `json:"cachedInputTokens,omitempty"`
 	ReasoningEffort                        string `json:"reasoningEffort,omitempty"`
 	ReasoningTokens                        *int64 `json:"reasoningTokens,omitempty"`
@@ -140,7 +143,7 @@ func (o *turnObserver) Generate(ctx context.Context, r ai.StoryRequest) (ai.Stor
 	if model == "" {
 		model = o.base.Identity().Model
 	}
-	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, ResponseFormat: response.ResponseFormat, SchemaFallback: response.SchemaFallback, ReasoningEffort: response.ReasoningEffort, ReasoningTokens: response.ReasoningTokens, CachedInputTokens: response.CachedInputTokens, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses}
+	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, ResponseFormat: response.ResponseFormat, SchemaFallback: response.SchemaFallback, Streamed: response.Streamed, StreamFallback: response.StreamFallback, ProtocolRetries: response.ProtocolRetries, ReasoningEffort: response.ReasoningEffort, ReasoningTokens: response.ReasoningTokens, CachedInputTokens: response.CachedInputTokens, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses}
 	var input struct {
 		Memory struct {
 			Evidence []json.RawMessage `json:"evidence"`

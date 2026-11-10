@@ -10,6 +10,8 @@ import (
 // QueueWaitMS is outside TotalMS; the remaining stages plus UnattributedMS add
 // up to TotalMS (within millisecond rounding).
 type Metrics struct {
+	// Log-only timing: existing persisted writer readiness retains its contract.
+	FirstStreamTextMS        *int64 `json:"firstStreamTextMs,omitempty"`
 	GenerationJobID          id.ID  `json:"generationJobId,omitempty"`
 	AttemptNo                int    `json:"attemptNo,omitempty"`
 	ConfigRevisionID         id.ID  `json:"configRevisionId,omitempty"`

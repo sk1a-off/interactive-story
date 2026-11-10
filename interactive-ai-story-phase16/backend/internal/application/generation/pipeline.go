@@ -31,23 +31,25 @@ type CanonAppender interface {
 type Phase string
 
 const (
-	PhaseQueued       Phase = "queued"
-	PhaseInterpreting Phase = "interpreting"
-	PhaseDirecting    Phase = "directing"
-	PhasePacing       Phase = "pacing"
-	PhaseWriting      Phase = "writing"
-	PhaseDraftReady   Phase = "draft_ready"
-	PhaseFinalizing   Phase = "finalizing"
-	PhaseEvaluating   Phase = "evaluating"
-	PhaseWorld        Phase = "world"
-	PhaseJournal      Phase = "journal"
-	PhaseObjectives   Phase = "objectives"
-	PhaseChoices      Phase = "choices"
-	PhaseValidating   Phase = "validating"
-	PhaseCommitting   Phase = "committing"
-	PhaseCompleted    Phase = "completed"
-	PhaseRetrying     Phase = "retrying"
-	PhaseFailed       Phase = "failed"
+	PhaseQueued         Phase = "queued"
+	PhaseInterpreting   Phase = "interpreting"
+	PhaseDirecting      Phase = "directing"
+	PhasePacing         Phase = "pacing"
+	PhaseWriting        Phase = "writing"
+	PhaseDraftReady     Phase = "draft_ready"
+	PhaseDraftStreaming Phase = "draft_streaming"
+	PhaseDraftReplaced  Phase = "draft_replaced"
+	PhaseFinalizing     Phase = "finalizing"
+	PhaseEvaluating     Phase = "evaluating"
+	PhaseWorld          Phase = "world"
+	PhaseJournal        Phase = "journal"
+	PhaseObjectives     Phase = "objectives"
+	PhaseChoices        Phase = "choices"
+	PhaseValidating     Phase = "validating"
+	PhaseCommitting     Phase = "committing"
+	PhaseCompleted      Phase = "completed"
+	PhaseRetrying       Phase = "retrying"
+	PhaseFailed         Phase = "failed"
 )
 
 type Update struct {
@@ -162,6 +164,7 @@ type Pipeline struct {
 	Memory                     *memorycontext.Service
 	Planner                    TurnPlanner
 	Extractor                  CanonExtractor
+	StreamWriter               bool
 	ProvisionalBeat            bool
 }
 
@@ -188,6 +191,31 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		}
 	}
 	pub(PhaseQueued, "", "")
+	var streamRevision int64
+	var firstStoryMS int64
+	var firstStorySeen bool
+	rewritten := false
+	var lastStreamText string
+	var lastStreamAt time.Time
+	streamText := func(text string) {
+		if !p.StreamWriter || p.Sink == nil {
+			return
+		}
+		if text == lastStreamText && text != "" {
+			return
+		}
+		if text != "" && lastStreamText != "" && time.Since(lastStreamAt) < 75*time.Millisecond {
+			return
+		}
+		lastStreamText = text
+		lastStreamAt = time.Now()
+		streamRevision++
+		if text != "" && !firstStorySeen {
+			firstStoryMS = time.Since(runStarted).Milliseconds()
+			firstStorySeen = true
+		}
+		p.Sink.Publish(ctx, Update{GenerationID: generationID, TimelineID: a.TimelineID, Phase: PhaseDraftStreaming, Revision: streamRevision, Provisional: true, TextDelta: text})
+	}
 	fail := func(err error) ([]event.StoredEvent, error) { pub(PhaseFailed, "", err.Error()); return nil, err }
 	a.Text = strings.TrimSpace(a.Text)
 	if a.Text == "" || a.TimelineID == "" {
@@ -299,20 +327,27 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	}
 	writerInput := map[string]any{"intent": in.Intent, "goal": dir.Goal, "pacing": pacing, "directorInstructions": activeInstructions, "quests": quests, "heroJournal": target.Journal, "context": contextNoObjectivesJournal}
 	memorycontext.Attach(writerInput, retrievedMemory)
-	if err := p.role(ctx, "writer", "v1", writerInput, &draft); err != nil {
+	if p.StreamWriter {
+		streamText("")
+	}
+	if err := p.roleWithText(ctx, "writer", "v1", writerInput, &draft, funcForWriter(p.StreamWriter, streamText)); err != nil {
 		return fail(err)
 	}
 	if draft.Text == "" {
 		return fail(ErrMalformedProposal)
 	}
 	if noveltyErr := narrativeNoveltyError(target.PreviousBeatText, draft.Text); noveltyErr != nil {
+		rewritten = true
 		// One bounded semantic rewrite. Do not send the rejected draft back: doing
 		// so would reinforce the copied wording in the model context.
 		writerInput["revisionInstruction"] = "The first draft repeated completed prose. Write a genuinely new continuation after previousBeatText. Do not recap, paraphrase or reuse its dialogue, actions, readouts, conclusions or wording. Introduce at least two observable state changes."
 		var revised struct {
 			Text string `json:"text"`
 		}
-		if err := p.role(ctx, "writer", "v1", writerInput, &revised); err != nil {
+		if p.StreamWriter {
+			streamText("")
+		}
+		if err := p.roleWithText(ctx, "writer", "v1", writerInput, &revised, funcForWriter(p.StreamWriter, streamText)); err != nil {
 			return fail(err)
 		}
 		if revised.Text == "" {
@@ -326,8 +361,20 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 	pub(PhaseWriting, draft.Text, "")
 	metrics.WriterMS = time.Since(writerStarted).Milliseconds()
 	metrics.TimeToFirstStoryTextMS = time.Since(runStarted).Milliseconds()
-	if p.ProvisionalBeat && p.Sink != nil {
-		p.Sink.Publish(ctx, Update{GenerationID: generationID, TimelineID: a.TimelineID, Phase: PhaseDraftReady, Revision: 1, Provisional: true, TextDelta: draft.Text})
+	if firstStorySeen {
+		metrics.FirstStreamTextMS = &firstStoryMS
+	}
+	if (p.ProvisionalBeat || p.StreamWriter) && p.Sink != nil {
+		revision := int64(1)
+		phase := PhaseDraftReady
+		if p.StreamWriter {
+			streamRevision++
+			revision = streamRevision
+			if rewritten || lastStreamText != "" && !strings.HasPrefix(draft.Text, lastStreamText) {
+				phase = PhaseDraftReplaced
+			}
+		}
+		p.Sink.Publish(ctx, Update{GenerationID: generationID, TimelineID: a.TimelineID, Phase: phase, Revision: revision, Provisional: true, TextDelta: draft.Text})
 	}
 
 	var worldResult struct {
@@ -1352,12 +1399,21 @@ func deterministicChoiceFallback() []choice {
 	}
 }
 
+func funcForWriter(enabled bool, callback func(string)) func(string) {
+	if enabled {
+		return callback
+	}
+	return nil
+}
 func (p Pipeline) role(ctx context.Context, role, version string, input any, out any) error {
+	return p.roleWithText(ctx, role, version, input, out, nil)
+}
+func (p Pipeline) roleWithText(ctx context.Context, role, version string, input any, out any, onText func(string)) error {
 	raw, err := json.Marshal(input)
 	if err != nil {
 		return err
 	}
-	resp, err := p.LLM.Generate(ctx, aiport.StoryRequest{Role: role, PromptVersion: version, Input: raw})
+	resp, err := p.LLM.Generate(ctx, aiport.StoryRequest{Role: role, PromptVersion: version, Input: raw, OnText: onText})
 	if err != nil {
 		return err
 	}
