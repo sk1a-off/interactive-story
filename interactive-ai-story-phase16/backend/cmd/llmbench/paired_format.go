@@ -56,7 +56,7 @@ func runPairedFormatProbe(o pairedOptions) error {
 		}
 	}
 	rand.New(rand.NewSource(o.Seed)).Shuffle(len(specs), func(i, j int) { specs[i], specs[j] = specs[j], specs[i] })
-	_ = savePaired(filepath.Join(root, "plan.json"), map[string]any{"version": "format-v1", "schedule": specs, "promptRevision": m.promptRevision, "promptSHA256": promptFingerprint(m.prompts), "seed": o.Seed, "notes": []string{"Twelve independent calls, no retries; same logical inputs and active system prompts", "Two repeated calls per case per format; small diagnostic sample, not a general reliability estimate", "Version 0.2.1 worker for both formats; stable UI-empty is recorded separately from timeout", "Three simultaneous workers; model sampling controls unavailable in web UI"}})
+	_ = savePaired(filepath.Join(root, "plan.json"), map[string]any{"version": "format-v1", "schedule": specs, "promptRevision": m.promptRevision, "promptSHA256": promptFingerprint(m.prompts), "seed": o.Seed, "notes": []string{"Twelve independent calls, no retries; same logical inputs and active system prompts", "Two repeated calls per case per format; small diagnostic sample, not a general reliability estimate", "Version 0.2.2 worker for both formats; stable UI-empty is recorded separately from timeout", "Three simultaneous workers; model sampling controls unavailable in web UI"}})
 	savePairedBridge(ctx, root, "before")
 	queue := make(chan formatSpec)
 	var wg sync.WaitGroup

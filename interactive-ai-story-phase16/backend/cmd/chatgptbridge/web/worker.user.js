@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.2.1
+// @version      0.2.2
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.2.1';
+  const VERSION='0.2.2';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -88,10 +88,23 @@
     if(current?.messageFormat==='readable-json-v3'&&bubble){
       const codes=[...bubble.querySelectorAll('code')];
       const markerSeen=bubble.textContent.includes(current.messageMarker);
-      if(markerSeen&&codes.length===1)return {text:codes[0].textContent.trim(),source:'fenced-block',bubble,more};
-      // Raw plain rendering is allowed only when the entire envelope matches.
       const raw=contents.map(e=>e.textContent).join('').trim();
       if(raw===current.prompt)return {text:current.messageContent,source:'raw-envelope',bubble,more};
+      // The live renderer pairs single backticks even inside a double-backtick
+      // span. Restore only observed CODE boundaries, then require the ENTIRE
+      // original envelope including the unique marker. Never strip punctuation.
+      function restore(node){
+        if(node.nodeType===3)return node.textContent;
+        if(node.nodeType!==1)return '';
+        if(node.tagName==='CODE')return '`'+node.textContent+'`';
+        return [...node.childNodes].map(restore).join('');
+      }
+      const restored=contents.map(restore).join('').trim();
+      if(restored===current.prompt)return {text:current.messageContent,source:'restored-inline-code',bubble,more};
+      if(markerSeen&&codes.length===1){
+        const text=codes[0].textContent.trim();
+        if(current.messageContent.startsWith(text))return {text,source:'fenced-block',bubble,more};
+      }
       return {text:null,source:markerSeen?'block-not-mounted':'marker-missing',bubble,more,invalid:!markerSeen&&!!raw};
     }
     // Long messages add a Show more button inside the bubble. It is not part
@@ -110,7 +123,7 @@
     const text=root?(root.innerText??root.textContent??'').trim():'';
     const stopped=!!exactButton(['Остановить','Stop','Stop generating']);
     const copy=!!heading&&buttons().some(e=>['Копировать','Copy'].includes(label(e))&&!!(heading.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING));
-    return {text,diagnostic:{assistantCount:roles('assistant').length,scopedRoots:scoped.length,globalRoots:global.length,textLength:text.length,codeBlocks:root?.querySelectorAll('pre code').length||0,stopVisible:stopped,copyVisible:copy}};
+    return {text,diagnostic:{assistantCount:roles('assistant').length,scopedRoots:scoped.length,globalRoots:global.length,textLength:text.length,rawTextLength:root?.textContent.length||0,codeBlocks:root?.querySelectorAll('pre code').length||0,stopVisible:stopped,copyVisible:copy}};
   }
   function modelSnapshot(){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
@@ -261,13 +274,18 @@
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
         if(!running||!temporary()||!instantLabel()||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         send.click(); // Exactly one click for this lease.
-        let stable='',since=0,emptySince=0,expandedBubble=null,emptyReply=false;
+        let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
           if(!temporary())throw Error('Временный режим больше не подтверждён.');
           const users=roles('user'),assistants=roles('assistant');
           if(users.length>1||assistants.length>1)throw Error('Неожиданный дополнительный ход чата.');
           const shown=userMessage(current),userText=shown.text;
           const expected=current.messageFormat==='readable-json-v3'?current.messageContent:current.prompt;
+          if(users.length===1&&userText!==expected){
+            show('Проверяю полный текст отправленного запроса…');
+            if(!correlationSince)correlationSince=Date.now();
+            if(Date.now()-correlationSince>=4000)throw Error('Не удалось подтвердить полный текст отправленного запроса.');
+          }else{correlationSince=0;}
           if(shown.invalid)throw Error('Ответ принадлежит другому запросу.');
           if(userText&&userText!==expected){
             if(expected.startsWith(userText)&&userText.length<expected.length){
@@ -280,11 +298,15 @@
           const state=assistantState(),text=state.text,d=state.diagnostic;
           const done=users.length===1&&userText===expected&&assistants.length===1&&!d.stopVisible&&d.copyVisible;
           if(done&&!text){
+            show('Ответ завершён без читаемого текста. Проверяю…');
             if(!emptySince)emptySince=Date.now();
             // A completed UI with no readable text is a terminal observation,
             // not proof that the underlying model generated no content.
             if(Date.now()-emptySince>=5000){emptyReply=true;return {text:''};}
-          }else{emptySince=0;}
+          }else{
+            emptySince=0;
+            show(d.stopVisible?(text?'Получаю ответ · '+text.length+' символов…':'Модель ещё генерирует ответ…'):text?'Ответ получен. Проверяю завершение…':'Ожидание ответа модели…');
+          }
           if(!done||!text){stable='';since=0;return null;}
           if(text!==stable){stable=text;since=Date.now();return null;}
           return Date.now()-since>=2500 ? {text}:null;

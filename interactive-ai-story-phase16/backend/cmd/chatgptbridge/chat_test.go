@@ -168,7 +168,7 @@ func TestEmptyCompletedResultStoresDiagnostic(t *testing.T) {
 	body := lease(j)
 	call(b, "/send", body)
 	body["reply"] = ""
-	body["error"] = `{"version":"0.2.1","stage":"completed-empty-ui","message":"UI completed without extractable text","assistant":{"assistantCount":1,"textLength":0,"copyVisible":true}}`
+	body["error"] = `{"version":"0.2.2","stage":"completed-empty-ui","message":"UI completed without extractable text","assistant":{"assistantCount":1,"textLength":0,"copyVisible":true}}`
 	w := call(b, "/result", body)
 	if w.Code != 200 || b.jobs[0].State != "failed" || b.jobs[0].Diagnostic == nil || b.jobs[0].Diagnostic.Assistant == nil || !b.jobs[0].Diagnostic.Assistant.CopyVisible {
 		t.Fatal(w.Body, b.jobs[0])
@@ -181,7 +181,7 @@ func TestEmptyCompletedResultStoresDiagnostic(t *testing.T) {
 func TestReadableJobsRequireCompatibleWorker(t *testing.T) {
 	b := newBridge("127.0.0.1:8791")
 	b.jobs = append(b.jobs, &job{ID: secret(), MessageFormat: "readable-json-v3", State: "queued", Deadline: b.now().Add(time.Minute)})
-	for _, v := range []string{"", "0.1.9", "0.2.0"} {
+	for _, v := range []string{"", "0.1.9", "0.2.0", "0.2.1"} {
 		if w := call(b, "/claim", map[string]string{"worker": "old-worker", "version": v}); w.Code != 204 {
 			t.Fatal("incompatible worker leased readable job", v, w.Code)
 		}

@@ -89,7 +89,13 @@ function fixture(options={}){
   if(options.externalAnswer)w.document.querySelector('#transcript').append(answer);
   if(options.streamingEmpty){const stop=w.document.createElement('button');stop.setAttribute('aria-label','Stop generating');assistant.append(stop);}
   if(options.userCopyOnly){user.append(copy);}
-  if(options.readable&&!options.rawEnvelope){
+  if(options.readable&&options.fragmentedInline){
+   content.replaceChildren();
+   const pieces=j.prompt.split('`');
+   pieces.forEach((piece,i)=>{if(i%2){const code=w.document.createElement('code');code.textContent=piece;content.append(code);}else content.append(w.document.createTextNode(piece));});
+   if(options.changedRestoredText)content.append(w.document.createTextNode(' changed'));
+  }
+  if(options.readable&&!options.rawEnvelope&&!options.fragmentedInline){
    content.textContent=(options.wrongMarker?'Story request other-job':j.messageMarker)+'\nExecute the block.\n';
    const code=w.document.createElement('code');content.append(code);
    code.textContent=options.wrongUser?'Осмотреть другую дверь':options.truncatedMessage?j.messageContent.slice(0,10200):j.messageContent;
@@ -187,7 +193,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.2.1');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.2.2');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -257,4 +263,22 @@ test('completed empty assistant UI terminates with bounded diagnostics and one s
 });
 for(const options of [{emptyAnswer:true,streamingEmpty:true},{emptyAnswer:true,userCopyOnly:true}])test('empty streaming UI or user-only copy does not claim completed output '+JSON.stringify(options),async()=>{
  const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(!f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
+});
+
+test('restore fragmented inline-code boundaries and require the full original envelope',async()=>{
+ const f=fixture({readable:true,fragmentedInline:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
+});
+test('restored Markdown mismatch terminates before the full answer timeout',async()=>{
+ const f=fixture({readable:true,fragmentedInline:true,changedRestoredText:true});try{
+  await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);
+  assert.ok(!f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);
+  assert.ok(f.w.document.querySelector('#story-chatgpt-bridge p').textContent.includes('полный текст'));
+  assert.ok(f.w.Date.now()<30000);
+ }finally{f.close();}
+});
+test('an empty reply after restored full correlation is reported once',async()=>{
+ const f=fixture({readable:true,fragmentedInline:true,emptyAnswer:true,rejectedResult:true});try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));const result=f.requests.find(r=>r.path==='/result').body;
+  assert.equal(result.reply,'');assert.equal(JSON.parse(result.error).assistant.rawTextLength,0);assert.equal(f.clicks,1);
+ }finally{f.close();}
 });

@@ -1,0 +1,5 @@
+{
+  "status": "interrupted",
+  "time": "2026-11-10T13:44:25.936801168Z",
+  "reason": "Stopped after visible ready answer was not accepted; live replay found seven inline-code spans stripping fourteen backticks. Worker 0.2.2 restores exact envelope; do not combine runs."
+}

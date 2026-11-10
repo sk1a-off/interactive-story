@@ -43,7 +43,7 @@ func waitPairedWorkers(ctx context.Context) error {
 				for _, value := range workers {
 					w, _ := value.(map[string]any)
 					seen, _ := time.Parse(time.RFC3339Nano, fmt.Sprint(w["seen"]))
-					if w["status"] == "ready" && w["version"] == "0.2.1" && time.Since(seen) < 15*time.Second {
+					if w["status"] == "ready" && w["version"] == "0.2.2" && time.Since(seen) < 15*time.Second {
 						ready++
 					}
 				}
@@ -58,7 +58,7 @@ func waitPairedWorkers(ctx context.Context) error {
 		case <-time.After(time.Second):
 		}
 	}
-	return fmt.Errorf("three ready workers 0.2.1 required; no comparison requests sent")
+	return fmt.Errorf("three ready workers 0.2.2 required; no comparison requests sent")
 }
 func savePairedBridge(ctx context.Context, root, phase string) {
 	if status, err := pairedBridgeState(ctx); err == nil {

@@ -20,7 +20,7 @@ func call(b *bridge, path string, body any) *httptest.ResponseRecorder {
 }
 func claim(t *testing.T, b *bridge, worker string) job {
 	t.Helper()
-	w := call(b, "/claim", map[string]string{"worker": worker, "version": "0.2.1"})
+	w := call(b, "/claim", map[string]string{"worker": worker, "version": "0.2.2"})
 	if w.Code != 200 {
 		t.Fatalf("claim %d %s", w.Code, w.Body)
 	}

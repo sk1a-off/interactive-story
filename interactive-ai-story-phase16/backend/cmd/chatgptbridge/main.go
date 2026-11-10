@@ -27,6 +27,7 @@ type assistantDiagnostic struct {
 	ScopedRoots    int  `json:"scopedRoots"`
 	GlobalRoots    int  `json:"globalRoots"`
 	TextLength     int  `json:"textLength"`
+	RawTextLength  int  `json:"rawTextLength"`
 	CodeBlocks     int  `json:"codeBlocks"`
 	StopVisible    bool `json:"stopVisible"`
 	CopyVisible    bool `json:"copyVisible"`
@@ -303,7 +304,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, j := range b.jobs {
 			if j.State == "queued" {
-				if j.MessageFormat == "readable-json-v3" && version != "0.2.1" {
+				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" {
 					continue
 				}
 				j.State = "leased"

@@ -173,7 +173,7 @@ func runPair(ctx context.Context, root string, m pairedModels, c pairedCase, s p
 }
 func newPairedPlan(o pairedOptions, m pairedModels, cases []pairedCase) pairedPlan {
 	raw, _ := json.Marshal(cases)
-	plan := pairedPlan{Version: "paired-readable-v3", Seed: o.Seed, ConfigID: m.config.ID.String(), ConfigRevision: m.config.Revision, PromptID: m.promptsID, PromptRevision: m.promptRevision, PromptSHA256: promptFingerprint(m.prompts), CorpusSHA256: pairedHash(raw), JudgeSHA256: pairedHash([]byte(pairedJudgeContract)), ParallelPairs: 3, CallDeadlineSeconds: 180, Cases: cases, Notes: []string{
+	plan := pairedPlan{Version: "paired-readable-v3-worker022", Seed: o.Seed, ConfigID: m.config.ID.String(), ConfigRevision: m.config.Revision, PromptID: m.promptsID, PromptRevision: m.promptRevision, PromptSHA256: promptFingerprint(m.prompts), CorpusSHA256: pairedHash(raw), JudgeSHA256: pairedHash([]byte(pairedJudgeContract)), ParallelPairs: 3, CallDeadlineSeconds: 180, Cases: cases, Notes: []string{
 		"Primary baseline is pure antigravity-preview-05-2026, not the configured Flash/Antigravity hybrid.",
 		"Each pair uses byte-identical logical input and the same frozen active prompt contract. Transport wrappers and native system-role handling differ.",
 		"Both primary role arms use buffered JSON without native schema enforcement. Sampling controls are not comparable in the browser/managed agent.",

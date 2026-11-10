@@ -1,0 +1,13 @@
+{
+  "sourceJobPrefix": "5ddf987d",
+  "workerVersion": "0.2.1",
+  "method": "Native UI replay in a fresh Temporary Chat with identical synthetic prompt; DOM read-only inspection",
+  "expectedLength": 8224,
+  "renderedLength": 8210,
+  "inlineCodeElements": 7,
+  "restoredLength": 8224,
+  "restoredExactMatch": true,
+  "assistantVisibleLength": 1603,
+  "assistantRawLength": 1603,
+  "scope": "Reproduces Markdown transformation; separate diagnostic attempt, not a benchmark replacement"
+}
