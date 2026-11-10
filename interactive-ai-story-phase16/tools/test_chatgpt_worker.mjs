@@ -10,16 +10,13 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function until(check){for(let i=0;i<500;i++){if(check())return;await pause(2);}throw Error('test timed out');}
 function fixture(options={}){
  const dom=new JSDOM(`<main><header>Временный чат</header><button aria-label="Выйти из режима временного чата"></button><button aria-label="Без персонализации" aria-haspopup="menu"></button><div role="textbox" contenteditable="true"></div><button aria-label="Отправить"></button><button aria-label="Выбрать модель ChatGPT" aria-expanded="false">Medium</button><section id="transcript"></section></main>`,{url:'https://chatgpt.com/?temporary-chat=true#story-bridge-worker',runScripts:'outside-only',virtualConsole:new VirtualConsole()});
- const w=dom.window;let clock=0;const requests=[];let clicks=0;
+ const w=dom.window;let clock=0;const requests=[];let clicks=0;let personalizationClicks=0;
  w.Date.now=()=>clock;w.setTimeout=(fn,ms)=>setTimeout(()=>{clock+=ms;fn();},0);
  w.Element.prototype.getClientRects=()=>[{}];
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
  const j={id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:'synthetic prompt'};
  const box=w.document.querySelector('[contenteditable]');
- w.document.querySelector('button[aria-haspopup="menu"]').onclick=()=>{
-   const choice=w.document.createElement('div');choice.setAttribute('role','menuitemradio');choice.setAttribute('aria-checked','true');choice.textContent='Без персонализации\nЭтот чат будет игнорировать память';
-   choice.onclick=()=>{if(!options.personalizationBlocked)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Без персонализации');choice.remove();};w.document.body.append(choice);
- };
+ w.document.querySelector('button[aria-haspopup="menu"]').onclick=()=>{personalizationClicks++;};
  const picker=w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]');
  picker.onclick=()=>{
   const existing=w.document.querySelector('[role="menu"]');
@@ -63,16 +60,17 @@ function fixture(options={}){
  };
  if(!options.unarmed)w.sessionStorage.setItem('story-chatgpt-probe-armed','yes');
  if(options.pending)w.sessionStorage.setItem('story-chatgpt-probe-pending',JSON.stringify({worker:j.worker,id:j.id,lease:j.lease}));
- if(options.personalized||options.personalizationBlocked)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Персонализированный');
+ if(options.personalized)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Персонализированный');
+ if(options.noPersonalizationControl)w.document.querySelector('button[aria-haspopup="menu"]').remove();
  if(options.notTemporary){w.document.querySelector('header').textContent='Regular chat';w.document.querySelector('button').remove();}
  w.eval(source);
- return {w,requests,get clicks(){return clicks;},close:()=>dom.window.close()};
+ return {w,requests,get clicks(){return clicks;},get personalizationClicks(){return personalizationClicks;},close:()=>dom.window.close()};
 }
 test('one send and completed reply correlated to current lease',async()=>{
  const f=fixture({personalized:true});try{await until(()=>f.requests.some(r=>r.path==='/result')).catch(e=>{throw Error(e.message+' '+f.w.document.querySelector('#story-chatgpt-bridge').textContent+' '+JSON.stringify(f.requests));});assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/send','/result']);const body=f.requests.at(-1).body;assert.equal(body.id,'job-id');assert.equal(body.lease,'lease-secret');}finally{f.close();}
 });
-for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{personalizationBlocked:true},{modelUnavailable:true}])test('safe stop '+JSON.stringify(options),async()=>{
- const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(f.clicks<=((options.wrongUser||options.rejectedResult)?1:0));if(!options.rejectedResult)assert.ok(!f.requests.some(r=>r.path==='/result'));assert.ok(f.requests.filter(r=>r.path==='/send').length<=1);if(options.pending||options.notTemporary||options.personalizationBlocked)assert.ok(!f.requests.some(r=>r.path==='/claim'));}finally{f.close();}
+for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{modelUnavailable:true}])test('safe stop '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(f.clicks<=((options.wrongUser||options.rejectedResult)?1:0));if(!options.rejectedResult)assert.ok(!f.requests.some(r=>r.path==='/result'));assert.ok(f.requests.filter(r=>r.path==='/send').length<=1);if(options.pending||options.notTemporary)assert.ok(!f.requests.some(r=>r.path==='/claim'));}finally{f.close();}
 });
 
 // Regression: a newly opened marked tab is not armed. Clicking Start at the
@@ -96,5 +94,15 @@ test('Start also works when only the worker fragment was removed',async()=>{
   f.w.document.querySelector('#story-chatgpt-bridge button').click();
   await until(()=>f.requests.some(r=>r.path==='/result'));
   assert.equal(f.clicks,1);
+ }finally{f.close();}
+});
+
+for(const options of [{personalized:true},{noPersonalizationControl:true}])test('personalization never blocks or changes the chat '+JSON.stringify(options),async()=>{
+ const f=fixture({...options,unarmed:true});
+ try{
+  f.w.document.querySelector('#story-chatgpt-bridge button').click();
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);assert.equal(f.personalizationClicks,0);
+  if(options.personalized)assert.ok(f.w.document.querySelector('button[aria-label="Персонализированный"]'));
  }finally{f.close();}
 });

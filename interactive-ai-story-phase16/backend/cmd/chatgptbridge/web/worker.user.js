@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.1
+// @version      0.1.2
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -52,15 +52,6 @@
     return new URL(location.href).searchParams.get('temporary-chat')==='true' &&
       (!!exactButton(['Выйти из режима временного чата','Exit temporary chat']) ||
        /Временный чат|Temporary Chat/i.test(document.querySelector('main header')?.innerText||''));
-  }
-  function noPersonalization(){return !!exactButton(['Без персонализации','Unpersonalized','Not personalized']);}
-  async function disablePersonalization(){
-    const toggle=await waitFor(()=>exactButton(['Без персонализации','Персонализированный','Unpersonalized','Not personalized','Personalized']),15000);
-    toggle.click();
-    const choice=await waitFor(()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>/^(Без персонализации|Unpersonalized|Not personalized)(\n|$)/i.test(e.innerText.trim())),5000);
-    // Select explicitly; the composer label must confirm the result.
-    choice.click();
-    await waitFor(noPersonalization,5000);
   }
   function instantLabel(){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
@@ -118,25 +109,24 @@
         throw Error('Предыдущий запрос прерван. Проверьте его статус; повтора не будет.');
       }
       await waitFor(empty,45000);
-      await disablePersonalization().catch(()=>{throw Error('Не удалось включить режим «Без персонализации». Проверьте рабочую вкладку.');});
       while(running){
-        if(!empty()||!noPersonalization())throw Error('Нужен пустой временный чат без персонализации.');
+        if(!empty())throw Error('Нужен пустой подтверждённый временный чат.');
         current=await request('/claim',{worker});
         if(!current){show('Готов. Ожидание синтетического задания…');await pause(1500);continue;}
         const lease={worker,id:current.id,lease:current.lease};
         sessionStorage.setItem(KEY+'pending',JSON.stringify(lease));
         show('Выбор GPT-6 Instant · '+current.id.slice(0,8));
         await selectGPT6Instant().catch(()=>{throw Error('Не удалось подтвердить GPT-6 Instant. Проверьте доступность модели и рабочую вкладку.');});
-        if(!running||!empty()||!noPersonalization())throw Error('Страница изменилась до отправки.');
+        if(!running||!empty())throw Error('Страница изменилась до отправки.');
         const box=editor();box.focus();
         // Use the browser editing command so the React composer receives a native input event.
         if(!document.execCommand('insertText',false,current.prompt))throw Error('Не удалось заполнить поле.');
         if(box.textContent.trim()!==current.prompt)throw Error('Текст поля не совпадает с заданием.');
         const send=await waitFor(()=>{const e=exactButton(['Отправить','Send']);return e&&!e.disabled&&e;},5000);
-        if(!running||!temporary()||!noPersonalization()||!instantLabel()||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
+        if(!running||!temporary()||!instantLabel()||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
         show('GPT-6 Instant · '+current.id.slice(0,8)+' · ожидание ответа…');
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
-        if(!running||!temporary()||!noPersonalization()||!instantLabel()||box.textContent.trim()!==current.prompt)throw Error('Отправка остановлена после разрешения.');
+        if(!running||!temporary()||!instantLabel()||box.textContent.trim()!==current.prompt)throw Error('Отправка остановлена после разрешения.');
         send.click(); // Exactly one click for this lease.
         let stable='',since=0;
         const reply=await waitFor(()=>{

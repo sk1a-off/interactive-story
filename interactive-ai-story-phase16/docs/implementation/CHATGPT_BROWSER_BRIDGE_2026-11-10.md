@@ -33,7 +33,7 @@ The default concurrency is 3; configuration accepts 1..4096, as does the window 
 ## Per-request contract
 
 1. Open a new root Temporary Chat. Confirm the temporary URL parameter, the UI mode and an empty transcript/composer. An ordinary chat is never a fallback.
-2. Select **Без персонализации** and confirm the composer control. Temporary Chat alone does not imply this setting: the observed UI explicitly allows personalized temporary chats.
+2. Leave personalization controls alone. From userscript **0.1.2**, personalization is neither changed nor required for sending, as requested by the user after the control failed in Chromium. Temporary Chat may still use account personalization; it only provides a fresh conversation here.
 3. Claim an exclusive queue lease. Select **GPT-6**, set power to **Instant**, verify the selected model and minimum power / Instant announcement. Recheck the visible Instant label before sending. An unavailable model/layout stops the worker.
 4. Fill the exact synthetic prompt. Confirm no previous turns. Obtain a one-use send authorization, then click Send once.
 5. Match the visible user turn to the prompt, allow exactly one assistant turn, wait for no Stop control, a Copy control and 2.5 seconds of stable text. Only then upload the reply under the job ID and lease.
@@ -59,7 +59,7 @@ The initial four probes preceded the explicit personalization requirement and mu
 
 Raw, account-free observations: `benchmarks/chatgpt-browser-probes-2026-11-10.json`. Screenshot: `benchmarks/chatgpt-temporary-probe-2026-11-10.jpg`. The local dashboard was also opened in the browser and its three-request button created exactly three queued jobs; this UI check did not involve an installed userscript worker. Dashboard screenshot: `benchmarks/chatgpt-bridge-dashboard-2026-11-10.jpg`.
 
-**Not yet validated live:** the full Violentmonkey → localhost → ChatGPT → result-upload path in the user's Chromium profile; automatic model/personalization selection through userscript-generated DOM events; actual CAPTCHA recovery; long prompts/production schemas; throughput and story quality. The available Codex browser has no userscript-manager installation surface. UI-only probes and DOM fixture tests do not establish these results.
+**Not yet validated live:** the full Violentmonkey → localhost → ChatGPT → result-upload path in the user's Chromium profile; automatic model selection through userscript-generated DOM events; actual CAPTCHA recovery; long prompts/production schemas; throughput and story quality. The available Codex browser has no userscript-manager installation surface. UI-only probes and DOM fixture tests do not establish these results.
 
 Before production integration: complete the local dashboard's one-request and three-request runs in Chromium, inspect their exports, then test real pipeline roles and preserve their dependency graph. No production routing should be inferred from this prototype.
 
@@ -74,10 +74,14 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Eleven DOM tests cover successful model/privacy selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable personalization unavailable model, and clicking Start with an unchanged URL or only a changed fragment. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Twelve DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, and clicking Start with an unchanged URL or only a changed fragment. DOM tests are simulated contracts, not browser integration proof.
 
 ## Userscript 0.1.1: Start-button fix
 
 The original Start handler assigned the fresh-chat URL even when that exact page was already open. Browsers do not reload for that navigation, so the armed flag changed but the worker did not start. Start now calls the worker directly in an already empty Temporary Chat. Otherwise it opens the fresh page, using an explicit reload when only the fragment differs. The button also has explicit styling independent of the page's button reset rules.
 
 To update an already running setup: restart the local bridge so its embedded assets are rebuilt, reopen its userscript link and approve updating the existing script to **0.1.1**, reload the worker tabs, then configure the new local token (bridge restart rotates it). Starting in the current empty Temporary Chat should immediately change the button to **Остановить**. Browser integration still requires checking this in Chromium; the two new regression tests exercise the actual click handler against DOM fixtures.
+
+## Userscript 0.1.2: remove personalization requirement
+
+Per the user's request, remove all personalization menu clicks and pre-send checks. Personalized Temporary Chats and chats without this control may proceed, while a fresh empty Temporary Chat and GPT-6 Instant remain mandatory. Two regression tests verify successful sending with personalization enabled or its control absent, and assert zero clicks on personalization. Update the installed userscript to **0.1.2**; when restarting the bridge, copy its newly rotated local token again.
