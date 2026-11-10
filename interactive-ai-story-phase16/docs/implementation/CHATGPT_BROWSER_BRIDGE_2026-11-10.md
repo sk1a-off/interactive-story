@@ -74,7 +74,7 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Fifteen DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Eighteen DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
 
 ## Userscript 0.1.1: Start-button fix
 
@@ -89,3 +89,7 @@ Per the user's request, remove all personalization menu clicks and pre-send chec
 ## Userscript 0.1.3: staged model confirmation
 
 Do not require the model radio row and reasoning-power announcement to coexist in the same menu view. Confirm GPT-6 while the model list is visible (reopen to verify if selection changed), then confirm the active slider at minimum and the visible Instant label. Live status announcements are not required. The observed slider input has `aria-hidden=true` itself; its active container, rather than the input's own ARIA visibility, determines which slider to read. Normalize an already-open menu and close it on failure. Errors identify the failed selection stage. DOM fixtures now unmount the model list and include the real slider's ARIA visibility. Live verification in the user's Chromium is still pending; screenshots alone do not identify exactly which old condition failed.
+
+## Userscript 0.1.4: dismiss the model menu
+
+The user's screenshot identifies the failed stage as closing the menu while Instant is selected. Replace repeat trigger clicks with Escape, then an outside pointer interaction on the empty composer if needed. Verify menu dismissal and the visible Instant label before sending. Cleanup uses the same dismissal path. Three regression scenarios model a trigger that cannot close on click: Escape works, only outside interaction works, or both are ignored (the last must stop without sending). The panel displays version 0.1.4 to make installation status visible. These are DOM tests; actual Chromium userscript behavior still needs a live rerun.

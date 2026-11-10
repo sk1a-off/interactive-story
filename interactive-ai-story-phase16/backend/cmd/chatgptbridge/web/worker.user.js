@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.3
+// @version      0.1.4
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -25,7 +25,7 @@
   let running=false;
   const panel=document.createElement('aside');panel.id='story-chatgpt-bridge';
   Object.assign(panel.style,{position:'fixed',right:'12px',top:'70px',zIndex:'2147483647',maxWidth:'330px',background:'#142238',color:'#edf3ff',padding:'14px',border:'1px solid #7ea1d2',borderRadius:'12px',font:'13px system-ui'});
-  const title=document.createElement('strong');title.textContent='Мост · '+worker.slice(0,8)+' · только тесты';
+  const title=document.createElement('strong');title.textContent='Мост 0.1.4 · '+worker.slice(0,8)+' · только тесты';
   const status=document.createElement('p');
   const button=document.createElement('button');button.type='button';button.textContent='Запустить';
   Object.assign(button.style,{display:'inline-block',padding:'7px 12px',marginTop:'8px',background:'#315587',color:'#fff',border:'1px solid #8eb7ed',borderRadius:'7px',cursor:'pointer',pointerEvents:'auto'});
@@ -62,9 +62,30 @@
     const visible=selector=>[...document.querySelectorAll(selector)].find(e=>!e.closest('[inert],[aria-hidden="true"]'));
     const getToggle=()=>visible('[data-model-picker-view-toggle]');
     const getModel=()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert],[aria-hidden="true"]')&&e.innerText.trim()==='GPT-6'&&e.getAttribute('aria-disabled')!=='true');
+    const activeMenu=()=>[...document.querySelectorAll('[role="menu"]')].find(e=>e.getAttribute('data-state')!=='closed'&&!e.closest('[inert],[aria-hidden="true"]')&&e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider]'));
+    const menuClosed=()=>getPicker()?.getAttribute('aria-expanded')!=='true'&&!activeMenu();
+    async function closeMenu(){
+      if(menuClosed())return;
+      // Radix-style triggers can react to pointerdown rather than .click().
+      // Escape is the normal dismissal path; do not toggle the trigger again.
+      const target=activeMenu()||document.activeElement||getPicker();
+      for(const type of ['keydown','keyup'])target?.dispatchEvent(new KeyboardEvent(type,{key:'Escape',code:'Escape',keyCode:27,bubbles:true,composed:true}));
+      await pause(200);
+      if(!menuClosed()){
+        const box=editor();
+        if(box){
+          box.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerType:'mouse',button:0}));
+          box.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,composed:true,button:0}));
+          box.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerType:'mouse',button:0}));
+          box.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,composed:true,button:0}));
+          box.click();box.focus();
+        }
+      }
+      await waitFor(menuClosed,3000);
+    }
     let stage='открытие меню модели';
     try{
-      let picker=await waitFor(getPicker,15000);
+      const picker=await waitFor(getPicker,15000);
       // A previous failure or the user may have left the menu open.
       if(picker.getAttribute('aria-expanded')!=='true')picker.click();
       stage='открытие списка моделей';
@@ -95,12 +116,10 @@
       // Confirm the rendered mode and minimum slider value instead.
       await waitFor(()=>minimum()&&getToggle()?.innerText.trim()==='Instant',5000);
       stage='закрытие меню модели';
-      picker=await waitFor(getPicker,5000);
-      if(picker.getAttribute('aria-expanded')==='true')picker.click();
-      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='false'&&instantLabel(),5000);
+      await closeMenu();
+      await waitFor(instantLabel,3000);
     }catch(e){
-      const picker=getPicker();
-      if(picker?.getAttribute('aria-expanded')==='true')picker.click();
+      try{await closeMenu();}catch{/* Preserve the original failed stage; never send. */}
       throw Error('GPT-6 Instant: '+stage+'. '+(e.message||e));
     }
   }

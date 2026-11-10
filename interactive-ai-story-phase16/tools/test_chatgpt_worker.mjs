@@ -13,6 +13,7 @@ function fixture(options={}){
  const w=dom.window;let clock=0;const requests=[];let clicks=0;let personalizationClicks=0;
  w.Date.now=()=>clock;w.setTimeout=(fn,ms)=>setTimeout(()=>{clock+=ms;fn();},0);
  w.Element.prototype.getClientRects=()=>[{}];
+ w.PointerEvent=w.MouseEvent;
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
  const j={id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:'synthetic prompt'};
  const box=w.document.querySelector('[contenteditable]');
@@ -38,10 +39,13 @@ function fixture(options={}){
  }
  picker.onclick=()=>{
   const existing=w.document.querySelector('[role="menu"]');
-  if(existing){existing.remove();picker.setAttribute('aria-expanded','false');return;}
+  if(existing){if(!options.triggerClickCannotClose){existing.remove();picker.setAttribute('aria-expanded','false');}return;}
   picker.setAttribute('aria-expanded','true');
   const menu=w.document.createElement('div');menu.setAttribute('role','menu');renderSimple(menu);w.document.body.append(menu);
  };
+ const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');};
+ w.document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!options.ignoreEscape)closeMenu();});
+ w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
  if(effort===0)picker.textContent='Instant';
  if(options.menuInitiallyOpen)picker.click();
  w.document.execCommand=(_cmd,_ui,text)=>{box.textContent=text;return true;};
@@ -74,7 +78,7 @@ function fixture(options={}){
 test('one send and completed reply correlated to current lease',async()=>{
  const f=fixture({personalized:true});try{await until(()=>f.requests.some(r=>r.path==='/result')).catch(e=>{throw Error(e.message+' '+f.w.document.querySelector('#story-chatgpt-bridge').textContent+' '+JSON.stringify(f.requests));});assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/send','/result']);const body=f.requests.at(-1).body;assert.equal(body.id,'job-id');assert.equal(body.lease,'lease-secret');}finally{f.close();}
 });
-for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{modelUnavailable:true},{modelSelectionIgnored:true}])test('safe stop '+JSON.stringify(options),async()=>{
+for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{modelUnavailable:true},{modelSelectionIgnored:true},{triggerClickCannotClose:true,ignoreEscape:true,ignoreOutside:true}])test('safe stop '+JSON.stringify(options),async()=>{
  const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(f.clicks<=((options.wrongUser||options.rejectedResult)?1:0));if(!options.rejectedResult)assert.ok(!f.requests.some(r=>r.path==='/result'));assert.ok(f.requests.filter(r=>r.path==='/send').length<=1);if(options.pending||options.notTemporary)assert.ok(!f.requests.some(r=>r.path==='/claim'));}finally{f.close();}
 });
 
@@ -119,5 +123,13 @@ for(const options of [{noAnnouncement:true},{noAnnouncement:true,instantInitiall
   assert.equal(f.clicks,1);
   assert.equal(f.w.document.querySelector('[role="menu"]'),null);
   assert.equal(f.w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]').textContent,'Instant');
+ }finally{f.close();}
+});
+
+for(const options of [{triggerClickCannotClose:true},{triggerClickCannotClose:true,ignoreEscape:true}])test('dismiss model menu without clicking its trigger '+JSON.stringify(options),async()=>{
+ const f=fixture(options);
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);assert.equal(f.w.document.querySelector('[role="menu"]'),null);
  }finally{f.close();}
 });
