@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/local/interactive-ai-story/backend/internal/domain/generation"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
@@ -12,9 +12,17 @@ import (
 	"time"
 )
 
-type JobQueue struct{ pool *pgxpool.Pool }
+// jobQueueDB is satisfied by *pgxpool.Pool and by pgx.Tx (integration tests
+// run the queue inside a rolled-back transaction).
+type jobQueueDB interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Exec(context.Context, string, ...any) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
+}
 
-func NewJobQueue(p *pgxpool.Pool) *JobQueue { return &JobQueue{pool: p} }
+type JobQueue struct{ pool jobQueueDB }
+
+func NewJobQueue(p jobQueueDB) *JobQueue { return &JobQueue{pool: p} }
 
 func (q *JobQueue) Enqueue(ctx context.Context, j generation.Job, maxAttempts int) error {
 	if maxAttempts < 1 {
@@ -28,7 +36,7 @@ func (q *JobQueue) Enqueue(ctx context.Context, j generation.Job, maxAttempts in
 }
 
 func (q *JobQueue) ClaimNext(ctx context.Context, owner string, now time.Time, ttl time.Duration) (jobqueue.ClaimedJob, error) {
-	tx, e := q.pool.BeginTx(ctx, pgx.TxOptions{})
+	tx, e := q.pool.Begin(ctx)
 	if e != nil {
 		return jobqueue.ClaimedJob{}, e
 	}
@@ -135,31 +143,63 @@ func (q *JobQueue) Heartbeat(ctx context.Context, jid id.ID, owner string, now t
 	return nil
 }
 func (q *JobQueue) Complete(ctx context.Context, jid id.ID, owner string, now time.Time) error {
-	tag, e := q.pool.Exec(ctx, `UPDATE generation_jobs SET
+	var affected int64
+	e := q.pool.QueryRow(ctx, `WITH finalized AS (
+ UPDATE generation_jobs SET
 status=CASE WHEN cancel_requested_at IS NULL THEN 'completed' ELSE 'cancelled' END,
 completed_at=$3::timestamptz,lease_owner=NULL,lease_expires_at=NULL,heartbeat_at=$3::timestamptz,
 error_code=CASE WHEN cancel_requested_at IS NULL THEN NULL ELSE error_code END,
 last_error=CASE WHEN cancel_requested_at IS NULL THEN NULL ELSE last_error END
-WHERE id=$1 AND status='running' AND lease_owner=$2`, jid, owner, now)
+WHERE id=$1 AND status='running' AND lease_owner=$2
+ RETURNING id,status,'generation cancelled'::text AS error_text
+), terminal AS (`+terminalUpdateSQL+`
+)
+SELECT count(*) FROM finalized`, jid, owner, now).Scan(&affected)
 	if e != nil {
 		return e
 	}
-	if tag.RowsAffected() != 1 {
+	if affected != 1 {
 		return generation.ErrLeaseLost
 	}
 	return nil
 }
+
+// terminalUpdateSQL appends a durable terminal 'failed' update for every job in
+// the `finalized` CTE (columns: id, status, error_text) whose new status is
+// failed/cancelled, so SSE replay (reconnect, reload, Last-Event-ID) always
+// ends. It is skipped when the job's last update is already terminal (the
+// pipeline usually published it itself). ON CONFLICT keeps a rare sequence race
+// with a still-running pipeline from aborting the job state transition.
+const terminalUpdateSQL = `
+INSERT INTO generation_updates(generation_job_id,sequence,phase,text_delta,error_text)
+SELECT f.id,
+ (SELECT COALESCE(MAX(gu.sequence),0)+1 FROM generation_updates gu WHERE gu.generation_job_id=f.id),
+ 'failed','',f.error_text
+FROM finalized f
+LEFT JOIN LATERAL (
+ SELECT gu.phase FROM generation_updates gu WHERE gu.generation_job_id=f.id ORDER BY gu.sequence DESC LIMIT 1
+) last_update ON true
+WHERE f.status IN ('failed','cancelled')
+ AND (last_update.phase IS NULL OR last_update.phase NOT IN ('failed','completed'))
+ON CONFLICT DO NOTHING`
+
 func (q *JobQueue) FailOrRetry(ctx context.Context, jid id.ID, owner string, now time.Time, backoff time.Duration, msg string) error {
-	tag, e := q.pool.Exec(ctx, `UPDATE generation_jobs SET
+	var affected int64
+	e := q.pool.QueryRow(ctx, `WITH finalized AS (
+ UPDATE generation_jobs SET
  status=CASE WHEN cancel_requested_at IS NOT NULL THEN 'cancelled' WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'queued' END,
  available_at=CASE WHEN attempt_count>=max_attempts THEN available_at ELSE $4 END,
  completed_at=CASE WHEN cancel_requested_at IS NOT NULL OR attempt_count>=max_attempts THEN $3::timestamptz ELSE NULL::timestamptz END,
  lease_owner=NULL,lease_expires_at=NULL,heartbeat_at=$3::timestamptz,last_error=$5,error_code=CASE WHEN attempt_count>=max_attempts THEN 'attempts_exhausted' ELSE error_code END
- WHERE id=$1 AND status='running' AND lease_owner=$2`, jid, owner, now, now.Add(backoff), msg)
+ WHERE id=$1 AND status='running' AND lease_owner=$2
+ RETURNING id,status,$5::text AS error_text
+), terminal AS (`+terminalUpdateSQL+`
+)
+SELECT count(*) FROM finalized`, jid, owner, now, now.Add(backoff), msg).Scan(&affected)
 	if e != nil {
 		return e
 	}
-	if tag.RowsAffected() != 1 {
+	if affected != 1 {
 		return generation.ErrLeaseLost
 	}
 	return nil
@@ -177,14 +217,20 @@ func (q *JobQueue) IsCancelRequested(ctx context.Context, jid id.ID) (bool, erro
 	return yes, e
 }
 func (q *JobQueue) RequeueExpired(ctx context.Context, now time.Time) (int64, error) {
-	tag, e := q.pool.Exec(ctx, `UPDATE generation_jobs SET status=CASE WHEN cancel_requested_at IS NOT NULL THEN 'cancelled' WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'queued' END,
+	var affected int64
+	e := q.pool.QueryRow(ctx, `WITH finalized AS (
+ UPDATE generation_jobs SET status=CASE WHEN cancel_requested_at IS NOT NULL THEN 'cancelled' WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'queued' END,
  lease_owner=NULL,lease_expires_at=NULL,available_at=$1::timestamptz,completed_at=CASE WHEN cancel_requested_at IS NOT NULL OR attempt_count>=max_attempts THEN $1::timestamptz ELSE NULL::timestamptz END,
  error_code=CASE WHEN attempt_count>=max_attempts THEN 'attempts_exhausted' ELSE error_code END,last_error=COALESCE(last_error,'lease expired')
- WHERE status='running' AND lease_expires_at <= $1`, now)
+ WHERE status='running' AND lease_expires_at <= $1
+ RETURNING id,status,'lease expired'::text AS error_text
+), terminal AS (`+terminalUpdateSQL+`
+)
+SELECT count(*) FROM finalized`, now).Scan(&affected)
 	if e != nil {
 		return 0, e
 	}
-	return tag.RowsAffected(), nil
+	return affected, nil
 }
 func (q *JobQueue) FindByRequest(ctx context.Context, timelineID id.ID, key string) (jobqueue.ExistingJob, bool, error) {
 	if timelineID.IsZero() || key == "" {

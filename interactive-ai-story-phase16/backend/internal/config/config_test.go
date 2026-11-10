@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestFastStateSwitch(t *testing.T) {
 	for _, value := range []string{"", "false", "true"} {
@@ -18,6 +21,22 @@ func TestJournalEvidenceIsolationSwitch(t *testing.T) {
 		cfg, err := Load()
 		if err != nil || cfg.GenerationJournalEvidenceIsolation != (value == "true") {
 			t.Fatalf("value=%q cfg=%v err=%v", value, cfg.GenerationJournalEvidenceIsolation, err)
+		}
+	}
+}
+
+func TestGenerationExecutionTimeout(t *testing.T) {
+	for value, want := range map[string]time.Duration{"": 25 * time.Minute, "30m": 30 * time.Minute, "1h": time.Hour} {
+		t.Setenv("GENERATION_EXECUTION_TIMEOUT", value)
+		cfg, err := Load()
+		if err != nil || cfg.GenerationExecutionTimeout != want {
+			t.Fatalf("value=%q got=%v err=%v, want %v", value, cfg.GenerationExecutionTimeout, err, want)
+		}
+	}
+	for _, bad := range []string{"0", "-5m", "soon"} {
+		t.Setenv("GENERATION_EXECUTION_TIMEOUT", bad)
+		if _, err := Load(); err == nil {
+			t.Fatalf("value=%q must be rejected", bad)
 		}
 	}
 }

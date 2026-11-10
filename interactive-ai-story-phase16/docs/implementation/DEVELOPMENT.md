@@ -26,6 +26,7 @@ Backend runtime:
 | `IMAGE_WORKER_TOKEN` | empty | Optional Bearer token for every `/internal/image-worker/*` route. |
 | `EMBEDDING_BASE_URL` | `http://127.0.0.1:8090` | Local sentence-transformers endpoint. |
 | `EMBEDDING_MODEL` | `deepvk/USER2-small` | Expected embedding model identity. |
+| `GENERATION_EXECUTION_TIMEOUT` | `25m` | Per-attempt story worker budget (positive Go duration). Default leaves headroom above the 20-minute fast-model timeout. |
 
 Generation switches accept `1`, `true`, `yes`, or `on`:
 

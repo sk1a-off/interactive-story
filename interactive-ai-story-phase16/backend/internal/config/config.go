@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -28,7 +29,14 @@ type Config struct {
 	GenerationFastState                bool
 	EmbeddingBaseURL                   string
 	EmbeddingModel                     string
+	// GenerationExecutionTimeout is the per-attempt budget of a story worker.
+	// It must exceed the largest story LLM timeout (safe-hybrid fast: 20m).
+	GenerationExecutionTimeout time.Duration
 }
+
+// DefaultGenerationExecutionTimeout leaves headroom above the 20m safe-hybrid
+// fast LLM timeout so a legitimate long request is not cut off by the worker.
+const DefaultGenerationExecutionTimeout = 25 * time.Minute
 
 func Load() (Config, error) {
 	cfg := Config{
@@ -60,6 +68,14 @@ func Load() (Config, error) {
 	if !strings.HasPrefix(cfg.MediaBaseURL, "/") {
 		return Config{}, fmt.Errorf("MEDIA_BASE_URL must be a local URL path")
 	}
+	timeout, err := time.ParseDuration(envOrDefault("GENERATION_EXECUTION_TIMEOUT", DefaultGenerationExecutionTimeout.String()))
+	if err != nil {
+		return Config{}, fmt.Errorf("GENERATION_EXECUTION_TIMEOUT must be a Go duration (e.g. 25m): %w", err)
+	}
+	if timeout <= 0 {
+		return Config{}, fmt.Errorf("GENERATION_EXECUTION_TIMEOUT must be > 0, got %s", timeout)
+	}
+	cfg.GenerationExecutionTimeout = timeout
 	return cfg, nil
 }
 

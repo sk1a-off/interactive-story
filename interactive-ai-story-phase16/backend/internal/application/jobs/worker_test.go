@@ -135,23 +135,100 @@ func TestWorkerTimeoutRoutesToRetry(t *testing.T) {
 }
 
 func TestWorkerCancelsExecutionWhenHeartbeatLosesLease(t *testing.T) {
-	q := &memQueue{
-		claimed:      jobqueue.ClaimedJob{Job: generation.Job{ID: jid()}, Reliability: generation.Reliability{AttemptCount: 1, MaxAttempts: 3}},
-		heartbeatErr: generation.ErrLeaseLost,
+	for name, hbErr := range map[string]error{
+		"lease lost": generation.ErrLeaseLost,
+		"db failure": errors.New("connection reset"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			q := &memQueue{
+				claimed:      jobqueue.ClaimedJob{Job: generation.Job{ID: jid()}, Reliability: generation.Reliability{AttemptCount: 1, MaxAttempts: 3}},
+				heartbeatErr: hbErr,
+			}
+			w := Worker{
+				Queue: q, Executor: execFn(func(ctx context.Context, _ jobqueue.ClaimedJob) error {
+					<-ctx.Done()
+					return ctx.Err()
+				}), Owner: "w", LeaseTTL: time.Second, HeartbeatEvery: time.Millisecond, Now: time.Now,
+			}
+			err := w.RunOnce(context.Background())
+			if !errors.Is(err, generation.ErrLeaseLost) || errors.Is(err, context.Canceled) {
+				t.Fatalf("RunOnce() error = %v, want ErrLeaseLost (not context.Canceled)", err)
+			}
+			q.mu.Lock()
+			defer q.mu.Unlock()
+			if q.heartbeats == 0 || q.completed || q.failed {
+				t.Fatalf("heartbeats=%d completed=%v failed=%v", q.heartbeats, q.completed, q.failed)
+			}
+		})
 	}
-	w := Worker{
-		Queue: q, Executor: execFn(func(ctx context.Context, _ jobqueue.ClaimedJob) error {
-			<-ctx.Done()
-			return ctx.Err()
-		}), Owner: "w", LeaseTTL: time.Second, HeartbeatEvery: time.Millisecond, Now: time.Now,
-	}
-	if err := w.RunOnce(context.Background()); !errors.Is(err, context.Canceled) {
-		t.Fatalf("RunOnce() error = %v, want context cancellation after lease loss", err)
-	}
+}
+
+// scriptedQueue hands out jobs in order and fails heartbeats for one job only.
+type scriptedQueue struct {
+	*memQueue
+	jobs        []jobqueue.ClaimedJob
+	failHB      id.ID
+	completedID chan id.ID
+}
+
+func (q *scriptedQueue) ClaimNext(context.Context, string, time.Time, time.Duration) (jobqueue.ClaimedJob, error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if q.heartbeats == 0 || q.completed || q.failed {
-		t.Fatalf("heartbeats=%d completed=%v failed=%v", q.heartbeats, q.completed, q.failed)
+	if len(q.jobs) == 0 {
+		return jobqueue.ClaimedJob{}, jobqueue.ErrNoJob
+	}
+	next := q.jobs[0]
+	q.jobs = q.jobs[1:]
+	return next, nil
+}
+func (q *scriptedQueue) Heartbeat(_ context.Context, job id.ID, _ string, _ time.Time, _ time.Duration) error {
+	if job == q.failHB {
+		return generation.ErrLeaseLost
+	}
+	return nil
+}
+func (q *scriptedQueue) Complete(_ context.Context, job id.ID, _ string, _ time.Time) error {
+	q.completedID <- job
+	return nil
+}
+
+func TestWorkerRunContinuesAfterHeartbeatFailure(t *testing.T) {
+	first := id.MustParse("00000000-0000-4000-8000-000000000911")
+	second := id.MustParse("00000000-0000-4000-8000-000000000912")
+	rel := generation.Reliability{AttemptCount: 1, MaxAttempts: 3}
+	q := &scriptedQueue{
+		memQueue:    &memQueue{},
+		jobs:        []jobqueue.ClaimedJob{{Job: generation.Job{ID: first}, Reliability: rel}, {Job: generation.Job{ID: second}, Reliability: rel}},
+		failHB:      first,
+		completedID: make(chan id.ID, 2),
+	}
+	w := Worker{
+		Queue: q, Executor: execFn(func(ctx context.Context, j jobqueue.ClaimedJob) error {
+			if j.Job.ID == first {
+				<-ctx.Done() // cancelled by the failing heartbeat
+				return ctx.Err()
+			}
+			return nil
+		}), Owner: "w", LeaseTTL: time.Minute, HeartbeatEvery: time.Millisecond, RecoveryEvery: time.Hour, Now: time.Now,
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+	go func() { done <- w.Run(ctx, time.Millisecond) }()
+
+	select {
+	case got := <-q.completedID:
+		if got != second {
+			t.Fatalf("completed %s, want second job %s (first lost its lease)", got, second)
+		}
+	case err := <-done:
+		t.Fatalf("Run() exited after heartbeat failure: %v", err)
+	case <-time.After(2 * time.Second):
+		t.Fatal("next job was not claimed after heartbeat failure")
+	}
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("Run() error = %v, want context.Canceled on shutdown", err)
 	}
 }
 

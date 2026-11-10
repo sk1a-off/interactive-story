@@ -1,8 +1,11 @@
 package generation
 
 import (
+	"bytes"
 	"context"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
+	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 )
@@ -50,5 +53,33 @@ func TestPersistedSinkAssignsSequenceBeforeLivePublish(t *testing.T) {
 	history, _ := store.List(context.Background(), g, 1)
 	if len(history) != 1 || history[0].Sequence != 2 {
 		t.Fatal("cursor replay returned wrong updates")
+	}
+}
+
+// ctxStore rejects appends on a done context, like a real DB driver.
+type ctxStore struct{ updateMem }
+
+func (s *ctxStore) Append(ctx context.Context, u Update) (Update, error) {
+	if err := ctx.Err(); err != nil {
+		return u, err
+	}
+	return s.updateMem.Append(ctx, u)
+}
+
+func TestPersistedSinkPersistsTerminalUpdateOnCancelledContext(t *testing.T) {
+	g := id.MustParse("00000000-0000-4000-8000-000000000802")
+	store := &ctxStore{}
+	var logs bytes.Buffer
+	sink := PersistedSink{Store: store, Logger: slog.New(slog.NewTextHandler(&logs, nil))}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	sink.Publish(ctx, Update{GenerationID: g, Phase: PhaseWriting})
+	sink.Publish(ctx, Update{GenerationID: g, Phase: PhaseFailed, Error: "timeout"})
+	history, _ := store.List(context.Background(), g, 0)
+	if len(history) != 1 || history[0].Phase != PhaseFailed {
+		t.Fatalf("history = %+v, want only the terminal failed update persisted", history)
+	}
+	if !strings.Contains(logs.String(), "generation update persist failed") {
+		t.Fatalf("append error of non-terminal update was not logged: %q", logs.String())
 	}
 }

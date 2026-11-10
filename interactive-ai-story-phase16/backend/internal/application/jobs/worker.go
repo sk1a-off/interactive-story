@@ -3,8 +3,10 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/local/interactive-ai-story/backend/internal/domain/generation"
 	"github.com/local/interactive-ai-story/backend/internal/ports/jobqueue"
+	"log/slog"
 	"time"
 )
 
@@ -22,6 +24,8 @@ type Worker struct {
 	ExecutionTimeout time.Duration
 	Backoff          func(int) time.Duration
 	Now              func() time.Time
+	// Logger is optional; when set, non-fatal lease losses are logged.
+	Logger *slog.Logger
 }
 
 func (w Worker) RunOnce(ctx context.Context) error {
@@ -42,6 +46,9 @@ func (w Worker) RunOnce(ctx context.Context) error {
 	if heartbeatEvery <= 0 {
 		heartbeatEvery = 10 * time.Second
 	}
+	// heartbeatErr records why the heartbeat goroutine cancelled the run. It is
+	// written only by that goroutine and read only after hbDone is closed.
+	var heartbeatErr error
 	hbDone := make(chan struct{})
 	go func() {
 		defer close(hbDone)
@@ -57,6 +64,11 @@ func (w Worker) RunOnce(ctx context.Context) error {
 					return
 				}
 				if e := w.Queue.Heartbeat(runCtx, claimed.Job.ID, w.Owner, w.Now(), w.LeaseTTL); e != nil {
+					// A failure caused by our own context ending (shutdown or
+					// execution timeout) is not a lease problem.
+					if runCtx.Err() == nil {
+						heartbeatErr = e
+					}
 					cancel()
 					return
 				}
@@ -70,6 +82,16 @@ func (w Worker) RunOnce(ctx context.Context) error {
 	defer finalCancel()
 	if execErr == nil {
 		return w.Queue.Complete(finalCtx, claimed.Job.ID, w.Owner, w.Now())
+	}
+	if heartbeatErr != nil && ctx.Err() == nil {
+		// The lease could not be renewed (lost lease or DB failure). Do not
+		// finalize: the lease may already belong to another worker, and lease
+		// recovery requeues the job otherwise. Report it as ErrLeaseLost so the
+		// run loop keeps going instead of treating it as shutdown.
+		if errors.Is(heartbeatErr, generation.ErrLeaseLost) {
+			return fmt.Errorf("jobs: job %s: heartbeat: %w", claimed.Job.ID, heartbeatErr)
+		}
+		return fmt.Errorf("jobs: job %s: heartbeat: %w: %v", claimed.Job.ID, generation.ErrLeaseLost, heartbeatErr)
 	}
 	if errors.Is(execErr, context.Canceled) {
 		if requested, e := w.Queue.IsCancelRequested(finalCtx, claimed.Job.ID); e == nil && requested {
@@ -100,8 +122,6 @@ func min(a, b int) int {
 	return b
 }
 
-var _ = generation.ErrLeaseLost
-
 func (w Worker) Run(ctx context.Context, poll time.Duration) error {
 	if poll <= 0 {
 		poll = 250 * time.Millisecond
@@ -122,7 +142,15 @@ func (w Worker) Run(ctx context.Context, poll time.Duration) error {
 	defer recoveryTicker.Stop()
 	for {
 		err := w.RunOnce(ctx)
-		if err != nil && !errors.Is(err, jobqueue.ErrNoJob) {
+		switch {
+		case err == nil, errors.Is(err, jobqueue.ErrNoJob):
+		case errors.Is(err, generation.ErrLeaseLost) && ctx.Err() == nil:
+			// Losing one job's lease must not stop the worker: lease recovery
+			// requeues that job and we keep claiming new ones.
+			if w.Logger != nil {
+				w.Logger.Warn("generation job lease lost; worker continues", "owner", w.Owner, "error", err)
+			}
+		default:
 			return err
 		}
 		select {

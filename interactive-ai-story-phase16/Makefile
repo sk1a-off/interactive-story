@@ -9,6 +9,8 @@ GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1 ?= $(shell sed -n 's/^GENERATION_JOURNA
 export GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1
 GENERATION_FAST_STATE_V1 ?= $(shell sed -n 's/^GENERATION_FAST_STATE_V1=//p' .env 2>/dev/null | tail -n 1)
 export GENERATION_FAST_STATE_V1
+GENERATION_EXECUTION_TIMEOUT ?= $(shell sed -n 's/^GENERATION_EXECUTION_TIMEOUT=//p' .env 2>/dev/null | tail -n 1)
+export GENERATION_EXECUTION_TIMEOUT
 
 .PHONY: dev db-up db-down migrate-up migrate-down backend-dev frontend-dev sqlc-generate backend-test frontend-test test lint build health
 

@@ -228,7 +228,7 @@ func main() {
 			}
 			return appgen.Pipeline{StreamWriter: public.StoryLLMStreamWriter, LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, Planner: planner, Memory: memoryRuntime.ForRevision(ctx, rev), ProvisionalBeat: cfg.GenerationProvisionalBeat, JournalEvidenceIsolationV1: cfg.GenerationJournalEvidenceIsolation}, nil
 		}
-		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}
+		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub, Logger: logger}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}
 		imageStorage, storageErr := localimages.New(cfg.MediaRoot, cfg.MediaBaseURL)
 		if storageErr != nil {
 			logger.Error("image storage unavailable", "error", storageErr)
@@ -243,7 +243,7 @@ func main() {
 		}
 		workers := make([]appjobs.Worker, 3)
 		for index := range workers {
-			workers[index] = appjobs.Worker{Queue: jobQueue, Executor: executor, Owner: fmt.Sprintf("backend-worker-%d", index+1), LeaseTTL: 30 * time.Second, HeartbeatEvery: 10 * time.Second, ExecutionTimeout: 10 * time.Minute, Backoff: appjobs.DefaultBackoff, Now: time.Now}
+			workers[index] = appjobs.Worker{Queue: jobQueue, Executor: executor, Owner: fmt.Sprintf("backend-worker-%d", index+1), LeaseTTL: 30 * time.Second, HeartbeatEvery: 10 * time.Second, ExecutionTimeout: cfg.GenerationExecutionTimeout, Backoff: appjobs.DefaultBackoff, Now: time.Now, Logger: logger}
 		}
 		promptWorker := appimagegen.PromptJobWorker{Repo: imageGenerationRepo, Images: imageService, Owner: "image-prompt-worker-1", LocalOwnerID: ownerID, LeaseTTL: 10 * time.Minute, ExecutionTimeout: 2 * time.Minute, Now: time.Now, Logger: logger}
 		startWorker = func(ctx context.Context) {
@@ -252,8 +252,14 @@ func main() {
 				go func() {
 					for ctx.Err() == nil {
 						err := run(ctx)
-						if err == nil || errors.Is(err, context.Canceled) || ctx.Err() != nil {
+						// Only shutdown of the parent ctx stops a worker. A nil or
+						// context.Canceled error from a still-live ctx (e.g. an
+						// internal cancel) is restarted, never treated as shutdown.
+						if ctx.Err() != nil {
 							return
+						}
+						if err == nil {
+							err = errors.New("worker returned without error")
 						}
 						logger.Error(name+" cycle failed; restarting", "error", err)
 						select {
