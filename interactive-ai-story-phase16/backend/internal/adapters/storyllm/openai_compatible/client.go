@@ -466,6 +466,9 @@ func chatCompletionsEndpoint(baseURL string) string {
 	if parsed, err := url.Parse(base); err == nil {
 		path = strings.TrimRight(parsed.Path, "/")
 	}
+	if strings.HasSuffix(path, "/chat/completions") {
+		return base
+	}
 	if strings.HasSuffix(path, "/v1") || strings.HasSuffix(path, "/openai") {
 		return base + "/chat/completions"
 	}
