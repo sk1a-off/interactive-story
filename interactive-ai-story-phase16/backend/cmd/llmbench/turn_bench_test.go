@@ -24,7 +24,7 @@ func TestTurnTransportCountsPollingSeparatelyAndOmitsCredentials(t *testing.T) {
 		if r.Method == http.MethodGet {
 			return nil, errors.New("PRIVATE_TRANSPORT_ERROR")
 		}
-		return &http.Response{StatusCode: 429, Body: io.NopCloser(strings.NewReader("secret"))}, nil
+		return &http.Response{StatusCode: 429, Body: io.NopCloser(strings.NewReader("secret")), Header: http.Header{"Retry-After": []string{"3600"}}}, nil
 	})}
 	for _, method := range []string{http.MethodPost, http.MethodGet} {
 		r, _ := http.NewRequestWithContext(context.WithValue(context.Background(), turnTraceKey{}, trace), method, "http://localhost/test", nil)
@@ -34,7 +34,7 @@ func TestTurnTransportCountsPollingSeparatelyAndOmitsCredentials(t *testing.T) {
 			resp.Body.Close()
 		}
 	}
-	if trace.Posts != 1 || trace.Gets != 1 || trace.TransportFailures != 1 || len(trace.Statuses) != 1 || trace.Statuses[0] != 429 {
+	if trace.Posts != 1 || trace.Gets != 1 || trace.TransportFailures != 1 || len(trace.Statuses) != 1 || trace.Statuses[0] != 429 || trace.RetryAfterSeconds != 3600 {
 		t.Fatalf("invalid physical counts: %+v", trace)
 	}
 }

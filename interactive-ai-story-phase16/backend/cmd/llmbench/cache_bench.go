@@ -208,9 +208,8 @@ func runCacheBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
 		return errors.New("no matching cache cases")
 	}
 	hash := func(b []byte) string { v := sha256.Sum256(b); return hex.EncodeToString(v[:]) }
-	pr, _ := json.Marshal(prompt)
 	fr, _ := json.Marshal(probes)
-	report := cacheBenchReport{Status: "running", Provider: o.Provider, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: hash(pr), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Notes: []string{
+	report := cacheBenchReport{Status: "running", Provider: o.Provider, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: promptFingerprint(prompt), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Notes: []string{
 		"Experimental JSON member order only; production prompt ordering and active settings remain unchanged. Both layouts preserve identical JSON data and system instructions.",
 		"Natural compact synthetic story contexts; no cache-threshold padding. Shared-prefix byte counts are not tokenizer counts or proof of cache eligibility.",
 		"One request at a time. Credential probes retain all failures; a working credential is pinned per role and never rotated in measured requests. No quality-model escalation.",

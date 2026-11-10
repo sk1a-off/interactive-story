@@ -1,0 +1,568 @@
+{
+  "BeforeSHA256": "3fda97e9083005361631f83f3e381f04fc93ad237410b45a6af43eadeb9ca070",
+  "AfterSHA256": "1ab297a6ec17c7819d428f103cdec970788684c8a27be46627c68097acb89315",
+  "Before": [
+    {
+      "memory": false,
+      "Runs": 6,
+      "Succeeded": 6,
+      "Failed": 0,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 24327.4343775,
+        "p95Ms": 46886.087795
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 75385.9891865,
+        "p95Ms": 99299.178839
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 75385.9914465,
+        "p95Ms": 99299.180129
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 9465,
+          "OutputTokens": 863,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1250.2069855,
+            "p95Ms": 1601.887683
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 75169,
+          "OutputTokens": 1055,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 35541.8200685,
+            "p95Ms": 74051.887501
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 10583,
+          "OutputTokens": 24,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1044.5366155,
+            "p95Ms": 1332.593055
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 7402,
+          "OutputTokens": 1064,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1118.9109195,
+            "p95Ms": 1306.587554
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 37637,
+          "OutputTokens": 164,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 26975.908302,
+            "p95Ms": 46693.547942
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 40262,
+          "OutputTokens": 1533,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 23207.7865555,
+            "p95Ms": 45793.278635
+          }
+        }
+      ],
+      "memorySkipped": 0
+    },
+    {
+      "memory": true,
+      "Runs": 6,
+      "Succeeded": 6,
+      "Failed": 0,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 27403.101828500003,
+        "p95Ms": 35350.16713
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 70586.6256315,
+        "p95Ms": 115175.530793
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 70586.6277465,
+        "p95Ms": 115175.532403
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 9547,
+          "OutputTokens": 764,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1143.4062085,
+            "p95Ms": 1315.674517
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 41976,
+          "OutputTokens": 924,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 26118.5165165,
+            "p95Ms": 45914.5924
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 10668,
+          "OutputTokens": 117,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 857.775048,
+            "p95Ms": 1024.213913
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 12544,
+          "OutputTokens": 1015,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1191.496381,
+            "p95Ms": 1510.164245
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 37722,
+          "OutputTokens": 24,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 25215.720095,
+            "p95Ms": 79825.175473
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 45388,
+          "OutputTokens": 1618,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 26306.1281025,
+            "p95Ms": 34010.072923
+          }
+        }
+      ],
+      "memorySkipped": 0
+    }
+  ],
+  "After": [
+    {
+      "memory": false,
+      "Runs": 6,
+      "Succeeded": 6,
+      "Failed": 0,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 29017.474376,
+        "p95Ms": 60883.559836
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 90729.714744,
+        "p95Ms": 187323.677056
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 90729.715734,
+        "p95Ms": 187323.678696
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 8867,
+          "OutputTokens": 890,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1802.8445805,
+            "p95Ms": 4218.429816
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 41955,
+          "OutputTokens": 532,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 27567.490628,
+            "p95Ms": 63708.646646
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 10653,
+          "OutputTokens": 24,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 2052.7195745,
+            "p95Ms": 15282.356172
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 7402,
+          "OutputTokens": 1042,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1345.5895955,
+            "p95Ms": 3820.164458
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 135485,
+          "OutputTokens": 203,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 31381.738635,
+            "p95Ms": 158607.571399
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 8,
+          "HTTPGets": 0,
+          "InputTokens": 40240,
+          "OutputTokens": 1603,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 26547.7249855,
+            "p95Ms": 59858.088423
+          }
+        }
+      ],
+      "memorySkipped": 0
+    },
+    {
+      "memory": true,
+      "Runs": 6,
+      "Succeeded": 6,
+      "Failed": 0,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 29393.346260500002,
+        "p95Ms": 55984.253707
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 100376.3511615,
+        "p95Ms": 373577.518722
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 100376.3525315,
+        "p95Ms": 373577.520242
+      },
+      "Roles": [
+        {
+          "Role": "choices",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 9225,
+          "OutputTokens": 1082,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 2463.2428394999997,
+            "p95Ms": 4526.044698
+          }
+        },
+        {
+          "Role": "quest_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 112373,
+          "OutputTokens": 933,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 35754.548435000004,
+            "p95Ms": 76807.662383
+          }
+        },
+        {
+          "Role": "state_evaluator",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 10663,
+          "OutputTokens": 24,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 1083.6681135,
+            "p95Ms": 3998.988099
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 1,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 2,
+          "HTTPGets": 0,
+          "InputTokens": 6725,
+          "OutputTokens": 71,
+          "CallLatency": {
+            "count": 1,
+            "medianMs": 22588.772757,
+            "p95Ms": 22588.772757
+          }
+        },
+        {
+          "Role": "turn_planner",
+          "Model": "gemini-3.5-flash-lite",
+          "Calls": 5,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 5,
+          "HTTPGets": 0,
+          "InputTokens": 10375,
+          "OutputTokens": 832,
+          "CallLatency": {
+            "count": 5,
+            "medianMs": 1349.883787,
+            "p95Ms": 1529.061821
+          }
+        },
+        {
+          "Role": "world_evaluator",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 310478,
+          "OutputTokens": 2077,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 26381.358010999997,
+            "p95Ms": 334277.910286
+          }
+        },
+        {
+          "Role": "writer",
+          "Model": "antigravity-preview-05-2026",
+          "Calls": 6,
+          "Repairs": 0,
+          "Failures": 0,
+          "HTTPPosts": 6,
+          "HTTPGets": 0,
+          "InputTokens": 45218,
+          "OutputTokens": 1613,
+          "CallLatency": {
+            "count": 6,
+            "medianMs": 28054.692242999998,
+            "p95Ms": 38199.284584
+          }
+        }
+      ],
+      "memorySkipped": 0
+    }
+  ],
+  "Deltas": [
+    {
+      "Memory": false,
+      "SuccessfulMatches": 6,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 2025.1261575000008,
+        "p95Ms": 36884.604838
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 9407.221866499996,
+        "p95Ms": 119046.22115199998
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 9407.221716499997,
+        "p95Ms": 119046.22132199998
+      }
+    },
+    {
+      "Memory": true,
+      "SuccessfulMatches": 6,
+      "FirstText": {
+        "count": 6,
+        "medianMs": 2599.609161999999,
+        "p95Ms": 27632.985942000003
+      },
+      "Ready": {
+        "count": 6,
+        "medianMs": 40697.495821,
+        "p95Ms": 258401.987929
+      },
+      "Total": {
+        "count": 6,
+        "medianMs": 40697.495636,
+        "p95Ms": 258401.987839
+      }
+    }
+  ],
+  "BeforeHTTP": {
+    "Posts": 72,
+    "Gets": 0,
+    "TransportFailures": 0,
+    "Statuses": {
+      "200": 72
+    }
+  },
+  "AfterHTTP": {
+    "Posts": 75,
+    "Gets": 0,
+    "TransportFailures": 0,
+    "Statuses": {
+      "200": 72,
+      "429": 2,
+      "503": 1
+    }
+  },
+  "Notes": [
+    "Legacy before fingerprint hashed {} rather than prompts. Prompt ID/revision match; historical content hash cannot independently prove equality.",
+    "Historical versus current observations are not a randomized causal comparison. Provider load, quotas, generated text and token counts can differ.",
+    "Timing summaries include successful turns; failures and their physical calls remain in counts. Matched deltas exclude any pair with a failed turn.",
+    "First text is pipeline preview availability, not browser rendering. Queue wait and real SQL Canon commit remain excluded."
+  ]
+}

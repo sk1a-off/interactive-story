@@ -231,9 +231,8 @@ func runSchemaBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
 		return errors.New("schema fixtures unavailable")
 	}
 	hash := func(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
-	pr, _ := json.Marshal(prompt)
 	fr, _ := json.Marshal(probes)
-	report := schemaBenchReport{SchemaSHA256: storyllm.ResponseSchemaFingerprint(), Status: "running", Provider: o.Provider, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: hash(pr), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Concurrency: 2, Seed: o.Seed, Notes: []string{
+	report := schemaBenchReport{SchemaSHA256: storyllm.ResponseSchemaFingerprint(), Status: "running", Provider: o.Provider, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: promptFingerprint(prompt), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Concurrency: 2, Seed: o.Seed, Notes: []string{
 		"Frozen synthetic role inputs captured from the production pipeline with a scripted writer. Provider configuration is read-only; no user stories, database fixtures or Canon writes.",
 		"Two concurrent paired workers; schema/object order alternates per case across repeats. Logical provider usage can omit rejected calls. Physical requests and effective formats are retained.",
 		"Checks cover required core fields, four unique choices, nonempty positive mutations, no negative mutations and verbatim beat evidence. These are not complete semantic or literary acceptance.",

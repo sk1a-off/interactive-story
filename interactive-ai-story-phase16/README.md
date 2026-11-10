@@ -9,6 +9,11 @@ See `docs/implementation/IMPLEMENTATION_STATUS.md` for the phase history and `do
 Development commands, environment variables, migrations, and CI checks are
 documented in [`docs/implementation/DEVELOPMENT.md`](docs/implementation/DEVELOPMENT.md).
 
+For this existing host installation, use the
+[current startup steps](docs/implementation/START_CURRENT_2026-11-10.md).
+The [completed before/after report](docs/implementation/TURN_AFTER_RESULTS_2026-11-10.md)
+records successful quota recovery but no demonstrated overall speedup.
+
 
 ## Current local MVP status
 

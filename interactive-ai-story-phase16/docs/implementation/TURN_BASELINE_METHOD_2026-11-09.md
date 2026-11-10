@@ -5,6 +5,14 @@ adds a full-turn mode to `cmd/llmbench` and a read-only runtime metrics endpoint
 It does not change model routing, prompts, generation profiles, or production
 settings.
 
+**2026-11-10 fingerprint correction:** the original `PromptSHA256` field hashed
+`{}` because `promptset.Revision` deliberately excludes its fields from public
+JSON. That historical hash does not prove prompt-content equality. The original
+raw results remain unchanged; their pinned prompt ID/revision are still recorded.
+New reports hash the actual prompt and role-settings maps explicitly, in all
+four benchmark modes. The stage 3.10 comparison warns when using the legacy
+hash and also checks pinned revision identities, fixtures, flags and ordering.
+
 ## Why a separate mode
 
 The original `llmbench` runs independent role contracts. `hybridbench` runs the
@@ -136,3 +144,33 @@ path. `-turn-cases conversation` selects a pilot. For mechanical overhead/wiring
 use `-turn-provider fake -turn-embedding-provider fake` and omit the configuration
 database. Fake results are marked `smoke_only`; they are not model-quality or
 Gemini-speed evidence. Existing single-role `llmbench` mode remains available.
+
+## Offline historical comparison (stage 3.10)
+
+After a complete current run, compare without database/model calls:
+
+```bash
+go run ./cmd/llmbench \
+  -turn-compare-before ../docs/implementation/benchmarks/turn-configured-baseline-2026-11-09.json \
+  -turn-compare-after /tmp/current-turn-report.json \
+  -output /tmp/turn-before-after.json
+```
+
+The comparison requires matching pinned AI/prompt revisions, model routing,
+profile, fixtures, memory provider, ordering/seed, repeats and effective flags.
+It rejects incomplete/duplicate/missing turns and reports without verified
+cleanup. Completed runs containing failed turns retain those failures and all
+physical HTTP calls; successful-match deltas exclude failed pairs. Summaries are
+recomputed from rows rather than trusting stored summary fields. Output contains
+source-file hashes and cannot overwrite an input through a path alias.
+
+The legacy empty-object prompt hash is accepted only with a matching nonzero
+pinned prompt ID/revision and an explicit warning. New actual content hashes must
+match when both reports have them. This cannot independently reconstruct prompt
+content from an old hash, and a historical before/after comparison does not
+separate code effects from provider load, quota changes or different generated
+prose.
+
+Current configured runs share the same request controller across client
+instances and safe-hybrid models, resolve the pinned generation profile, and
+record normalized 429 Retry-After seconds without exposing raw headers or keys.

@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -39,6 +40,7 @@ import (
 )
 
 type turnBenchmarkOptions struct {
+	requests                                                                                  *storyllm.RequestControl
 	Enabled, Planner, Provisional, FastState, JournalIsolation, JSONSchema                    bool
 	Provider, ConfigDSN, FixtureDSN, SecretStore, EmbeddingProvider, EmbeddingEndpoint, Cases string
 	Repeats                                                                                   int
@@ -69,7 +71,19 @@ type turnCallTrace struct {
 	mu                             sync.Mutex
 	Posts, Gets, TransportFailures int
 	Statuses                       []int
+	RetryAfterSeconds              int64
 }
+
+func retryHintSeconds(value string, now time.Time) int64 {
+	if seconds, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64); err == nil {
+		return min(max(seconds, 0), 86400)
+	}
+	if until, err := http.ParseTime(value); err == nil {
+		return min(max(int64(math.Ceil(until.Sub(now).Seconds())), 0), 86400)
+	}
+	return 0
+}
+
 type turnTraceKey struct{}
 type turnTransport struct{ base http.RoundTripper }
 
@@ -92,6 +106,9 @@ func (t turnTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 			trace.TransportFailures++
 		} else {
 			trace.Statuses = append(trace.Statuses, resp.StatusCode)
+			if resp.StatusCode == http.StatusTooManyRequests {
+				trace.RetryAfterSeconds = max(trace.RetryAfterSeconds, retryHintSeconds(resp.Header.Get("Retry-After"), time.Now()))
+			}
 		}
 		trace.mu.Unlock()
 	}
@@ -99,6 +116,7 @@ func (t turnTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 }
 
 type turnRoleCall struct {
+	RetryAfterSeconds                      int64  `json:"retryAfterSeconds,omitempty"`
 	Streamed                               bool   `json:"streamed,omitempty"`
 	StreamFallback                         bool   `json:"streamFallback,omitempty"`
 	ProtocolRetries                        int    `json:"protocolRetries,omitempty"`
@@ -143,7 +161,7 @@ func (o *turnObserver) Generate(ctx context.Context, r ai.StoryRequest) (ai.Stor
 	if model == "" {
 		model = o.base.Identity().Model
 	}
-	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, ResponseFormat: response.ResponseFormat, SchemaFallback: response.SchemaFallback, Streamed: response.Streamed, StreamFallback: response.StreamFallback, ProtocolRetries: response.ProtocolRetries, ReasoningEffort: response.ReasoningEffort, ReasoningTokens: response.ReasoningTokens, CachedInputTokens: response.CachedInputTokens, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses}
+	call := turnRoleCall{Sequence: seq, Role: r.Role, Model: model, StartMS: float64(start.Sub(o.started)) / float64(time.Millisecond), EndMS: float64(end.Sub(o.started)) / float64(time.Millisecond), ElapsedMS: float64(end.Sub(start)) / float64(time.Millisecond), InputTokens: response.InputTokens, OutputTokens: response.OutputTokens, InputBytes: len(r.Input), Repair: r.Repair || r.Role == "structured_repair", Failed: err != nil, EscalatedFrom: response.EscalatedFrom, ResponseFormat: response.ResponseFormat, SchemaFallback: response.SchemaFallback, Streamed: response.Streamed, StreamFallback: response.StreamFallback, ProtocolRetries: response.ProtocolRetries, ReasoningEffort: response.ReasoningEffort, ReasoningTokens: response.ReasoningTokens, CachedInputTokens: response.CachedInputTokens, HTTPPosts: trace.Posts, HTTPGets: trace.Gets, TransportFailures: trace.TransportFailures, HTTPStatuses: trace.Statuses, RetryAfterSeconds: trace.RetryAfterSeconds}
 	var input struct {
 		Memory struct {
 			Evidence []json.RawMessage `json:"evidence"`
@@ -209,6 +227,8 @@ type turnBenchmarkReport struct {
 	PromptSHA256, FixtureSHA256                       string
 	PrimaryModel                                      string
 	SafeHybrid                                        bool
+	GenerationProfile                                 aiconfig.GenerationProfile
+	SharedRequestLimits                               bool
 	Planner, Provisional, FastState, JournalIsolation bool
 	Embedding                                         ai.ProviderIdentity
 	Repeats                                           int
@@ -372,8 +392,12 @@ func turnBenchmarkModel(o turnBenchmarkOptions, rev aiconfig.Revision, prompt pr
 	if json.Unmarshal(rev.Settings, &settings) != nil {
 		return nil, errors.New("invalid AI settings")
 	}
+	requests := o.requests
+	if requests == nil {
+		requests = storyllm.NewRequestControl(3, 1)
+	}
 	client := func(model, profile string, timeout time.Duration) (ai.StoryLLM, error) {
-		return storyllm.New(storyllm.Config{BaseURL: settings.StoryLLMEndpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: model, Profile: profile, Timeout: timeout, PromptSet: &prompt, JSONSchema: o.JSONSchema}, &http.Client{Timeout: timeout, Transport: turnTransport{base: http.DefaultTransport}})
+		return storyllm.New(storyllm.Config{BaseURL: settings.StoryLLMEndpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: model, Profile: profile, Timeout: timeout, PromptSet: &prompt, JSONSchema: o.JSONSchema, Requests: requests}, &http.Client{Timeout: timeout, Transport: turnTransport{base: http.DefaultTransport}})
 	}
 	if settings.StoryLLMSafeHybrid {
 		fast, err := client(aiconfig.Gemini35FlashLiteModel, "safe-hybrid-fast", 20*time.Minute)
@@ -390,6 +414,7 @@ func turnBenchmarkModel(o turnBenchmarkOptions, rev aiconfig.Revision, prompt pr
 }
 
 func runTurnBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
+	o.requests = storyllm.NewRequestControl(3, 1)
 	r := turnBenchmarkReport{SchemaSHA256: storyllm.ResponseSchemaFingerprint(), JSONSchema: o.JSONSchema, Mode: "paired-full-turn-v1", Status: "failed", StartedAt: time.Now().UTC(), Provider: o.Provider, Planner: o.Planner, Provisional: o.Provisional, FastState: o.FastState, JournalIsolation: o.JournalIsolation, Repeats: o.Repeats, Seed: o.Seed, Notes: []string{
 		"Frozen synthetic targets only; configuration DB is read-only, credentials and user-story content are never reported.",
 		"Production Pipeline and Safe Hybrid routing are used. Memory-off/on pairs share the same initial target and action; generated prose can differ.",
@@ -398,6 +423,8 @@ func runTurnBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
 		"Reported usage belongs to logical response telemetry and can omit rejected/escalated calls. Zero tokens do not prove zero provider consumption.",
 		"Latency summaries use succeeded turns; failed elapsed times remain in per-run records. This does not validate literary quality or measure durable telemetry persistence.",
 	}}
+	r.GenerationProfile = aiconfig.GenerationQuality
+	r.SharedRequestLimits = true
 	save := func() error {
 		r.Summary = summarizeTurnRuns(r.Runs)
 		r.Paired = pairedTurnDeltas(r.Runs)
@@ -446,13 +473,16 @@ func runTurnBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
 		var s aiconfig.PublicSettings
 		_ = json.Unmarshal(rev.Settings, &s)
 		r.SafeHybrid = s.StoryLLMSafeHybrid
+		r.GenerationProfile = s.GenerationProfile.Effective()
+		if !s.GenerationProfile.Available() {
+			return fail("unavailable_generation_profile")
+		}
+		r.Planner = o.Planner || r.GenerationProfile == aiconfig.GenerationBalance
 	}
-	pr, _ := json.Marshal(prompts)
-	hash := sha256.Sum256(pr)
-	r.PromptSHA256 = hex.EncodeToString(hash[:])
+	r.PromptSHA256 = promptFingerprint(prompts)
 	fixtures := turnFixtures()
 	fr, _ := json.Marshal(fixtures)
-	hash = sha256.Sum256(fr)
+	hash := sha256.Sum256(fr)
 	r.FixtureSHA256 = hex.EncodeToString(hash[:])
 	if o.Cases != "" {
 		var selected []turnFixture
@@ -554,8 +584,9 @@ func runTurnBenchmark(o turnBenchmarkOptions, output string) (runErr error) {
 				canon := &turnCaptureCanon{}
 				var stages generationmetrics.Metrics
 				pipeline := appgen.Pipeline{LLM: observer, Canon: canon, Targets: fixture, Sink: sink, MaxRepairs: 1, ProvisionalBeat: o.Provisional, JournalEvidenceIsolationV1: o.JournalIsolation, Metrics: func(m generationmetrics.Metrics) { m.ErrorText = ""; stages = m }}
-				if o.Planner {
-					pipeline.Planner = appgen.LLMTurnPlanner{LLM: observer}
+				pipeline.Planner, err = appgen.PlannerForProfile(r.GenerationProfile, o.Planner, observer)
+				if err != nil {
+					return fail("unavailable_generation_profile")
 				}
 				if enabled {
 					pipeline.Memory = &memorycontext.Service{TopK: 8, MemoryTokenBudget: 1024, Builder: contextbuilder.Builder{Embeddings: embeddings, Memory: pg.NewHybridMemoryRetriever(pool), Visibility: pg.NewMemoryVisibilityResolver(pool), Profile: memory.EmbeddingProfile{Provider: r.Embedding.Provider, Model: r.Embedding.Model, Revision: 1}, RetrievalTimeout: time.Second}}

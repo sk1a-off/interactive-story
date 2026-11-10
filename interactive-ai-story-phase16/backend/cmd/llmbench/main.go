@@ -168,12 +168,15 @@ type report struct {
 func main() {
 	turnOptions := registerTurnBenchmarkFlags(flag.CommandLine)
 	var endpoint, model, output, reasoning, onlyCase, secretStorePath, secretName, scheduleInput string
+	var compareBefore, compareAfter string
 	var noThinkToken, interactions, skipWarmup bool
 	var strictSchema, schemaBench, reasoningBench, cacheBench, writerStreamBench bool
 	flag.StringVar(&endpoint, "endpoint", "http://127.0.0.1:11434/v1/chat/completions", "OpenAI-compatible chat completions endpoint")
 	flag.StringVar(&model, "model", "", "model identifier")
 	flag.StringVar(&output, "output", "", "JSON report path")
 	flag.StringVar(&scheduleInput, "turn-schedule-report", "", "analyze a completed full-turn JSON report offline; no provider or database calls")
+	flag.StringVar(&compareBefore, "turn-compare-before", "", "offline comparison: baseline full-turn report")
+	flag.StringVar(&compareAfter, "turn-compare-after", "", "offline comparison: completed current full-turn report")
 	flag.StringVar(&reasoning, "reasoning", "none", "reasoning effort: none, low, medium, or high")
 	flag.BoolVar(&noThinkToken, "no-think-token", false, "append the Qwen /no_think control token")
 	flag.BoolVar(&writerStreamBench, "writer-stream-bench", false, "frozen pipeline smoke with live writer and scripted other roles; compare buffered/streamed availability")
@@ -187,6 +190,17 @@ func main() {
 	flag.BoolVar(&interactions, "interactions", false, "use the Google Interactions API instead of chat completions")
 	flag.BoolVar(&skipWarmup, "skip-warmup", false, "do not spend a separate request on endpoint warmup")
 	flag.Parse()
+	if compareBefore != "" || compareAfter != "" {
+		if compareBefore == "" || compareAfter == "" || writerStreamBench || cacheBench || reasoningBench || schemaBench || turnOptions.Enabled || scheduleInput != "" {
+			fmt.Fprintln(os.Stderr, "comparison requires both reports and no other benchmark mode")
+			os.Exit(2)
+		}
+		if err := writeTurnComparison(compareBefore, compareAfter, output); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if writerStreamBench {
 		if cacheBench || reasoningBench || schemaBench || turnOptions.Enabled || scheduleInput != "" {
 			fmt.Fprintln(os.Stderr, "writer stream benchmark modes are exclusive")

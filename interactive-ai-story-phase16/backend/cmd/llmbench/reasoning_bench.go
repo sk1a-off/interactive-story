@@ -243,9 +243,8 @@ func runReasoningBenchmark(o turnBenchmarkOptions, output string) (runErr error)
 		return errors.New("no matching reasoning cases")
 	}
 	hash := func(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
-	pr, _ := json.Marshal(prompts)
 	fr, _ := json.Marshal(probes)
-	report := reasoningBenchReport{Status: "running", Provider: o.Provider, Model: aiconfig.Gemini35FlashLiteModel, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: hash(pr), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Concurrency: 2, Seed: o.Seed, Notes: []string{
+	report := reasoningBenchReport{Status: "running", Provider: o.Provider, Model: aiconfig.Gemini35FlashLiteModel, ConfigID: rev.ID, ConfigRevision: rev.Revision, PromptSHA256: promptFingerprint(prompts), FixtureSHA256: hash(fr), StartedAt: time.Now().UTC(), Repeats: o.Repeats, Concurrency: 2, Seed: o.Seed, Notes: []string{
 		"Frozen synthetic fast-role inputs; configuration and credential store are read-only. No database fixtures, Canon SQL writes or active-setting changes.",
 		"Paired low/minimal requests share exact inputs, prompt revision, model and JSON-object format. Two concurrent workers; within-case order reverses each repeat.",
 		"Direct current Flash-Lite route, with no Safe Hybrid quality fallback to hide unsupported settings or inflate a different model's timing. Requests are capped at 60 seconds.",
