@@ -11,6 +11,8 @@ documented in [`docs/implementation/DEVELOPMENT.md`](docs/implementation/DEVELOP
 
 For this existing host installation, use the
 [current startup steps](docs/implementation/START_CURRENT_2026-11-10.md).
+Run `./start.sh` for one-command database/backend/frontend startup and automatic
+browser opening; Ctrl+C stops the application processes.
 The [completed before/after report](docs/implementation/TURN_AFTER_RESULTS_2026-11-10.md)
 records successful quota recovery but no demonstrated overall speedup.
 

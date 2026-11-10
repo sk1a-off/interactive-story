@@ -8,6 +8,46 @@ revision uses Google Safe Hybrid, so llama.cpp is not required for this path.
 The commands below start the application, not the benchmark. No test runner or
 temporary benchmark embedding service is required for ordinary play.
 
+## One-command launch
+
+```bash
+./start.sh
+```
+
+The executable launcher works from any current directory. It starts the existing
+PostgreSQL container, waits for readiness, verifies a new private database dump
+before pending migrations, installs frontend dependencies when their lockfile
+changes, builds the current backend, starts backend/Vite and opens the browser
+after readiness checks. Subsequent launches skip backups/migrations when the
+schema is already current. Saved credentials and generated files use the same
+locations as `make backend-dev`.
+
+Logs are kept in `data/logs/start-*`; backups in `data/backups/`. Ctrl+C or closing
+the terminal stops launcher-owned processes while leaving PostgreSQL and
+pre-existing services running. A lock prevents duplicate instances. Occupied
+application ports cause a clear failure without killing their owners.
+
+If saved AI settings enable memory, USER2 is started automatically; missing CPU
+dependencies/model files are downloaded on first use. An already healthy USER2
+service is reused. Perchance remains a browser worker: keep its configured tab
+and userscript open. Narration requires your separately configured OmniVoice
+service. The launcher does not download a local story GGUF or change AI settings.
+
+Use `./start.sh --no-browser` for terminals without a browser. Advanced overrides
+are `HOST_DATABASE_URL` (local PostgreSQL only), `STORY_DB_CONTAINER`,
+`STORY_BACKEND_PORT`, `STORY_FRONTEND_PORT` and the existing `HOST_*` paths.
+Selected `.env` values are read as literal data; the file is never sourced.
+
+Validation: a fresh isolated database was migrated to 35, then the launcher
+created/validated its dump and upgraded it to 40. Backend readiness and the
+frontend API proxy worked; duplicate launch returned without new services, and
+Ctrl+C released both application ports while PostgreSQL remained healthy.
+Automated stub-based tests cover failed-backup migration blocking, literal
+dotenv handling and preserving an occupied port. No production migration or
+model generation was performed by these launcher tests.
+
+The manual steps below remain available for diagnosis.
+
 ## 1. Prepare the database and frontend once
 
 From the project directory:
