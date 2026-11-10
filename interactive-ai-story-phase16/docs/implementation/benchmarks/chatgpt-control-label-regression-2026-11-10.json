@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-10",
+  "verification": "read-only DOM evaluation in authenticated ChatGPT browser; not userscript-manager integration",
+  "picker": {
+    "expanded": "false",
+    "oldText": "Уровень усилий рассуждения\nInstant",
+    "hiddenPlaceholder": {
+      "aria-hidden": "true",
+      "opacity": "0"
+    },
+    "renderedText": "Instant",
+    "oldCheck": false,
+    "newCheck": true
+  },
+  "script_version": "0.1.5"
+}

@@ -74,7 +74,7 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Eighteen DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Twenty-one DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
 
 ## Userscript 0.1.1: Start-button fix
 
@@ -93,3 +93,13 @@ Do not require the model radio row and reasoning-power announcement to coexist i
 ## Userscript 0.1.4: dismiss the model menu
 
 The user's screenshot identifies the failed stage as closing the menu while Instant is selected. Replace repeat trigger clicks with Escape, then an outside pointer interaction on the empty composer if needed. Verify menu dismissal and the visible Instant label before sending. Cleanup uses the same dismissal path. Three regression scenarios model a trigger that cannot close on click: Escape works, only outside interaction works, or both are ignored (the last must stop without sending). The panel displays version 0.1.4 to make installation status visible. These are DOM tests; actual Chromium userscript behavior still needs a live rerun.
+
+## Userscript 0.1.5: hidden label placeholder (live DOM reproduction)
+
+The failure is now reproduced on the actual ChatGPT DOM, rather than inferred from a screenshot. The closed picker (`aria-expanded=false`) returns `Уровень усилий рассуждения\nInstant` from `innerText`: the animated placeholder has `aria-hidden=true` and opacity zero, but still contributes to `innerText`. Consequently the former strict Instant comparison returns false even with the menu closed and Instant visible.
+
+Read control text by skipping hidden/inert/ARIA-hidden branches and CSS-hidden or zero-opacity elements. Keep the strict visible mode match; a hidden stale Instant label must not authorize a visibly Medium control. The same corrected predicate was evaluated read-only against the live DOM: old check false, corrected check true, rendered label Instant. This validates the specific label correction, not the full userscript transport path.
+
+Three additional tests cover the hidden placeholder, a hidden stale Instant label with visible Medium (must stop), and diagnostic redaction. The new **Диагностика** button copies only version, worker ID, control attributes, slider values and the last failed selection stage, with no prompt, transcript, lease or token. If clipboard access is unavailable, it displays that bounded report in the panel. Screenshot-based diagnosis should be replaced with this report for any further unsupported layout.
+
+Read-only live observation: `benchmarks/chatgpt-control-label-regression-2026-11-10.json`. Update the userscript to **0.1.5** after restarting the bridge and reload worker tabs. Full Chromium integration remains to be rerun.

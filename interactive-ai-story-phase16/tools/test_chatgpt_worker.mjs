@@ -19,6 +19,14 @@ function fixture(options={}){
  const box=w.document.querySelector('[contenteditable]');
  w.document.querySelector('button[aria-haspopup="menu"]').onclick=()=>{personalizationClicks++;};
  const picker=w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]');
+ function updatePicker(text){
+  if(!options.hiddenPlaceholder){picker.textContent=text;return;}
+  // Sanitized structure observed in the live ChatGPT DOM on 2026-11-10.
+  const hidden=w.document.createElement('span');hidden.setAttribute('aria-hidden','true');hidden.style.opacity='0';hidden.textContent='Уровень усилий рассуждения';
+  const hiddenOld=w.document.createElement('span');hiddenOld.setAttribute('aria-hidden','true');hiddenOld.textContent='Instant';
+  const visible=w.document.createElement('span');visible.setAttribute('aria-hidden','false');visible.textContent=text;
+  picker.replaceChildren(hidden,hiddenOld,visible);
+ }
  let selectedModel=options.modelAlreadySelected?'GPT-6':'GPT-5.6 Sol';
  let effort=options.instantInitially?0:1;
  function renderSimple(menu){
@@ -34,7 +42,7 @@ function fixture(options={}){
   const track=w.document.createElement('div');track.dataset.modelPickerPowerSlider='';
   const slider=w.document.createElement('span');slider.setAttribute('role','slider');slider.setAttribute('aria-hidden','true');slider.setAttribute('aria-valuemin','0');slider.setAttribute('aria-valuenow',String(effort));track.append(slider);
   const status=w.document.createElement('span');status.setAttribute('role','status');status.textContent=effort===0?'Instant, 1 из 3.':'Medium, 2 из 3.';
-  power.onkeydown=e=>{if(e.key==='ArrowLeft'){effort=0;slider.setAttribute('aria-valuenow','0');status.textContent='Instant, 1 из 3.';picker.textContent='Instant';toggle.textContent='Instant';}};
+  power.onkeydown=e=>{if(e.key==='ArrowLeft'){effort=0;slider.setAttribute('aria-valuenow','0');status.textContent='Instant, 1 из 3.';updatePicker('Instant');toggle.textContent='Instant';}};
   menu.append(power,track);if(!options.noAnnouncement)menu.append(status);
  }
  picker.onclick=()=>{
@@ -43,10 +51,10 @@ function fixture(options={}){
   picker.setAttribute('aria-expanded','true');
   const menu=w.document.createElement('div');menu.setAttribute('role','menu');renderSimple(menu);w.document.body.append(menu);
  };
- const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');};
+ const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');if(options.closedWrongMode)updatePicker('Medium');};
  w.document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!options.ignoreEscape)closeMenu();});
  w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
- if(effort===0)picker.textContent='Instant';
+ updatePicker(effort===0?'Instant':'Medium');
  if(options.menuInitiallyOpen)picker.click();
  w.document.execCommand=(_cmd,_ui,text)=>{box.textContent=text;return true;};
  w.GM_getValue=()=> 'a'.repeat(48);w.GM_setValue=()=>{};w.GM_registerMenuCommand=()=>{};
@@ -78,7 +86,7 @@ function fixture(options={}){
 test('one send and completed reply correlated to current lease',async()=>{
  const f=fixture({personalized:true});try{await until(()=>f.requests.some(r=>r.path==='/result')).catch(e=>{throw Error(e.message+' '+f.w.document.querySelector('#story-chatgpt-bridge').textContent+' '+JSON.stringify(f.requests));});assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/send','/result']);const body=f.requests.at(-1).body;assert.equal(body.id,'job-id');assert.equal(body.lease,'lease-secret');}finally{f.close();}
 });
-for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{modelUnavailable:true},{modelSelectionIgnored:true},{triggerClickCannotClose:true,ignoreEscape:true,ignoreOutside:true}])test('safe stop '+JSON.stringify(options),async()=>{
+for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{modelUnavailable:true},{modelSelectionIgnored:true},{hiddenPlaceholder:true,closedWrongMode:true},{triggerClickCannotClose:true,ignoreEscape:true,ignoreOutside:true}])test('safe stop '+JSON.stringify(options),async()=>{
  const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(f.clicks<=((options.wrongUser||options.rejectedResult)?1:0));if(!options.rejectedResult)assert.ok(!f.requests.some(r=>r.path==='/result'));assert.ok(f.requests.filter(r=>r.path==='/send').length<=1);if(options.pending||options.notTemporary)assert.ok(!f.requests.some(r=>r.path==='/claim'));}finally{f.close();}
 });
 
@@ -131,5 +139,30 @@ for(const options of [{triggerClickCannotClose:true},{triggerClickCannotClose:tr
  try{
   await until(()=>f.requests.some(r=>r.path==='/result'));
   assert.equal(f.clicks,1);assert.equal(f.w.document.querySelector('[role="menu"]'),null);
+ }finally{f.close();}
+});
+
+test('hidden animation placeholder does not reject the visible Instant control',async()=>{
+ const f=fixture({hiddenPlaceholder:true});
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);
+  const picker=f.w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]');
+  assert.ok(picker.innerText.includes('Уровень усилий рассуждения'));
+  assert.equal(picker.querySelector('[aria-hidden="false"]').textContent,'Instant');
+ }finally{f.close();}
+});
+test('control diagnostics exclude the prompt and transport credentials',async()=>{
+ const f=fixture({hiddenPlaceholder:true,closedWrongMode:true});
+ try{
+  await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);
+  [...f.w.document.querySelectorAll('#story-chatgpt-bridge button')].find(e=>e.textContent==='Диагностика').click();
+  await pause(10);
+  const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
+  assert.ok(text.startsWith('Диагностика: '));
+  const report=JSON.parse(text.slice('Диагностика: '.length));
+  assert.equal(report.version,'0.1.5');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.current.picker.text,'Medium');
+  for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
 });

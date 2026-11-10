@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.4
+// @version      0.1.5
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,6 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
+  const VERSION='0.1.5';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -23,13 +24,21 @@
   sessionStorage.setItem(KEY+'uuid',worker);
   let token=String(GM_getValue(KEY+'token',''));
   let running=false;
+  let lastModelFailure=null;
   const panel=document.createElement('aside');panel.id='story-chatgpt-bridge';
   Object.assign(panel.style,{position:'fixed',right:'12px',top:'70px',zIndex:'2147483647',maxWidth:'330px',background:'#142238',color:'#edf3ff',padding:'14px',border:'1px solid #7ea1d2',borderRadius:'12px',font:'13px system-ui'});
-  const title=document.createElement('strong');title.textContent='Мост 0.1.4 · '+worker.slice(0,8)+' · только тесты';
+  const title=document.createElement('strong');title.textContent='Мост '+VERSION+' · '+worker.slice(0,8)+' · только тесты';
   const status=document.createElement('p');
   const button=document.createElement('button');button.type='button';button.textContent='Запустить';
   Object.assign(button.style,{display:'inline-block',padding:'7px 12px',marginTop:'8px',background:'#315587',color:'#fff',border:'1px solid #8eb7ed',borderRadius:'7px',cursor:'pointer',pointerEvents:'auto'});
-  panel.append(title,status,button);document.documentElement.append(panel);
+  const diagnosticButton=document.createElement('button');diagnosticButton.type='button';diagnosticButton.textContent='Диагностика';
+  diagnosticButton.style.cssText=button.style.cssText;diagnosticButton.style.marginLeft='6px';
+  diagnosticButton.onclick=async()=>{
+    const report=JSON.stringify({version:VERSION,worker,running,lastModelFailure,current:modelSnapshot()},null,2);
+    try{await navigator.clipboard.writeText(report);show('Диагностика скопирована. Она содержит только состояние элементов управления, без текста чата и токенов.');}
+    catch{show('Диагностика: '+report);}
+  };
+  panel.append(title,status,button,diagnosticButton);document.documentElement.append(panel);
   const show=text=>{status.textContent=text;};
   GM_registerMenuCommand('Токен локального моста',()=>{
     const value=window.prompt('Токен со страницы http://127.0.0.1:8791. Не пароль ChatGPT.','');
@@ -45,7 +54,19 @@
   });}
   // Selectors observed in the ChatGPT UI on 2026-11-10. Unknown layouts stop safely.
   const buttons=()=>[...document.querySelectorAll('button')].filter(e=>!panel.contains(e)&&e.getClientRects().length);
-  const label=e=>e.getAttribute('aria-label')||e.textContent.trim();
+  // innerText includes the composer's opacity-zero animation placeholder.
+  // Read rendered control text, skipping hidden animation/ARIA branches.
+  function controlText(root){
+    function read(node){
+      if(node.nodeType===3)return node.textContent;
+      if(node.nodeType!==1||node.matches('[hidden],[inert],[aria-hidden="true"]'))return '';
+      const css=getComputedStyle(node);
+      if(css.display==='none'||css.visibility==='hidden'||css.visibility==='collapse'||css.opacity==='0')return '';
+      return [...node.childNodes].map(read).join('');
+    }
+    return root?read(root).replace(/\s+/g,' ').trim():'';
+  }
+  const label=e=>e.getAttribute('aria-label')||controlText(e);
   const exactButton=names=>buttons().find(e=>names.includes(label(e)));
   const roles=role=>[...document.querySelectorAll(`[data-conversation-role="${role}"]`)];
   function temporary(){
@@ -55,13 +76,22 @@
   }
   function instantLabel(){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
-    return picker&&/^Instant$/.test(picker.innerText.trim());
+    return picker&&controlText(picker)==='Instant';
+  }
+  function modelSnapshot(){
+    const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
+    return {
+      temporary:temporary(),
+      picker:picker?{text:controlText(picker),expanded:picker.getAttribute('aria-expanded'),state:picker.getAttribute('data-state'),effort:picker.getAttribute('data-selected-reasoning-effort')}:null,
+      menus:[...document.querySelectorAll('[role="menu"]')].filter(e=>e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider]')).map(e=>({state:e.getAttribute('data-state'),hidden:e.getAttribute('aria-hidden'),inert:!!e.closest('[inert]')})),
+      sliders:[...document.querySelectorAll('[data-model-picker-power-slider] [role="slider"]')].map(e=>({min:e.getAttribute('aria-valuemin'),value:e.getAttribute('aria-valuenow'),hidden:e.getAttribute('aria-hidden')})),
+    };
   }
   async function selectGPT6Instant(){
     const getPicker=()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     const visible=selector=>[...document.querySelectorAll(selector)].find(e=>!e.closest('[inert],[aria-hidden="true"]'));
     const getToggle=()=>visible('[data-model-picker-view-toggle]');
-    const getModel=()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert],[aria-hidden="true"]')&&e.innerText.trim()==='GPT-6'&&e.getAttribute('aria-disabled')!=='true');
+    const getModel=()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert],[aria-hidden="true"]')&&controlText(e)==='GPT-6'&&e.getAttribute('aria-disabled')!=='true');
     const activeMenu=()=>[...document.querySelectorAll('[role="menu"]')].find(e=>e.getAttribute('data-state')!=='closed'&&!e.closest('[inert],[aria-hidden="true"]')&&e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider]'));
     const menuClosed=()=>getPicker()?.getAttribute('aria-expanded')!=='true'&&!activeMenu();
     async function closeMenu(){
@@ -114,11 +144,12 @@
       }
       // Live announcements are optional and may not contain a mode index.
       // Confirm the rendered mode and minimum slider value instead.
-      await waitFor(()=>minimum()&&getToggle()?.innerText.trim()==='Instant',5000);
+      await waitFor(()=>minimum()&&controlText(getToggle())==='Instant',5000);
       stage='закрытие меню модели';
       await closeMenu();
       await waitFor(instantLabel,3000);
     }catch(e){
+      lastModelFailure={stage,...modelSnapshot()};
       try{await closeMenu();}catch{/* Preserve the original failed stage; never send. */}
       throw Error('GPT-6 Instant: '+stage+'. '+(e.message||e));
     }
