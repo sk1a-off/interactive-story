@@ -1,0 +1,99 @@
+{
+  "date": "2026-11-10",
+  "scope": "synthetic UI feasibility probes",
+  "latency_benchmark": false,
+  "three_parallel_dispatch_span_ms_upper_bound": 3731,
+  "model_menu_inspection": {
+    "selected": "GPT-6",
+    "power": "Instant",
+    "slider_value": "0",
+    "scope": "separately inspected after probes"
+  },
+  "integrated_userscript_live_test": "pending installation in user Chromium",
+  "probes": [
+    {
+      "probe_id": "bridge-single-20261110-a1",
+      "transport": "Codex browser UI, not userscript",
+      "temporary_chat_confirmed": true,
+      "empty_before_send": true,
+      "user_turns": 1,
+      "assistant_turns": 1,
+      "completed": true,
+      "valid_json": true,
+      "reply": {
+        "probe_id": "bridge-single-20261110-a1",
+        "ok": true,
+        "text": "Фонарь осветил пустую площадь."
+      },
+      "personalization_off_confirmed": false,
+      "observed_after_ms_upper_bound": 12969
+    },
+    {
+      "probe_id": "bridge-parallel-20261110-1",
+      "transport": "Codex browser UI, not userscript",
+      "temporary_chat_confirmed": true,
+      "empty_before_send": true,
+      "user_turns": 1,
+      "assistant_turns": 1,
+      "completed": true,
+      "valid_json": true,
+      "reply": {
+        "probe_id": "bridge-parallel-20261110-1",
+        "ok": true,
+        "text": "Фонарь осветил пустую площадь."
+      },
+      "personalization_off_confirmed": false,
+      "observed_after_ms_upper_bound": 81658
+    },
+    {
+      "probe_id": "bridge-parallel-20261110-2",
+      "transport": "Codex browser UI, not userscript",
+      "temporary_chat_confirmed": true,
+      "empty_before_send": true,
+      "user_turns": 1,
+      "assistant_turns": 1,
+      "completed": true,
+      "valid_json": true,
+      "reply": {
+        "probe_id": "bridge-parallel-20261110-2",
+        "ok": true,
+        "text": "Фонарь осветил пустую площадь."
+      },
+      "personalization_off_confirmed": false,
+      "observed_after_ms_upper_bound": 80851
+    },
+    {
+      "probe_id": "bridge-parallel-20261110-3",
+      "transport": "Codex browser UI, not userscript",
+      "temporary_chat_confirmed": true,
+      "empty_before_send": true,
+      "user_turns": 1,
+      "assistant_turns": 1,
+      "completed": true,
+      "valid_json": true,
+      "reply": {
+        "probe_id": "bridge-parallel-20261110-3",
+        "ok": true,
+        "text": "Фонарь осветил пустую площадь."
+      },
+      "personalization_off_confirmed": false,
+      "observed_after_ms_upper_bound": 79893
+    },
+    {
+      "probe_id": "bridge-unpersonalized-20261110",
+      "transport": "Codex browser UI, not userscript",
+      "temporary_chat_confirmed": true,
+      "empty_before_send": true,
+      "user_turns": 1,
+      "assistant_turns": 1,
+      "completed": true,
+      "valid_json": true,
+      "reply": {
+        "probe_id": "bridge-unpersonalized-20261110",
+        "ok": true,
+        "text": "Фонарь осветил пустую площадь."
+      },
+      "personalization_off_confirmed": true
+    }
+  ]
+}
