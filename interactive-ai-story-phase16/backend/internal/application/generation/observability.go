@@ -62,7 +62,7 @@ func (l *observingLLM) Generate(ctx context.Context, request aiport.StoryRequest
 		l.logger.Warn("generation call telemetry write failed", "generation_id", l.jobID, "role", request.Role, "error", recordErr)
 	}
 	if l.logger != nil {
-		l.logger.InfoContext(ctx, "generation role timing", "generation_id", l.jobID, "attempt", l.attemptNo, "sequence", sequence, "role", request.Role, "model", provider.Model, "elapsed_ms", latencyMS, "input_tokens", response.InputTokens, "output_tokens", response.OutputTokens, "reasoning_effort", response.ReasoningEffort, "reasoning_tokens", response.ReasoningTokens, "response_format", response.ResponseFormat, "schema_fallback", response.SchemaFallback, "repair", repairCount > 0, "succeeded", callErr == nil)
+		l.logger.InfoContext(ctx, "generation role timing", "generation_id", l.jobID, "attempt", l.attemptNo, "sequence", sequence, "role", request.Role, "model", provider.Model, "elapsed_ms", latencyMS, "input_tokens", response.InputTokens, "output_tokens", response.OutputTokens, "cached_input_tokens", response.CachedInputTokens, "reasoning_effort", response.ReasoningEffort, "reasoning_tokens", response.ReasoningTokens, "response_format", response.ResponseFormat, "schema_fallback", response.SchemaFallback, "repair", repairCount > 0, "succeeded", callErr == nil)
 	}
 	return response, callErr
 }

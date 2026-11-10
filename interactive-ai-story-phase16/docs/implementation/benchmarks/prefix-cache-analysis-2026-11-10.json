@@ -1,0 +1,32 @@
+{
+  "sourceSha256": "454ea5e4c4231688373b32756fe1d8eac83f5ba62bcf8a0d3cc01af55b92ad89",
+  "measuredRequests": 24,
+  "preflightRequests": 2,
+  "acceptedReplies": 23,
+  "providerFailures": 1,
+  "validationFailures": 0,
+  "acceptancePassed": false,
+  "physicalStatuses": {
+    "200": 25,
+    "503": 1
+  },
+  "paired": [
+    {
+      "role": "turn_planner",
+      "eligiblePairs": 5,
+      "excludedPairs": 1,
+      "medianStaticFirstMinusCurrentMs": 420.31337299999996
+    },
+    {
+      "role": "writer",
+      "eligiblePairs": 6,
+      "excludedPairs": 0,
+      "medianStaticFirstMinusCurrentMs": 568.3795800000007
+    }
+  ],
+  "notes": [
+    "Semantic JSON hashes match within every current/static-first pair; wire hashes differ.",
+    "No cache-hit evidence was observed. Unknown chat cache usage is not a measured zero.",
+    "Successful-pair deltas are conditional on availability and do not establish a cache-caused latency effect."
+  ]
+}

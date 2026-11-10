@@ -133,6 +133,7 @@ type chatResponse struct {
 		PromptTokens      int64           `json:"prompt_tokens"`
 		CompletionTokens  int64           `json:"completion_tokens"`
 		CompletionDetails json.RawMessage `json:"completion_tokens_details"`
+		PromptDetails     json.RawMessage `json:"prompt_tokens_details"`
 	} `json:"usage"`
 }
 
@@ -160,8 +161,9 @@ type interactionResponse struct {
 		} `json:"content"`
 	} `json:"steps"`
 	Usage struct {
-		InputTokens  int64 `json:"total_input_tokens"`
-		OutputTokens int64 `json:"total_output_tokens"`
+		InputTokens  int64           `json:"total_input_tokens"`
+		OutputTokens int64           `json:"total_output_tokens"`
+		CachedTokens json.RawMessage `json:"total_cached_tokens"`
 	} `json:"usage"`
 }
 
@@ -288,7 +290,7 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 	if !ok {
 		return aiport.StoryResponse{}, fmt.Errorf("%w: finish_reason=%s content_chars=%d", aiport.ErrInvalidOutput, decoded.Choices[0].FinishReason, len([]rune(decoded.Choices[0].Message.Content)))
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback, ReasoningEffort: chat.ReasoningEffort, ReasoningTokens: reportedReasoningTokens(decoded.Usage.CompletionDetails)}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.PromptTokens, OutputTokens: decoded.Usage.CompletionTokens, Provider: c.Identity(), ResponseFormat: chat.ResponseFormat.Type, SchemaFallback: fallback, ReasoningEffort: chat.ReasoningEffort, ReasoningTokens: reportedReasoningTokens(decoded.Usage.CompletionDetails), CachedInputTokens: reportedCachedTokens(decoded.Usage.PromptDetails)}, nil
 }
 
 func (c *Client) generateAntigravity(ctx context.Context, system string, input []byte, schema map[string]any) (aiport.StoryResponse, error) {
@@ -330,7 +332,7 @@ func (c *Client) generateAntigravity(ctx context.Context, system string, input [
 	if schema != nil && !fallback {
 		format = "json_schema"
 	}
-	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens, Provider: c.Identity(), ResponseFormat: format, SchemaFallback: fallback}, nil
+	return aiport.StoryResponse{Output: out, InputTokens: decoded.Usage.InputTokens, OutputTokens: decoded.Usage.OutputTokens, Provider: c.Identity(), ResponseFormat: format, SchemaFallback: fallback, CachedInputTokens: optionalTokenCount(decoded.Usage.CachedTokens)}, nil
 }
 
 func lastModelOutputText(response interactionResponse) string {

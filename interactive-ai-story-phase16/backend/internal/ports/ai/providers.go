@@ -47,6 +47,8 @@ type StoryResponse struct {
 	// nil distinguishes unreported reasoning usage from a reported zero.
 	ReasoningEffort string
 	ReasoningTokens *int64
+	// Cached input is a provider-reported subset; missing is not a measured zero.
+	CachedInputTokens *int64
 }
 type StoryLLM interface {
 	Identity() ProviderIdentity

@@ -95,6 +95,10 @@ Reasoning controls have a dedicated `cmd/llmbench -reasoning-bench` experiment
 using frozen low/minimal pairs and explicit failure accounting. Current runtime
 defaults were retained; see
 [REASONING_EFFORT_2026-11-09.md](REASONING_EFFORT_2026-11-09.md).
+Prefix-cache telemetry distinguishes reported zero from unavailable usage in both
+chat completions and Interactions. `cmd/llmbench -cache-bench` compares current
+and experimental static-first JSON inputs without changing runtime ordering.
+See [PREFIX_CACHE_2026-11-10.md](PREFIX_CACHE_2026-11-10.md).
 Runtime recorded timing is available through
 `GET /api/v1/generations/{generationId}/metrics`, scoped to the local owner.
 

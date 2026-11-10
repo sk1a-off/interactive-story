@@ -169,13 +169,14 @@ func main() {
 	turnOptions := registerTurnBenchmarkFlags(flag.CommandLine)
 	var endpoint, model, output, reasoning, onlyCase, secretStorePath, secretName, scheduleInput string
 	var noThinkToken, interactions, skipWarmup bool
-	var strictSchema, schemaBench, reasoningBench bool
+	var strictSchema, schemaBench, reasoningBench, cacheBench bool
 	flag.StringVar(&endpoint, "endpoint", "http://127.0.0.1:11434/v1/chat/completions", "OpenAI-compatible chat completions endpoint")
 	flag.StringVar(&model, "model", "", "model identifier")
 	flag.StringVar(&output, "output", "", "JSON report path")
 	flag.StringVar(&scheduleInput, "turn-schedule-report", "", "analyze a completed full-turn JSON report offline; no provider or database calls")
 	flag.StringVar(&reasoning, "reasoning", "none", "reasoning effort: none, low, medium, or high")
 	flag.BoolVar(&noThinkToken, "no-think-token", false, "append the Qwen /no_think control token")
+	flag.BoolVar(&cacheBench, "cache-bench", false, "paired current/static-first prefix experiment; pinned credential per role, no active-setting changes")
 	flag.BoolVar(&reasoningBench, "reasoning-bench", false, "paired low/minimal frozen fast-role benchmark; no active settings or Canon writes")
 	flag.BoolVar(&schemaBench, "schema-bench", false, "paired frozen role schema compatibility/negative-case benchmark; read-only config, no fixtures or Canon writes")
 	flag.BoolVar(&strictSchema, "strict-schema", false, "use a strict JSON schema when the benchmark case defines one")
@@ -185,6 +186,17 @@ func main() {
 	flag.BoolVar(&interactions, "interactions", false, "use the Google Interactions API instead of chat completions")
 	flag.BoolVar(&skipWarmup, "skip-warmup", false, "do not spend a separate request on endpoint warmup")
 	flag.Parse()
+	if cacheBench {
+		if reasoningBench || schemaBench || turnOptions.Enabled || scheduleInput != "" {
+			fmt.Fprintln(os.Stderr, "cache benchmark modes are exclusive")
+			os.Exit(2)
+		}
+		if err := runCacheBenchmark(*turnOptions, output); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if reasoningBench {
 		if schemaBench || turnOptions.Enabled || scheduleInput != "" {
 			fmt.Fprintln(os.Stderr, "reasoning benchmark modes are exclusive")
