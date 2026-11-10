@@ -1,0 +1,31 @@
+{
+  "outcome": {
+    "Arm": "chatgpt",
+    "Model": "gpt-6-instant",
+    "ErrorCode": "provider_or_transport_error",
+    "OK": false,
+    "ElapsedMS": 14600,
+    "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      502
+    ],
+    "InputTokens": 0,
+    "OutputTokens": 0,
+    "StartedAt": "2026-11-10T13:57:40.812083244Z",
+    "FinishedAt": "2026-11-10T13:57:55.412918459Z"
+  },
+  "spec": {
+    "ID": "turn_planner_browser-r1-readable-plain-json",
+    "CaseID": "turn_planner_browser",
+    "Format": "readable-plain-json",
+    "Repeat": 1
+  }
+}

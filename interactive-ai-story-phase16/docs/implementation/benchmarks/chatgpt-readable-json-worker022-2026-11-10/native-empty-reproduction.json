@@ -1,0 +1,17 @@
+{
+  "method": "Native input in a fresh Temporary Chat, no userscript; identical saved synthetic writer request",
+  "beforeReload": {
+    "userCount": 1,
+    "assistantCount": 1,
+    "visibleTextLength": 0,
+    "rawTextContentLength": 0,
+    "stopVisible": false,
+    "copyVisible": true
+  },
+  "afterReload": {
+    "userCount": 0,
+    "assistantCount": 0,
+    "temporaryChatLandingVisible": true
+  },
+  "scope": "An empty assistant DOM can occur without the worker; this does not identify the underlying model/server cause. Reload did not recover the conversation. Independent diagnostic, not a benchmark replacement."
+}

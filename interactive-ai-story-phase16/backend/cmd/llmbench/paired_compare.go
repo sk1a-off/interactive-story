@@ -17,9 +17,9 @@ import (
 )
 
 type pairedOptions struct {
-	Enabled, Smoke, Resume, FormatProbe bool
-	DSN, Secrets, Output                string
-	Seed                                int64
+	Enabled, Smoke, Resume, FormatProbe, PlainFormat bool
+	DSN, Secrets, Output                             string
+	Seed                                             int64
 }
 
 type pairedModels struct {

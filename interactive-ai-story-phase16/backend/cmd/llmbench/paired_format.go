@@ -45,12 +45,16 @@ func runPairedFormatProbe(o pairedOptions) error {
 	}
 	cases := pairedCorpus()
 	specs := []formatSpec{}
+	formats := []string{"legacy-json", "readable-json-v3"}
+	if o.PlainFormat {
+		formats = []string{"readable-json-v3", "readable-plain-json"}
+	}
 	for _, id := range []string{"turn_planner_browser", "writer_detective", "writer_archive"} {
 		if _, ok := pairedCaseByID(cases, id); !ok {
 			return fmt.Errorf("missing probe case %s", id)
 		}
 		for rep := 1; rep <= 2; rep++ {
-			for _, format := range []string{"legacy-json", "readable-json-v3"} {
+			for _, format := range formats {
 				specs = append(specs, formatSpec{ID: fmt.Sprintf("%s-r%d-%s", id, rep, format), CaseID: id, Repeat: rep, Format: format})
 			}
 		}

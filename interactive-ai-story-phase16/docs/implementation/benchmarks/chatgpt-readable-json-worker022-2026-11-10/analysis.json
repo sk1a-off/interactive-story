@@ -1,0 +1,52 @@
+{
+  "scope": "Small synthetic diagnostic sample; no quality ranking or rare-failure guarantee",
+  "planned": 12,
+  "recorded": 12,
+  "formats": {
+    "legacy-json": {
+      "planned": 6,
+      "recorded": 6,
+      "validJSONObjects": 5,
+      "errors": {
+        "provider_or_transport_error": 1
+      },
+      "completedEmptyUI": 1,
+      "nonemptyRawDOMOnEmptyUI": 0,
+      "medianSuccessfulSeconds": 18.201,
+      "maxObservedAttemptSeconds": 20.5,
+      "allSuccessfulHTTPPostCounts": [
+        1
+      ],
+      "allWorkerJobStates": {
+        "complete": 5,
+        "failed": 1
+      }
+    },
+    "readable-json-v3": {
+      "planned": 6,
+      "recorded": 6,
+      "validJSONObjects": 2,
+      "errors": {
+        "provider_or_transport_error": 4
+      },
+      "completedEmptyUI": 4,
+      "nonemptyRawDOMOnEmptyUI": 0,
+      "medianSuccessfulSeconds": 16.501,
+      "maxObservedAttemptSeconds": 21.8,
+      "allSuccessfulHTTPPostCounts": [
+        1
+      ],
+      "allWorkerJobStates": {
+        "failed": 4,
+        "complete": 2
+      }
+    }
+  },
+  "workerVersions": [
+    "0.2.2"
+  ],
+  "activeJobsAfter": 0,
+  "logicalInputsMatch": true,
+  "twoSidedFisherP": 0.24242424242424243,
+  "statisticalCaveat": "Repeated scenarios are not independent random user requests; Fisher P is descriptive only. Exploratory multiple comparisons were not corrected."
+}

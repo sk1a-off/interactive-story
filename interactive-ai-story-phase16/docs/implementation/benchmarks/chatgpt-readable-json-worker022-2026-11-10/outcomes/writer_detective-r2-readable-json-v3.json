@@ -1,0 +1,31 @@
+{
+  "outcome": {
+    "Arm": "chatgpt",
+    "Model": "gpt-6-instant",
+    "ErrorCode": "provider_or_transport_error",
+    "OK": false,
+    "ElapsedMS": 21800,
+    "InputSHA256": "5ae312f7563a778808ead36546a7a16fa3cb3d3471a8a9ccda3c5ef51f6b54c4",
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      502
+    ],
+    "InputTokens": 0,
+    "OutputTokens": 0,
+    "StartedAt": "2026-11-10T13:54:27.537245428Z",
+    "FinishedAt": "2026-11-10T13:54:49.337934432Z"
+  },
+  "spec": {
+    "ID": "writer_detective-r2-readable-json-v3",
+    "CaseID": "writer_detective",
+    "Format": "readable-json-v3",
+    "Repeat": 2
+  }
+}

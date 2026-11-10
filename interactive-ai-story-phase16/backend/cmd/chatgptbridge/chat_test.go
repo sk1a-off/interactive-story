@@ -190,3 +190,29 @@ func TestReadableJobsRequireCompatibleWorker(t *testing.T) {
 		t.Fatal(j)
 	}
 }
+
+func TestPlainReadableEnvelopeRoundTrip(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	r := httptest.NewRequest("POST", "http://"+b.host+"/v1/chat/completions", strings.NewReader(`{"model":"gpt-6-instant","messages":[{"role":"system","content":"Return `+"`goal`"+`"},{"role":"user","content":"{\"action\":\"Осмотреть дверь\"}"}]}`)).WithContext(ctx)
+	r.Header.Set("Authorization", "Bearer "+b.token)
+	r.Header.Set("X-Story-Input-Format", "readable-plain-json")
+	done := make(chan struct{})
+	go func() { b.ServeHTTP(httptest.NewRecorder(), r); close(done) }()
+	j := waitChatJob(t, b)
+	if j.InputEncoding != "readable-plain-json" || j.MessageFormat != "readable-json-v3" || !strings.HasSuffix(j.Prompt, "MESSAGES_JSON= "+j.MessageContent) {
+		t.Fatal("plain transport changed correlation contract", j.Prompt)
+	}
+	var envelope struct {
+		Messages []struct {
+			Role    string
+			Content json.RawMessage
+		}
+	}
+	if json.Unmarshal([]byte(j.MessageContent), &envelope) != nil || len(envelope.Messages) != 2 {
+		t.Fatal("invalid envelope")
+	}
+	cancel()
+	<-done
+}

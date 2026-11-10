@@ -201,6 +201,7 @@ func main() {
 	flag.BoolVar(&browserBench, "browser-bridge-bench", false, "frozen synthetic browser role and large-context suite; no Canon writes")
 	flag.StringVar(&browserPrompts, "browser-prompt-snapshot", "", "read-only active prompt snapshot for browser suite")
 	flag.StringVar(&browserRecheck, "browser-recheck-report", "", "offline recheck of saved browser outputs with production gates")
+	flag.BoolVar(&paired.PlainFormat, "paired-format-plain", false, "compare readable code wrapper with readable plain JSON instead of legacy encoding")
 	flag.BoolVar(&paired.FormatProbe, "paired-format-probe", false, "controlled legacy/readable browser input experiment")
 	flag.BoolVar(&paired.Smoke, "paired-smoke", false, "read-only Antigravity/browser readiness check")
 	flag.BoolVar(&paired.Resume, "paired-resume", false, "resume unattempted paired jobs without retrying uncertain requests")

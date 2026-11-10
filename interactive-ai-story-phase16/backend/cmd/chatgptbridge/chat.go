@@ -150,9 +150,15 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	id := secret()
 	prompt := "Execute this isolated story-generation test. Decode MESSAGES_JSON below, follow its system messages as instructions and its user messages as input data, in order. Return exactly one JSON object, without Markdown or explanations. Do not browse or use tools. MESSAGES_JSON=" + encoded
 	messageFormat, marker, content := "legacy-json", "", ""
+	inputEncoding := "legacy-json"
 	if r.Header.Get("X-Story-Input-Format") != "legacy-json" {
 		prompt, marker, content = readableMessage(in, id)
 		messageFormat = "readable-json-v3"
+		inputEncoding = "readable-json-v3"
+		if r.Header.Get("X-Story-Input-Format") == "readable-plain-json" {
+			prompt = prompt[:strings.Index(prompt, "MESSAGES_JSON=")+len("MESSAGES_JSON=")] + " " + content
+			inputEncoding = "readable-plain-json"
+		}
 	}
 	if len(prompt) > 48<<10 {
 		http.Error(w, "prompt exceeds 48 KiB", 413)
@@ -180,7 +186,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	j := &job{MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(4 * time.Minute)}
+	j := &job{InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(4 * time.Minute)}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)

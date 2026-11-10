@@ -1,0 +1,50 @@
+{
+  "scope": "Small synthetic diagnostic sample; no quality ranking or rare-failure guarantee",
+  "planned": 12,
+  "recorded": 12,
+  "formats": {
+    "readable-json-v3": {
+      "planned": 6,
+      "recorded": 6,
+      "validJSONObjects": 6,
+      "errors": {},
+      "completedEmptyUI": 0,
+      "nonemptyRawDOMOnEmptyUI": 0,
+      "medianSuccessfulSeconds": 22.351,
+      "maxObservedAttemptSeconds": 25.201,
+      "allSuccessfulHTTPPostCounts": [
+        1
+      ],
+      "allWorkerJobStates": {
+        "complete": 6
+      }
+    },
+    "readable-plain-json": {
+      "planned": 6,
+      "recorded": 6,
+      "validJSONObjects": 3,
+      "errors": {
+        "provider_or_transport_error": 3
+      },
+      "completedEmptyUI": 2,
+      "nonemptyRawDOMOnEmptyUI": 0,
+      "medianSuccessfulSeconds": 24.801,
+      "maxObservedAttemptSeconds": 29.2,
+      "allSuccessfulHTTPPostCounts": [
+        1
+      ],
+      "allWorkerJobStates": {
+        "failed": 2,
+        "uncertain": 1,
+        "complete": 3
+      }
+    }
+  },
+  "workerVersions": [
+    "0.2.2"
+  ],
+  "activeJobsAfter": 0,
+  "logicalInputsMatch": true,
+  "twoSidedFisherP": 0.18181818181818182,
+  "statisticalCaveat": "Repeated scenarios are not independent random user requests; Fisher P is descriptive only. Exploratory multiple comparisons were not corrected."
+}

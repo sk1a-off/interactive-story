@@ -1,0 +1,37 @@
+{
+  "outcome": {
+    "Arm": "chatgpt",
+    "Model": "gpt-6-instant",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 22401,
+    "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+    "Output": {
+      "intent": "Осторожно осмотреть запертую дверь архива и её петли, не пытаясь вскрыть замок.",
+      "immediateGoal": "Внимательно осмотреть поверхность запертой двери архива, её петли и видимые крепления, не прикасаясь к замку и не пытаясь открыть дверь. Определить только то, что можно непосредственно наблюдать, не предполагая наличия скрытых проходов, повреждений или дополнительных деталей.",
+      "transition": "continue_scene",
+      "riskFlags": []
+    },
+    "Checks": {
+      "schemaScore": 1,
+      "instructionScore": 1,
+      "languageScore": 1,
+      "continuityScore": 1
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 0,
+    "OutputTokens": 0,
+    "StartedAt": "2026-11-10T13:58:35.515467284Z",
+    "FinishedAt": "2026-11-10T13:58:57.91651521Z"
+  },
+  "spec": {
+    "ID": "turn_planner_browser-r2-readable-json-v3",
+    "CaseID": "turn_planner_browser",
+    "Format": "readable-json-v3",
+    "Repeat": 2
+  }
+}

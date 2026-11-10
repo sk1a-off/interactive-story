@@ -41,6 +41,7 @@ type workerDiagnostic struct {
 	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
+	InputEncoding      string            `json:"inputEncoding,omitempty"`
 	MessageFormat      string            `json:"messageFormat,omitempty"`
 	MessageMarker      string            `json:"messageMarker,omitempty"`
 	MessageContent     string            `json:"messageContent,omitempty"`
