@@ -17,7 +17,7 @@ import (
 func TestQuotaCooldownIsSharedAndTurnOvertakesImageRetry(t *testing.T) {
 	control := NewRequestControl(1, 1)
 	const delay = 60 * time.Millisecond
-	control.backoff = func(int, string) (time.Duration, bool) { return delay, true }
+	control.backoff = func(int, string) time.Duration { return delay }
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	var calls atomic.Int32
@@ -147,7 +147,7 @@ func TestQuotaCanRecoverBeforeStreamAndNeverRetriesPartialStream(t *testing.T) {
 func TestRejectedKeysSkipWithoutBackoffButDoNotLoop(t *testing.T) {
 	calls, waits := 0, 0
 	control := immediateControl()
-	control.backoff = func(int, string) (time.Duration, bool) { waits++; return 0, true }
+	control.backoff = func(int, string) time.Duration { waits++; return 0 }
 	c, _ := New(Config{BaseURL: "https://bad-keys.test/openai", Provider: "google_gemini", Model: "test", APIKeys: []string{"one", "two", "three"}, Requests: control}, &http.Client{Transport: roundTrip(func(*http.Request) (*http.Response, error) {
 		calls++
 		return schemaHTTP(403, `{"error":"api key rejected SECRET"}`), nil

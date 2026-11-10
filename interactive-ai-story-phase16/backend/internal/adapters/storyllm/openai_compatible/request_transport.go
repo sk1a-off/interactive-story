@@ -17,9 +17,9 @@ import (
 const maxQuotaRetries = 3
 
 // Equal jitter avoids immediate retries while spreading clients over time.
-// Retry-After is honored up to 30s; longer waits fail this request rather than
-// retrying earlier than the provider asked. The shared cooldown still applies.
-func quotaDelay(retry int, retryAfter string, now time.Time, jitter float64) (time.Duration, bool) {
+// Long Retry-After hints belong to the rejected credential/model. Short hints
+// (up to 30s) also bound origin-wide recovery to avoid bursts on shared quota.
+func quotaDelay(retry int, retryAfter string, now time.Time, jitter float64) time.Duration {
 	ceiling := time.Second << min(max(retry, 0), 3)
 	delay := ceiling/2 + time.Duration(float64(ceiling/2)*jitter)
 	var requested time.Duration
@@ -31,7 +31,7 @@ func quotaDelay(retry int, retryAfter string, now time.Time, jitter float64) (ti
 	if requested > delay {
 		delay = requested
 	}
-	return min(delay, 24*time.Hour), delay <= 30*time.Second
+	return min(delay, 24*time.Hour)
 }
 
 func (c *Client) bufferedRequest(ctx context.Context, body []byte, agent bool) ([]byte, error) {
@@ -51,6 +51,10 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		state = &requestState{}
 	}
 	keys := c.cfg.APIKeys
+	eligibleKeys := keys
+	if c.cfg.Provider != "google_gemini" && len(eligibleKeys) > 1 {
+		eligibleKeys = eligibleKeys[:1] // credential rotation is Google-only
+	}
 	ringID := c.cfg.Provider + "\x00" + c.cfg.Model + "\x00" + strings.TrimRight(c.cfg.BaseURL, "/")
 	index := keyCursor(ringID, len(keys))
 	scope := requestScope(c.cfg.Provider, c.cfg.BaseURL)
@@ -59,6 +63,12 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		release, err := c.cfg.Requests.acquire(ctx, scope, c.cfg.Provider == "google_gemini", state.background)
 		if err != nil {
 			return nil, err
+		}
+		var available bool
+		index, available = c.cfg.Requests.availableCredential(scope, c.cfg.Model, eligibleKeys, index, rejected)
+		if !available {
+			release()
+			return nil, fmt.Errorf("%w: configured credentials cooling down", ai.ErrUnavailable)
 		}
 		endpoint := chatCompletionsEndpoint(c.cfg.BaseURL)
 		if agent {
@@ -106,11 +116,22 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		}
 		// Install cooldown before releasing the slot: queued work must not slip
 		// through between the 429 response and its shared backoff.
-		delay, retryAllowed := time.Duration(0), true
 		if status == http.StatusTooManyRequests && readErr == nil {
-			delay, retryAllowed = quotaDelay(state.quotaRetries, resp.Header.Get("Retry-After"), time.Now(), rand.Float64())
+			now, jitter := time.Now(), rand.Float64()
+			delay := quotaDelay(state.quotaRetries, "", now, jitter)
+			hint := quotaDelay(state.quotaRetries, resp.Header.Get("Retry-After"), now, jitter)
 			if c.cfg.Requests.backoff != nil {
-				delay, retryAllowed = c.cfg.Requests.backoff(state.quotaRetries, resp.Header.Get("Retry-After"))
+				delay = c.cfg.Requests.backoff(state.quotaRetries, "")
+			}
+			if hint > quotaDelay(state.quotaRetries, "", now, jitter) {
+				key := ""
+				if len(keys) > 0 {
+					key = keys[index]
+				}
+				c.cfg.Requests.coolCredential(scope, c.cfg.Model, key, hint)
+				if hint <= 30*time.Second {
+					delay = max(delay, hint)
+				}
 			}
 			c.cfg.Requests.cooldown(scope, delay)
 		}
@@ -133,7 +154,7 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 			return nil, fmt.Errorf("%w: %w", ai.ErrUnavailable, errStreamUnsupported)
 		}
 		if status == http.StatusTooManyRequests {
-			if !retryAllowed || state.quotaRetries >= maxQuotaRetries {
+			if state.quotaRetries >= maxQuotaRetries {
 				return nil, fmt.Errorf("%w: quota retry budget exhausted (status 429)", ai.ErrUnavailable)
 			}
 			state.quotaRetries++

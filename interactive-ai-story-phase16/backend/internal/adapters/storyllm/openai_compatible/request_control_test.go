@@ -22,25 +22,24 @@ func TestQuotaDelayExponentialJitterAndRetryAfter(t *testing.T) {
 		retry        int
 		jitter       float64
 		want         time.Duration
-		allowed      bool
 	}{
-		{"first floor", "", 0, 0, 500 * time.Millisecond, true},
-		{"first ceiling", "", 0, 1, time.Second, true},
-		{"second", "", 1, .5, 1500 * time.Millisecond, true},
-		{"third", "", 2, .5, 3 * time.Second, true},
-		{"cap", "", 99, 1, 8 * time.Second, true},
-		{"seconds", "5", 0, 0, 5 * time.Second, true},
-		{"date", now.Add(10 * time.Second).Format(http.TimeFormat), 0, 0, 10 * time.Second, true},
-		{"past", now.Add(-time.Hour).Format(http.TimeFormat), 0, 0, 500 * time.Millisecond, true},
-		{"negative", "-2", 0, 0, 500 * time.Millisecond, true},
-		{"invalid", "invalid", 0, 0, 500 * time.Millisecond, true},
-		{"long wait", "31", 0, 0, 31 * time.Second, false},
-		{"overflow guard", "9223372036854775807", 0, 0, 24 * time.Hour, false},
+		{"first floor", "", 0, 0, 500 * time.Millisecond},
+		{"first ceiling", "", 0, 1, time.Second},
+		{"second", "", 1, .5, 1500 * time.Millisecond},
+		{"third", "", 2, .5, 3 * time.Second},
+		{"cap", "", 99, 1, 8 * time.Second},
+		{"seconds", "5", 0, 0, 5 * time.Second},
+		{"date", now.Add(10 * time.Second).Format(http.TimeFormat), 0, 0, 10 * time.Second},
+		{"past", now.Add(-time.Hour).Format(http.TimeFormat), 0, 0, 500 * time.Millisecond},
+		{"negative", "-2", 0, 0, 500 * time.Millisecond},
+		{"invalid", "invalid", 0, 0, 500 * time.Millisecond},
+		{"long wait", "31", 0, 0, 31 * time.Second},
+		{"overflow guard", "9223372036854775807", 0, 0, 24 * time.Hour},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, allowed := quotaDelay(tc.retry, tc.header, now, tc.jitter)
-			if got != tc.want || allowed != tc.allowed {
-				t.Fatalf("delay=%s allowed=%v, want %s/%v", got, allowed, tc.want, tc.allowed)
+			got := quotaDelay(tc.retry, tc.header, now, tc.jitter)
+			if got != tc.want {
+				t.Fatalf("delay=%s, want %s", got, tc.want)
 			}
 		})
 	}
@@ -48,7 +47,7 @@ func TestQuotaDelayExponentialJitterAndRetryAfter(t *testing.T) {
 
 func immediateControl() *RequestControl {
 	c := NewRequestControl(3, 1)
-	c.backoff = func(int, string) (time.Duration, bool) { return 0, true }
+	c.backoff = func(int, string) time.Duration { return 0 }
 	return c
 }
 

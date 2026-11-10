@@ -13,7 +13,7 @@ safe-hybrid models. A controller confined to an individual client would not cap
 aggregate runtime traffic because the factories create clients repeatedly.
 
 Admission pools use provider plus URL origin, excluding credentials and model.
-Google chat and Interactions therefore share capacity and cooldown even when
+Google chat and Interactions therefore share capacity and short cooldown even when
 their URL paths or models differ. Different origins are independent. This is
 conservative: keys/projects are not mapped to independently measured quota
 budgets. Multiple keys do not create additional admission capacity. Multiple
@@ -50,9 +50,11 @@ the same policy in chat, Interactions and pre-acceptance stream requests:
    releasing capacity so queued requests cannot bypass the observed rejection.
 2. Use equal jitter: retry delays are 0.5–1s, 1–2s and 2–4s. A final exhausted
    rejection also sets a 4–8s cooldown for subsequent requests.
-3. Honor a larger `Retry-After` delay in seconds or HTTP-date form. Delays over
-   30s stop this role attempt immediately; the shared cooldown remains in force
-   (defensively bounded to 24h), and pending calls still respect their deadlines.
+3. Honor `Retry-After` seconds or HTTP dates for the rejected credential/model
+   (bounded to 24h). Hints up to 30s also extend the short shared cooldown. Longer
+   hints skip only that credential/model, allowing other configured Google keys
+   and other models to proceed after exponential backoff. If no identity is
+   available, fail without holding a job asleep until a distant quota reset.
 4. Google requests advance the existing key cursor; other providers retain
    their configured identity. No immediate rotation burst bypasses cooldown.
 5. Allow at most three quota retries per `Generate` call. Schema/unsupported
@@ -104,6 +106,22 @@ for this point. Controlled faults prove the transport and priority behavior;
 they do not quantify a real-provider latency improvement. Retry delays
 deliberately increase time between rejected requests; aggregate throughput and
 tail latency under live contention still require measurement.
+
+## Later live correction
+
+The stage 3.10 rerun exposed an overly broad long cooldown: one terminal 429
+was followed by a next role waiting 179.7s with zero HTTP requests before manual
+interruption. The first implementation shared even multi-hour Retry-After hints
+across all keys/models on the hostname. This was a runtime latency defect, not a
+model inference measurement. The interrupted report and verified fixture cleanup
+are retained in `benchmarks/turn-after-interrupted-2026-11-10.json`.
+
+Long hints now use a model/credential identity with a SHA-256 key digest;
+credential values never enter diagnostics. Ordinary short backoff, aggregate
+capacity, priority and the three-retry budget remain shared/bounded. Tests verify
+key rotation after a one-hour hint, independence of another model, remembered
+cooling credentials across clients, and prompt failure with no additional POSTs
+when all credentials are cooling.
 
 ## Next point
 
