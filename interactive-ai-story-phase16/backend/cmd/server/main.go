@@ -220,12 +220,12 @@ func main() {
 			if err != nil {
 				return appgen.Pipeline{}, err
 			}
-			var planner appgen.TurnPlanner
-			if cfg.GenerationTurnPlanner {
-				planner = appgen.LLMTurnPlanner{LLM: llm}
-			}
 			var public domainconfig.PublicSettings
 			_ = json.Unmarshal(rev.Settings, &public)
+			planner, err := appgen.PlannerForProfile(public.GenerationProfile, cfg.GenerationTurnPlanner, llm)
+			if err != nil {
+				return appgen.Pipeline{}, err
+			}
 			return appgen.Pipeline{StreamWriter: public.StoryLLMStreamWriter, LLM: llm, MaxRepairs: 1, Canon: canonService, Instructions: directorRepo, Targets: generationTarget, ContextShadow: contextShadow, Planner: planner, Memory: memoryRuntime.ForRevision(ctx, rev), ProvisionalBeat: cfg.GenerationProvisionalBeat, JournalEvidenceIsolationV1: cfg.GenerationJournalEvidenceIsolation}, nil
 		}
 		executor := appgen.DurableExecutor{Config: configRepo, Prompts: promptRepo, Resolve: resolvePipeline, Hub: hub, Sink: appgen.PersistedSink{Store: updateStore, Live: hub}, Attempts: attemptStore, RunMetrics: generationMetricsStore, Logger: logger, ContextMode: "lossless-dedupe-v1"}

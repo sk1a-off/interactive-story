@@ -33,8 +33,8 @@ type TurnPlanner interface {
 	Plan(context.Context, PlayerAction, generationtarget.Target, []narrative.DirectorInstruction) (TurnPlan, error)
 }
 
-// LLMTurnPlanner is benchmark-only until Gate 5 passes. Go pacing hard limits
-// and location validation remain authoritative in Pipeline.
+// LLMTurnPlanner combines intent, direction and pacing in one bounded call.
+// Go pacing hard limits and location validation remain authoritative in Pipeline.
 type LLMTurnPlanner struct{ LLM aiport.StoryLLM }
 
 func (p LLMTurnPlanner) Plan(ctx context.Context, action PlayerAction, target generationtarget.Target, instructions []narrative.DirectorInstruction) (TurnPlan, error) {

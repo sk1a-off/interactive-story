@@ -1,3 +1,5 @@
+import { GenerationProfileSettings } from './GenerationProfileSettings'
+import type { GenerationProfile } from '../lib/api'
 import { WriterStreamingSettings } from './WriterStreamingSettings'
 import { StructuredOutputSettings } from './StructuredOutputSettings'
 import { Fragment, FormEvent, useEffect, useRef, useState } from 'react'
@@ -337,10 +339,11 @@ function AISettings(){
  const [imageResolution,setImageResolution]=useState('768x768');const [imageCount,setImageCount]=useState(2)
  const [jsonSchema,setJsonSchema]=useState(false)
  const [streamWriter,setStreamWriter]=useState(false)
+ const [generationProfile,setGenerationProfile]=useState<GenerationProfile>('quality')
  const [memory,setMemory]=useState<MemoryOptions>({enabled:false,topK:8,tokenBudget:1024})
  useEffect(()=>{if(active)setMemory({enabled:active.public.memoryEnabled??false,topK:active.public.memoryTopK??8,tokenBudget:active.public.memoryTokenBudget??1024})},[active])
  useEffect(()=>{if(!active)return;setImageResolution(active.public.image_resolution??'768x768');setImageCount(active.public.image_count??2)},[active])
- useEffect(()=>{if(!active)return;setStoryProvider(active.storyLlm.provider);setStoryModel(active.storyLlm.model);setStoryEndpoint(active.public.storyLlmEndpoint);setSafeHybrid(Boolean(active.public.storyLlmSafeHybrid));setJsonSchema(Boolean(active.public.storyLlmJsonSchema));setStreamWriter(Boolean(active.public.storyLlmStreamWriter));setImageProvider(active.image.provider);setImageModel(active.image.model)},[active])
+ useEffect(()=>{if(!active)return;setStoryProvider(active.storyLlm.provider);setStoryModel(active.storyLlm.model);setStoryEndpoint(active.public.storyLlmEndpoint);setSafeHybrid(Boolean(active.public.storyLlmSafeHybrid));setJsonSchema(Boolean(active.public.storyLlmJsonSchema));setStreamWriter(Boolean(active.public.storyLlmStreamWriter));setGenerationProfile(active.public.generationProfile??'quality');setImageProvider(active.image.provider);setImageModel(active.image.model)},[active])
  const googleAI=storyProvider==='google_gemini'
  const selectedGoogleModel=googleStoryModels.find(model=>model.id===storyModel)??googleStoryModels[3]
  const chooseProvider=(provider:string)=>{setStoryProvider(provider);setSafeHybrid(false);setApiKeysText('');setShowApiKey(false);if(provider==='google_gemini'){setStoryModel('gemini-3.5-flash-lite');setStoryEndpoint('https://generativelanguage.googleapis.com/v1beta/openai')}else{setStoryModel(active?.storyLlm.provider==='openai_compatible'?active.storyLlm.model:'');setStoryEndpoint(active?.storyLlm.provider==='openai_compatible'?active.public.storyLlmEndpoint:'http://127.0.0.1:8081')}}
@@ -351,7 +354,7 @@ function AISettings(){
    storyLlm:{kind:'story_llm',provider:storyProvider,model:storyModel,profile:safeHybrid?'google-ai-safe-hybrid':googleAI?'google-ai-rotating':active?.storyLlm.provider==='openai_compatible'?active.storyLlm.profile:'llamacpp-local'},
    embedding:active?.embedding??{kind:'embedding',provider:'local_sentence_transformers',model:'deepvk/USER2-small',profile:'cpu'},
    image:{kind:'image',provider:imageProvider,model:imageModel,profile:active?.image.profile||''},
-   public:{storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,storyLlmJsonSchema:jsonSchema,storyLlmStreamWriter:streamWriter,worldRulesSafeMode:active?.public.worldRulesSafeMode??false,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||'',image_resolution:imageResolution,image_count:imageCount,memoryEnabled:memory.enabled,memoryTopK:memory.topK,memoryTokenBudget:memory.tokenBudget}
+   public:{generationProfile,storyLlmEndpoint:storyEndpoint,storyLlmContext:googleAI?1048576:active?.public.storyLlmContext||16384,storyLlmKvDType:googleAI?'managed':active?.public.storyLlmKvDType||'q8_0',storyLlmSafeHybrid:googleAI&&safeHybrid,storyLlmJsonSchema:jsonSchema,storyLlmStreamWriter:streamWriter,worldRulesSafeMode:active?.public.worldRulesSafeMode??false,embeddingEndpoint:active?.public.embeddingEndpoint||'',imageEndpoint:active?.public.imageEndpoint||'',image_resolution:imageResolution,image_count:imageCount,memoryEnabled:memory.enabled,memoryTopK:memory.topK,memoryTokenBudget:memory.tokenBudget}
  },storyLlmApiKeys:enteredKeys.length?enteredKeys:undefined,activate:true}),onSuccess:()=>{setApiKeysText('');qc.invalidateQueries({queryKey:['ai-settings']})}})
  const activate=useMutation({mutationFn:activateAIRevision,onSuccess:()=>qc.invalidateQueries({queryKey:['ai-settings']})})
  return <main className="settings-screen"><header className="director-header"><button className="ghost" onClick={()=>nav(-1)}>← Назад</button><strong>AI Providers</strong></header><section className="settings-content">
@@ -379,6 +382,7 @@ function AISettings(){
      <label>Число вариантов<select value={imageCount} onChange={e=>setImageCount(Number(e.target.value))}>{[1,2,3,4].map(count=><option value={count} key={count}>{count}</option>)}</select></label>
      <small className="muted">Один вариант генерируется быстрее. Настройки применятся только к новым иллюстрациям.</small>
     </fieldset>
+    <GenerationProfileSettings value={generationProfile} onChange={setGenerationProfile}/>
     <WriterStreamingSettings enabled={streamWriter} onChange={setStreamWriter}/>
     <StructuredOutputSettings enabled={jsonSchema} onChange={setJsonSchema}/>
     <MemorySettings value={memory} onChange={setMemory} saved={{enabled:active.public.memoryEnabled??false,topK:active.public.memoryTopK??8,tokenBudget:active.public.memoryTokenBudget??1024}} revision={active.id}/>
@@ -387,7 +391,7 @@ function AISettings(){
     {create.error&&<p className="error">{create.error.message}</p>}
    </div>
   </section>}
-  <section className="settings-card"><h2>История revisions</h2><div className="revision-list">{q.data?.revisions.map(v=><article className="revision-row" key={v.id}><div><strong>rev {v.revision} · {v.public.storyLlmSafeHybrid?'Безопасный гибрид':v.storyLlm.model}</strong><p className="muted tiny">{v.storyLlm.provider}{v.public.storyLlmSafeHybrid?' · Flash-Lite + Antigravity':''}{v.storyLlmSecretCount?` · ключей: ${v.storyLlmSecretCount}`:''} · image: {v.image.provider}/{v.image.model}</p></div>{v.active?<span className="active-chip">active</span>:<button className="ghost" disabled={activate.isPending} onClick={()=>activate.mutate(v.id)}>Активировать</button>}</article>)}</div>{activate.error&&<p className="error">{activate.error.message}</p>}</section>
+  <section className="settings-card"><h2>История revisions</h2><div className="revision-list">{q.data?.revisions.map(v=><article className="revision-row" key={v.id}><div><strong>rev {v.revision} · {v.public.storyLlmSafeHybrid?'Безопасный гибрид':v.storyLlm.model}</strong><p className="muted tiny">{v.public.generationProfile==='balance'?'Баланс':'Качество'} · {v.storyLlm.provider}{v.public.storyLlmSafeHybrid?' · Flash-Lite + Antigravity':''}{v.storyLlmSecretCount?` · ключей: ${v.storyLlmSecretCount}`:''} · image: {v.image.provider}/{v.image.model}</p></div>{v.active?<span className="active-chip">active</span>:<button className="ghost" disabled={activate.isPending} onClick={()=>activate.mutate(v.id)}>Активировать</button>}</article>)}</div>{activate.error&&<p className="error">{activate.error.message}</p>}</section>
  </section></main>
 }
 

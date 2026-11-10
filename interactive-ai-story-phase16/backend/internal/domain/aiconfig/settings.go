@@ -37,23 +37,27 @@ func IsSupportedGoogleStoryModel(model string) bool {
 }
 
 type PublicSettings struct {
-	StoryLLMEndpoint     string `json:"storyLlmEndpoint"`
-	StoryLLMContext      int    `json:"storyLlmContext"`
-	StoryLLMKVDType      string `json:"storyLlmKvDType"`
-	StoryLLMStreamWriter bool   `json:"storyLlmStreamWriter"`
-	StoryLLMJSONSchema   bool   `json:"storyLlmJsonSchema"`
-	StoryLLMSafeHybrid   bool   `json:"storyLlmSafeHybrid"`
-	WorldRulesSafeMode   bool   `json:"worldRulesSafeMode"`
-	EmbeddingEndpoint    string `json:"embeddingEndpoint"`
-	ImageEndpoint        string `json:"imageEndpoint"`
-	ImageResolution      string `json:"image_resolution"`
-	ImageCount           *int   `json:"image_count,omitempty"`
-	MemoryEnabled        bool   `json:"memoryEnabled"`
-	MemoryTopK           *int   `json:"memoryTopK,omitempty"`
-	MemoryTokenBudget    *int   `json:"memoryTokenBudget,omitempty"`
+	GenerationProfile    GenerationProfile `json:"generationProfile"`
+	StoryLLMEndpoint     string            `json:"storyLlmEndpoint"`
+	StoryLLMContext      int               `json:"storyLlmContext"`
+	StoryLLMKVDType      string            `json:"storyLlmKvDType"`
+	StoryLLMStreamWriter bool              `json:"storyLlmStreamWriter"`
+	StoryLLMJSONSchema   bool              `json:"storyLlmJsonSchema"`
+	StoryLLMSafeHybrid   bool              `json:"storyLlmSafeHybrid"`
+	WorldRulesSafeMode   bool              `json:"worldRulesSafeMode"`
+	EmbeddingEndpoint    string            `json:"embeddingEndpoint"`
+	ImageEndpoint        string            `json:"imageEndpoint"`
+	ImageResolution      string            `json:"image_resolution"`
+	ImageCount           *int              `json:"image_count,omitempty"`
+	MemoryEnabled        bool              `json:"memoryEnabled"`
+	MemoryTopK           *int              `json:"memoryTopK,omitempty"`
+	MemoryTokenBudget    *int              `json:"memoryTokenBudget,omitempty"`
 }
 
 func (s PublicSettings) Validate() error {
+	if !s.GenerationProfile.Available() {
+		return ErrInvalidPublicSettings
+	}
 	if s.MemoryTopK != nil && (*s.MemoryTopK < 1 || *s.MemoryTopK > 100) {
 		return ErrInvalidPublicSettings
 	}
@@ -92,7 +96,7 @@ func (s PublicSettings) WithImageDefaults() PublicSettings {
 }
 
 func (s PublicSettings) JSON() json.RawMessage {
-	b, _ := json.Marshal(s.WithImageDefaults().WithMemoryDefaults())
+	b, _ := json.Marshal(s.WithImageDefaults().WithMemoryDefaults().WithGenerationDefaults())
 	return b
 }
 

@@ -94,6 +94,10 @@ func (s Service) Activate(ctx context.Context, i id.ID) (domain.SafeView, error)
 	if e != nil {
 		return domain.SafeView{}, e
 	}
+	var public domain.PublicSettings
+	if len(v.Settings) > 0 && json.Unmarshal(v.Settings, &public) != nil || !public.GenerationProfile.Available() {
+		return domain.SafeView{}, domain.ErrInvalidPublicSettings
+	}
 	if v.StoryLLM.Provider == domain.ProviderGoogleGemini && len(CredentialKeys(ctx, s.Secrets, v.ID)) == 0 {
 		return domain.SafeView{}, ErrGeminiAPIKeyRequired
 	}
@@ -105,7 +109,7 @@ func (s Service) Activate(ctx context.Context, i id.ID) (domain.SafeView, error)
 func (s Service) safe(ctx context.Context, v domain.Revision, active bool) domain.SafeView {
 	var pub domain.PublicSettings
 	_ = json.Unmarshal(v.Settings, &pub)
-	pub = pub.WithImageDefaults().WithMemoryDefaults()
+	pub = pub.WithImageDefaults().WithMemoryDefaults().WithGenerationDefaults()
 	keyCount := len(CredentialKeys(ctx, s.Secrets, v.ID))
 	return domain.SafeView{ID: v.ID.String(), Revision: v.Revision, StoryLLM: v.StoryLLM, Embedding: v.Embedding, Image: v.Image, Public: pub, Active: active, StoryLLMSecretConfigured: keyCount > 0, StoryLLMSecretCount: keyCount}
 }

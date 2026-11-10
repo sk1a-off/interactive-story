@@ -50,4 +50,10 @@ Gemini quotas are generally enforced per Google Cloud project rather than per ke
 
 Provider keys are write-only in the HTTP API and never enter Story JSON or PostgreSQL. For the local launcher they are persisted in `data/secrets/provider-keys.json` with owner-only permissions (`0600`); Docker uses the dedicated `provider-secrets` volume. Override the location with `SECRET_STORE_PATH` or `HOST_SECRET_STORE_PATH`.
 
+AI Settings also offer **Quality** (current behavior, default) and **Balance**
+(combined turn planning). If combined planning is already enabled, Balance does
+not remove more calls. **Speed** remains unavailable pending durable finalization
+and save/fork safety work. Models and early-text settings stay independent of
+the profile. See [generation profiles](docs/implementation/GENERATION_PROFILES_2026-11-10.md).
+
 The project is suitable for a local MVP launch attempt. It is not yet marked production/release PASS until the PostgreSQL + real LLM + browser + Perchance acceptance gates are executed on the target machine.
