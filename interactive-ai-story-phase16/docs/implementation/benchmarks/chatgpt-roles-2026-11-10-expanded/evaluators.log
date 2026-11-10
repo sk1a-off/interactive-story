@@ -1,0 +1,8 @@
+state_evaluator              ok=true  score=0.825 time= 10801ms tps=  0.0 error=
+quest_evaluator              ok=true  score=1.000 time= 14100ms tps=  0.0 error=
+choices                      ok=true  score=0.987 time= 20500ms tps=  0.0 error=
+image_prompt                 ok=true  score=1.000 time= 15800ms tps=  0.0 error=
+turn_planner_browser         ok=true  score=1.000 time= 18900ms tps=  0.0 error=
+world_browser_positive       ok=true  score=0.500 time= 18800ms tps=  0.0 error=
+world_browser_negative       ok=true  score=1.000 time= 11000ms tps=  0.0 error=
+summary json=7/7 score=0.902 avg_tps=0.0 cold=0ms

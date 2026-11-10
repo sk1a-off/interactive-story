@@ -1,0 +1,20 @@
+{
+  "finished": "2026-11-10T11:51:37.888737+00:00",
+  "processes": {
+    "setup": -15,
+    "writer": -15,
+    "evaluators": -15
+  },
+  "count": 0,
+  "transport_ok": 0,
+  "cases": [],
+  "notes": [
+    "Frozen synthetic cases using active prompt snapshot; production settings and Canon unchanged.",
+    "Browser temperature, token limits and native JSON schema are not enforced; token usage/TPS unavailable.",
+    "Model messages are serialized into one physical line for the contenteditable transport.",
+    "Role fixtures run independently; this is not a committed full story turn or a comparison with current Google routing."
+  ],
+  "status": "interrupted",
+  "intended_cases": 16,
+  "reason": "User-message comparison included the Show more control; three dispatched jobs became uncertain, later queued jobs cancelled. No automatic resend."
+}

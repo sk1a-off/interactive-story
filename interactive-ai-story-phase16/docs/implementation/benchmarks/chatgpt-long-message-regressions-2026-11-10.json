@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-10",
+  "scope": "read-only live DOM reproductions using synthetic requests",
+  "show_more": {
+    "expected_chars": 4941,
+    "bubble_chars": 4956,
+    "bubble_matches": false,
+    "content_chars": 4941,
+    "content_matches": true
+  },
+  "inline_code": {
+    "expected_chars": 4399,
+    "actual_chars": 4389,
+    "strict_match": false,
+    "matches_after_removing_backticks": true,
+    "inline_code_elements": 5
+  },
+  "notes": [
+    "UI reproductions are distinct from userscript test runs.",
+    "Message content and transport credentials are excluded from this proof."
+  ],
+  "collapsed_limit": {
+    "expected_chars": 11677,
+    "collapsed_chars": 10240,
+    "collapsed_is_exact_prefix": true,
+    "expanded_chars": 11677,
+    "expanded_parts": 1,
+    "expanded_matches_full_input": true
+  }
+}

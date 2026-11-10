@@ -10,7 +10,7 @@ From the repository directory:
 ./start-chatgpt-bridge.sh
 ```
 
-Open <http://127.0.0.1:8791>. The dashboard serves the userscript and offers one-request and three-request tests, worker status and JSON report export. The token is generated in memory on every bridge startup; copy it from the dashboard into the userscript menu. It is a local transport token, not a ChatGPT credential.
+Open <http://127.0.0.1:8791>. The dashboard serves the userscript and offers one-request and three-request tests, worker status and JSON report export. The launcher persists its local token in owner-only `data/secrets/chatgpt-bridge-token`; copy it from the dashboard into the userscript menu once. `CHATGPT_BRIDGE_TOKEN_FILE` overrides the file. Directly starting the binary without this variable retains ephemeral-token behavior. It is a local transport token, not a ChatGPT credential.
 
 Visible Chromium windows can be opened separately:
 
@@ -47,7 +47,7 @@ The userscript only arms explicitly marked worker tabs; it reads visible DOM con
 - Preparing job expiry becomes `failed`; after send authorization it becomes `uncertain`. Jobs are never automatically requeued, including before-send failures.
 - Reload/crash with a pending lease pauses instead of resending. A lost authorization response never causes a click. Lost result upload does not cause another model request.
 - A worker that cannot establish readiness pauses and reports `attention` when the local bridge is reachable. Expired heartbeat also shows no connection. CAPTCHA or login challenges are handled manually in the visible window; press **Запустить** afterwards. The bridge does not identify or solve a CAPTCHA automatically.
-- Worker status survives as a dashboard record for five minutes without heartbeat. Jobs are bounded to 60 in-memory records. Restart discards this test queue and rotates the token; keep exported reports if needed. This is not a durable production queue.
+- Worker status survives as a dashboard record for five minutes without heartbeat. Jobs are bounded to 60 in-memory records. Restart discards this test queue; the launcher preserves the saved token; keep exported reports if needed. This is not a durable production queue.
 - Localhost binding, exact Host validation, bounded request bodies, authenticated job operations and no CORS prevent ordinary remote pages from controlling the queue. Keep the dashboard/token local. Reports exclude lease secrets and the bridge token.
 - Stop the bridge with Ctrl+C. Browser windows stay open for inspection. Stop a worker with its panel button; an already submitted ChatGPT request may still finish.
 
@@ -74,7 +74,7 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Twenty-one DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Twenty-nine DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
 
 ## Userscript 0.1.1: Start-button fix
 
@@ -103,3 +103,26 @@ Read control text by skipping hidden/inert/ARIA-hidden branches and CSS-hidden o
 Three additional tests cover the hidden placeholder, a hidden stale Instant label with visible Medium (must stop), and diagnostic redaction. The new **Диагностика** button copies only version, worker ID, control attributes, slider values and the last failed selection stage, with no prompt, transcript, lease or token. If clipboard access is unavailable, it displays that bounded report in the panel. Screenshot-based diagnosis should be replaced with this report for any further unsupported layout.
 
 Read-only live observation: `benchmarks/chatgpt-control-label-regression-2026-11-10.json`. Update the userscript to **0.1.5** after restarting the bridge and reload worker tabs. Full Chromium integration remains to be rerun.
+
+## Live role-test support and userscript 0.1.6–0.1.7
+
+The attached user export confirmed the complete userscript path for **4/4 short probes**, across three workers with three overlapping authorized requests. See `benchmarks/chatgpt-user-probes-2026-11-10.json`. Total durations were 6.31–7.64 s; these small copy probes are not a production latency benchmark.
+
+A separate authenticated `POST /v1/chat/completions` endpoint on **8791 only** now accepts buffered `gpt-6-instant` test calls with system/user text messages. It does not modify the main story server. It queues an exclusive browser lease, waits for exactly one JSON object and returns the content in a compatible response envelope. Streaming, tools, other models, native token accounting and enforced temperature/token-limit/schema settings are not supported. Browser completion maps to a transport `stop`, not a native model finish reason. Queue admission is bounded, prompt limit 48 KiB, HTTP body limit 64 KiB, and caller cancellation cannot requeue a sent request.
+
+`tools/chatgpt_role_bench.py` uses the active prompt revision snapshot in `data/run/chatgpt-active-prompts.json` and the compiled `data/run/chatgpt-role-bench`. It first requires three fresh ready heartbeats, then runs three independent groups (16 synthetic cases). It never writes production settings or Canon. The underlying benchmark saves partial results after each case and stops its group on the first transport error. Token counts/TPS remain unavailable; test scores are mechanical checks, not a literary verdict.
+
+Long-message failures were reproduced in live DOM:
+
+- **Show more:** bubble text includes the expand button. For 4,941 input characters the old bubble comparison saw 4,956; `[data-search-result-target]` retained exactly 4,941. Version 0.1.6 reads only the message-content node. Strict mismatched-message rejection remains enabled.
+- **Markup:** the real 4,399-character director input became 4,389 DOM characters, exactly removing ten backticks and producing five inline-code elements. Keeping the original contract logically unchanged requires render-safe JSON string encoding on the server. ASCII punctuation inside envelope strings is represented by JSON Unicode escapes; decoding gives the original message values. Outer JSON structure remains valid. The strict UI comparison is preserved; it is not replaced with substring matching.
+- **Lost fragment:** version 0.1.7 retains a paused worker panel in tabs with a previously registered UUID even when ChatGPT drops `#story-bridge-worker`. Ordinary unmarked tabs remain untouched and registration alone does not start sending.
+- **Trigger events:** version 0.1.7 sends the pointerdown/mousedown/pointerup/mouseup/click sequence when opening the model picker and waits for open state before selecting a model. Closure uses Escape/outside interaction. Bounded local diagnostics include only stage, error label and expected/actual lengths; no prompt, reply, lease or account token.
+
+Uncertain or failed attempts are kept separately from any later successful rerun. They are never silently retried under their old lease. The live server launched during this test remains running under the PID stored in `data/run/chatgptbridge-live.pid`, using the same local token. Its log is `data/run/chatgptbridge-live.log`. Do not launch a second bridge on the occupied port. Stop that exact process before using the normal launcher again.
+
+## Userscript 0.1.8 and completed role coverage
+
+Version 0.1.8 expands a matching collapsed user-message prefix before correlating an answer. It never accepts only the prefix. A failed or incomplete expansion cannot upload a result. Multiple top-level message-content segments are combined when needed. A live DOM check confirmed 10,240 characters collapsed and an exact 11,677-character match after expansion. The benchmark has successful coverage of all 16 scenarios across retries; see [the result report](CHATGPT_ROLE_TEST_RESULTS_2026-11-10.md) for failures, latency and limits.
+
+The bridge now defaults to a 2,000 ms lease warmup per fresh worker page. `CHATGPT_BRIDGE_LEASE_WARMUP_MS=0` disables it for explicit experiments; it is included in the reported timings. Menu opening is still not perfectly reliable and no production routing switch was made. The local fail callback carries bounded diagnostic labels and lengths, not transcript contents or account credentials.

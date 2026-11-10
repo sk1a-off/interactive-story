@@ -1,0 +1,64 @@
+{
+  "exported": "2026-11-10T11:40:58.881Z",
+  "jobs": [
+    {
+      "id": "511c2edccd5e45ce88f137b298203d21fbd927eb68a7c76b",
+      "prompt": "Synthetic bridge probe. Return ONLY this JSON object, no markdown. Copy every value exactly: {\"probe_id\":\"511c2edccd5e45ce88f137b298203d21fbd927eb68a7c76b\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}",
+      "state": "complete",
+      "worker": "a624163e-3125-4bd7-bd3d-29aab5da74da",
+      "created": "2026-11-10T14:40:12.808955309+03:00",
+      "deadline": "2026-11-10T14:43:12.808955359+03:00",
+      "sent": "2026-11-10T14:40:14.237071891+03:00",
+      "finished": "2026-11-10T14:40:19.935977539+03:00",
+      "reply": "{\"probe_id\":\"511c2edccd5e45ce88f137b298203d21fbd927eb68a7c76b\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}"
+    },
+    {
+      "id": "66db49407aca3e1f3f4ca7a419fa2c53e77d9bc2fa892e28",
+      "prompt": "Synthetic bridge probe. Return ONLY this JSON object, no markdown. Copy every value exactly: {\"probe_id\":\"66db49407aca3e1f3f4ca7a419fa2c53e77d9bc2fa892e28\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}",
+      "state": "complete",
+      "worker": "f47b4c60-6c39-493e-a3a3-27fbc232ea8c",
+      "created": "2026-11-10T14:40:43.695675327+03:00",
+      "deadline": "2026-11-10T14:43:43.695675367+03:00",
+      "sent": "2026-11-10T14:40:44.956575346+03:00",
+      "finished": "2026-11-10T14:40:50.000734688+03:00",
+      "reply": "{\"probe_id\":\"66db49407aca3e1f3f4ca7a419fa2c53e77d9bc2fa892e28\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}"
+    },
+    {
+      "id": "48ca830625ccd7e67c3606620b7c0530b233e5d1e06b2bbb",
+      "prompt": "Synthetic bridge probe. Return ONLY this JSON object, no markdown. Copy every value exactly: {\"probe_id\":\"48ca830625ccd7e67c3606620b7c0530b233e5d1e06b2bbb\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}",
+      "state": "complete",
+      "worker": "a624163e-3125-4bd7-bd3d-29aab5da74da",
+      "created": "2026-11-10T14:40:43.695676617+03:00",
+      "deadline": "2026-11-10T14:43:43.695676657+03:00",
+      "sent": "2026-11-10T14:40:45.193245789+03:00",
+      "finished": "2026-11-10T14:40:50.313638905+03:00",
+      "reply": "{\"probe_id\":\"48ca830625ccd7e67c3606620b7c0530b233e5d1e06b2bbb\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}"
+    },
+    {
+      "id": "5e4281cea4723afb2a6f1968a54fef65614e13d202b9567e",
+      "prompt": "Synthetic bridge probe. Return ONLY this JSON object, no markdown. Copy every value exactly: {\"probe_id\":\"5e4281cea4723afb2a6f1968a54fef65614e13d202b9567e\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}",
+      "state": "complete",
+      "worker": "07914600-6e0a-4950-a5f8-199e3e21cf5a",
+      "created": "2026-11-10T14:40:43.695677227+03:00",
+      "deadline": "2026-11-10T14:43:43.695677257+03:00",
+      "sent": "2026-11-10T14:40:46.293342862+03:00",
+      "finished": "2026-11-10T14:40:51.337287865+03:00",
+      "reply": "{\"probe_id\":\"5e4281cea4723afb2a6f1968a54fef65614e13d202b9567e\",\"ok\":true,\"text\":\"Фонарь осветил пустую площадь.\"}"
+    }
+  ],
+  "max_active": 3,
+  "workers": {
+    "07914600-6e0a-4950-a5f8-199e3e21cf5a": {
+      "seen": "2026-11-10T14:40:55.926240651+03:00",
+      "status": "ready"
+    },
+    "a624163e-3125-4bd7-bd3d-29aab5da74da": {
+      "seen": "2026-11-10T14:40:56.960037301+03:00",
+      "status": "ready"
+    },
+    "f47b4c60-6c39-493e-a3a3-27fbc232ea8c": {
+      "seen": "2026-11-10T14:40:56.347404139+03:00",
+      "status": "ready"
+    }
+  }
+}

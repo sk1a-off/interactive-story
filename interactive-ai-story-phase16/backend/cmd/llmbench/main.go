@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -110,6 +111,7 @@ type credentialRing struct {
 }
 
 type testCase struct {
+	Contract    string
 	Name        string
 	Role        string
 	Input       any
@@ -152,17 +154,20 @@ type proseMetrics struct {
 }
 
 type report struct {
-	Model        string       `json:"model"`
-	Endpoint     string       `json:"endpoint"`
-	StartedAt    time.Time    `json:"startedAt"`
-	FinishedAt   time.Time    `json:"finishedAt"`
-	ColdStartMS  int64        `json:"coldStartMs"`
-	Cases        []caseResult `json:"cases"`
-	JSONValid    int          `json:"jsonValid"`
-	JSONTotal    int          `json:"jsonTotal"`
-	AverageScore float64      `json:"averageScore"`
-	AverageTPS   float64      `json:"averageTokensPerSecond"`
-	AverageMS    int64        `json:"averageElapsedMs"`
+	Status               string       `json:"status,omitempty"`
+	PromptSnapshotSHA256 string       `json:"promptSnapshotSha256,omitempty"`
+	PromptRevision       int64        `json:"promptRevision,omitempty"`
+	Model                string       `json:"model"`
+	Endpoint             string       `json:"endpoint"`
+	StartedAt            time.Time    `json:"startedAt"`
+	FinishedAt           time.Time    `json:"finishedAt"`
+	ColdStartMS          int64        `json:"coldStartMs"`
+	Cases                []caseResult `json:"cases"`
+	JSONValid            int          `json:"jsonValid"`
+	JSONTotal            int          `json:"jsonTotal"`
+	AverageScore         float64      `json:"averageScore"`
+	AverageTPS           float64      `json:"averageTokensPerSecond"`
+	AverageMS            int64        `json:"averageElapsedMs"`
 }
 
 func main() {
@@ -171,6 +176,9 @@ func main() {
 	var compareBefore, compareAfter string
 	var noThinkToken, interactions, skipWarmup bool
 	var strictSchema, schemaBench, reasoningBench, cacheBench, writerStreamBench bool
+	var browserBench bool
+	var browserPrompts string
+	var browserRecheck string
 	flag.StringVar(&endpoint, "endpoint", "http://127.0.0.1:11434/v1/chat/completions", "OpenAI-compatible chat completions endpoint")
 	flag.StringVar(&model, "model", "", "model identifier")
 	flag.StringVar(&output, "output", "", "JSON report path")
@@ -189,7 +197,17 @@ func main() {
 	flag.StringVar(&secretName, "secret-name", "", "key within the local provider secret store")
 	flag.BoolVar(&interactions, "interactions", false, "use the Google Interactions API instead of chat completions")
 	flag.BoolVar(&skipWarmup, "skip-warmup", false, "do not spend a separate request on endpoint warmup")
+	flag.BoolVar(&browserBench, "browser-bridge-bench", false, "frozen synthetic browser role and large-context suite; no Canon writes")
+	flag.StringVar(&browserPrompts, "browser-prompt-snapshot", "", "read-only active prompt snapshot for browser suite")
+	flag.StringVar(&browserRecheck, "browser-recheck-report", "", "offline recheck of saved browser outputs with production gates")
 	flag.Parse()
+	if browserRecheck != "" {
+		if err := recheckBrowserReport(browserRecheck, output); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if compareBefore != "" || compareAfter != "" {
 		if compareBefore == "" || compareAfter == "" || writerStreamBench || cacheBench || reasoningBench || schemaBench || turnOptions.Enabled || scheduleInput != "" {
 			fmt.Fprintln(os.Stderr, "comparison requires both reports and no other benchmark mode")
@@ -275,6 +293,9 @@ func main() {
 	}
 	client := &http.Client{Timeout: 6 * time.Minute}
 	r := report{Model: model, Endpoint: endpoint, StartedAt: time.Now().UTC()}
+	if browserBench {
+		r.Status = "running"
+	}
 	if !skipWarmup {
 		warmStart := time.Now()
 		_, _, _, _ = complete(context.Background(), client, endpoint, credentials, interactions, chatRequest{
@@ -290,13 +311,59 @@ func main() {
 		}
 	}
 
-	for _, tc := range suite() {
+	cases := suite()
+	if browserBench {
+		cases = browserRoleSuite()
+	}
+	if browserPrompts != "" {
+		if !browserBench {
+			fmt.Fprintln(os.Stderr, "prompt snapshot requires -browser-bridge-bench")
+			os.Exit(2)
+		}
+		raw, e := os.ReadFile(browserPrompts)
+		if e != nil {
+			fmt.Fprintln(os.Stderr, e)
+			os.Exit(2)
+		}
+		var snapshot struct {
+			Revision int64             `json:"revision"`
+			Prompts  map[string]string `json:"prompts"`
+		}
+		if json.Unmarshal(raw, &snapshot) != nil || snapshot.Revision < 1 {
+			fmt.Fprintln(os.Stderr, "invalid prompt snapshot")
+			os.Exit(2)
+		}
+		r.PromptRevision = snapshot.Revision
+		hash := sha256.Sum256(raw)
+		r.PromptSnapshotSHA256 = fmt.Sprintf("%x", hash)
+		for i, tc := range cases {
+			cases[i], e = browserContract(tc, snapshot.Prompts)
+			if e != nil {
+				fmt.Fprintln(os.Stderr, e)
+				os.Exit(2)
+			}
+		}
+	}
+	for _, tc := range cases {
 		if len(onlyCases) > 0 && !onlyCases[tc.Name] {
 			continue
 		}
 		res := runCase(context.Background(), client, endpoint, model, reasoning, noThinkToken, strictSchema, interactions, credentials, tc)
 		r.Cases = append(r.Cases, res)
+		if browserBench {
+			raw, e := json.MarshalIndent(r, "", "  ")
+			if e != nil {
+				panic(e)
+			}
+			if e = os.WriteFile(output, append(raw, '\n'), 0644); e != nil {
+				panic(e)
+			}
+		}
 		fmt.Printf("%-28s ok=%-5t score=%.3f time=%6dms tps=%5.1f error=%s\n", res.Name, res.OK, caseScore(res.Validation), res.ElapsedMS, res.TokensPerSecond, res.Error)
+		if browserBench && !res.OK {
+			r.Status = "interrupted"
+			break
+		}
 	}
 
 	var score, tps float64
@@ -315,6 +382,9 @@ func main() {
 		r.AverageTPS = tps / float64(len(r.Cases))
 		r.AverageMS = elapsed / int64(len(r.Cases))
 	}
+	if browserBench && r.Status != "interrupted" {
+		r.Status = "complete"
+	}
 	r.FinishedAt = time.Now().UTC()
 	raw, err := json.MarshalIndent(r, "", "  ")
 	if err != nil {
@@ -327,7 +397,11 @@ func main() {
 }
 
 func runCase(ctx context.Context, client *http.Client, endpoint, model, reasoning string, noThinkToken, strictSchema, interactions bool, credentials *credentialRing, tc testCase) caseResult {
-	contract, err := promptcatalog.Get("v1", tc.Role)
+	contract := tc.Contract
+	var err error
+	if contract == "" {
+		contract, err = promptcatalog.Get("v1", tc.Role)
+	}
 	if err != nil {
 		return caseResult{Name: tc.Name, Role: tc.Role, Error: err.Error()}
 	}
@@ -394,7 +468,7 @@ func runCase(ctx context.Context, client *http.Client, endpoint, model, reasonin
 
 func proseText(caseName string, object map[string]any) string {
 	switch caseName {
-	case "writer_continuation":
+	case "writer_continuation", "writer_large_context":
 		return stringField(object, "text")
 	case "setup_prose_second":
 		if opening, ok := objectField(object, "opening_situation"); ok {
@@ -691,7 +765,7 @@ func schemaFor(caseName string) map[string]any {
 		}
 	}
 	switch caseName {
-	case "writer_continuation":
+	case "writer_continuation", "writer_large_context":
 		return stringObject("text")
 	case "action_interpreter":
 		return stringObject("intent")

@@ -1,0 +1,53 @@
+{
+  "status": "interrupted",
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "promptRevision": 25,
+  "model": "gpt-6-instant",
+  "endpoint": "http://127.0.0.1:8791/v1/chat/completions",
+  "startedAt": "2026-11-10T12:12:50.349562687Z",
+  "finishedAt": "2026-11-10T12:13:05.652008643Z",
+  "coldStartMs": 0,
+  "cases": [
+    {
+      "name": "director",
+      "role": "director",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 8701,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\"goal\":\"Лада изображает готовность сжечь лист из журнала Мирона, тайно сохраняя его и наблюдая за реакцией Тихона и карты. Когда пламя приближается к бумаге, на схеме подземного шлюза проявляется ранее невидимая отметка, указывающая на опасный участок Северной лестницы. Тихон, поверив в уничтожение листа, невольно выдаёт знание об этом участке, которого прежде не признавал, и пытается помешать Ладе воспользоваться открывшимся проходом. Лада получает новую зацепку для поиска Мирона и конкретное основание усомниться в искренности Тихона, но вынуждена решить, как сохранить лист и добраться до лестницы, прежде чем проход закроется.\"}"
+    },
+    {
+      "name": "writer_continuation",
+      "role": "writer",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard",
+      "elapsedMs": 6600,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job failed; inspect local dashboard\n"
+    }
+  ],
+  "jsonValid": 1,
+  "jsonTotal": 2,
+  "averageScore": 0.5,
+  "averageTokensPerSecond": 0,
+  "averageElapsedMs": 7650
+}

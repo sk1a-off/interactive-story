@@ -1,0 +1,124 @@
+{
+  "status": "interrupted",
+  "expected_cases": 16,
+  "finished": "2026-11-10T12:20:15.221205+00:00",
+  "processes": {
+    "setup": 0,
+    "writer": 0,
+    "evaluators": 0
+  },
+  "count": 8,
+  "transport_ok": 5,
+  "cases": [
+    {
+      "name": "setup_story_bible",
+      "ok": true,
+      "ms": 20700,
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "prose": null,
+      "error": null
+    },
+    {
+      "name": "setup_initial_cast",
+      "ok": true,
+      "ms": 29601,
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "prose": null,
+      "error": null
+    },
+    {
+      "name": "setup_quest_stages",
+      "ok": true,
+      "ms": 23901,
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "prose": null,
+      "error": null
+    },
+    {
+      "name": "setup_prose_second",
+      "ok": false,
+      "ms": 6401,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    },
+    {
+      "name": "director",
+      "ok": true,
+      "ms": 9600,
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "prose": null,
+      "error": null
+    },
+    {
+      "name": "writer_continuation",
+      "ok": false,
+      "ms": 6101,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    },
+    {
+      "name": "state_evaluator",
+      "ok": true,
+      "ms": 11400,
+      "validation": {
+        "schemaScore": 0.5,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "prose": null,
+      "error": null
+    },
+    {
+      "name": "quest_evaluator",
+      "ok": false,
+      "ms": 6200,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    }
+  ],
+  "notes": [
+    "Frozen synthetic cases using active prompt snapshot; production settings and Canon unchanged.",
+    "Browser temperature, token limits and native JSON schema are not enforced; token usage/TPS unavailable.",
+    "Model messages are serialized into one physical line for the contenteditable transport.",
+    "Role fixtures run independently; this is not a committed full story turn or a comparison with current Google routing."
+  ]
+}

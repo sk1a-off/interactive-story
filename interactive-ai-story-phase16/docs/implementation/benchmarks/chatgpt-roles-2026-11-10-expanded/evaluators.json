@@ -1,0 +1,146 @@
+{
+  "status": "complete",
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "promptRevision": 25,
+  "model": "gpt-6-instant",
+  "endpoint": "http://127.0.0.1:8791/v1/chat/completions",
+  "startedAt": "2026-11-10T12:28:24.119614669Z",
+  "finishedAt": "2026-11-10T12:30:14.027757053Z",
+  "coldStartMs": 0,
+  "cases": [
+    {
+      "name": "state_evaluator",
+      "role": "state_evaluator",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 10801,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 0.5,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\n\"changes\": [\n{\n\"operation\": \"create\",\n\"category\": \"item\",\n\"name\": \"Медный ключ от зала затонувших дел\",\n\"description\": \"Ключ от зала затонувших дел в Архиве приливов. Лада хранит его во внутреннем кармане.\",\n\"quantity\": 1,\n\"level\": \"получен\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Тихон передал Ладе медный ключ от зала затонувших дел, и она убрала его во внутренний карман.\",\n\"tags\": [\"ключ\", \"архив\", \"доступ\"]\n},\n{\n\"operation\": \"create\",\n\"category\": \"item\",\n\"name\": \"Выписка из журнала\",\n\"description\": \"Полученная за две медные монеты архивная выписка из журнала с синей печатью.\",\n\"quantity\": 1,\n\"level\": \"получена\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Лада отсчитала две из трёх монет и получила лист с синей архивной печатью.\",\n\"tags\": [\"документ\", \"архив\", \"выписка\"]\n},\n{\n\"operation\": \"update\",\n\"entryId\": \"55555555-5555-4555-8555-555555555555\",\n\"category\": \"currency\",\n\"name\": \"медных монет\",\n\"description\": \"Наличные деньги Лады\",\n\"quantity\": 1,\n\"level\": \"одна монета осталась\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Лада отсчитала две из трёх монет и получила лист с синей архивной печатью.\",\n\"tags\": [\"деньги\", \"наличные\"]\n}\n]\n}"
+    },
+    {
+      "name": "quest_evaluator",
+      "role": "quest_evaluator",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 14100,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\n\"changes\": [\n{\n\"operation\": \"progress\",\n\"objectiveId\": \"22222222-2222-4222-8222-222222222222\",\n\"scope\": \"minor\",\n\"kind\": \"task\",\n\"status\": \"active\",\n\"progress\": 80,\n\"evidenceQuote\": \"Лада успела срисовать три поворота маршрута на манжету; последний участок карты оставался скрыт печатью архива.\"\n},\n{\n\"operation\": \"progress\",\n\"objectiveId\": \"11111111-1111-4111-8111-111111111111\",\n\"scope\": \"global\",\n\"kind\": \"quest\",\n\"status\": \"active\",\n\"progress\": 35,\n\"evidenceQuote\": \"Тихон увидел знак хранителей и впервые назвал Мирона своим учеником.\"\n},\n{\n\"operation\": \"create\",\n\"parentObjectiveId\": \"11111111-1111-4111-8111-111111111111\",\n\"scope\": \"minor\",\n\"kind\": \"task\",\n\"title\": \"Получить запись дежурного хранителя\",\n\"description\": \"Найти в кабинете смотрителя журнал дежурного хранителя и получить запись, необходимую для снятия печати архива. Смотритель сейчас обходит верхние этажи.\",\n\"successCriteria\": \"Получена подходящая запись дежурного хранителя из журнала в кабинете смотрителя, позволяющая открыть печать архива.\",\n\"status\": \"active\",\n\"progress\": 0,\n\"evidenceQuote\": \"печать откроется только записью дежурного хранителя. Такой журнал находится в кабинете смотрителя, который сейчас обходит верхние этажи.\"\n}\n]\n}"
+    },
+    {
+      "name": "choices",
+      "role": "choices",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 20500,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 0.9127622377622377,
+        "continuityScore": 1
+      },
+      "output": "{\n\"choices\": [\n{\n\"id\": \"choice_1\",\n\"label\": \"Взять медный ключ и попытаться пройти в зал затонувших дел\"\n},\n{\n\"id\": \"choice_2\",\n\"label\": \"Попросить Тихона рассказать больше о Мироне и знаке хранителей\"\n},\n{\n\"id\": \"choice_3\",\n\"label\": \"Отправиться в кабинет смотрителя на поиски журнала дежурного хранителя\"\n},\n{\n\"id\": \"choice_4\",\n\"label\": \"Прислушаться к ударам за дверью и проверить, что остановило воду в трубках\"\n}\n]\n}"
+    },
+    {
+      "name": "image_prompt",
+      "role": "image_prompt",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 15800,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\n\"shouldIllustrate\": true,\n\"importance\": 0.94,\n\"anchorParagraph\": 1,\n\"visualSummary\": \"Lada holds a wet sheet near an amber lamp as its ink glows green, projecting a mysterious route map and the keepers' symbol onto the archive wall. Tikhon watches the revelation with astonished recognition.\",\n\"positivePrompt\": \"A single cinematic illustration in painterly fantasy realism: Lada carefully holds a wet sheet of paper by its very edge near the flame of an amber oil lamp. The ink on the sheet glows vivid emerald green, casting a luminous shadow map onto the archive wall, revealing a winding route through the hall of sunken records and the mysterious symbol of the keepers. Beside her stands Tikhon, a lean 51-year-old archivist with silver spectacles and ink-stained fingers, studying the symbol with startled recognition and cautious intensity. Cold teal reflections from surrounding water contrast with warm amber lamplight and supernatural green illumination. Atmospheric archival interior, medium-wide eye-level composition, readable faces and hands, layered shadows, cinematic depth.\",\n\"negativePrompt\": \"text, readable writing, letters, numbers, captions, subtitles, speech bubbles, dialogue balloons, comic panels, manga panels, storyboard, split screen, collage, multiple frames, watermark, signature, logo, UI, duplicated characters, duplicate face, extra limbs, extra fingers, malformed hands, deformed anatomy, cropped head, blurry face, low detail, distorted spectacles, incorrect reflections, excessive green light, oversaturated colors, flat lighting, cartoon style, modern technology, unrelated characters, invented decorative objects, burning paper, destroyed documents, illegible visual composition\"\n}"
+    },
+    {
+      "name": "turn_planner_browser",
+      "role": "turn_planner",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 18900,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\n\"intent\": \"Осторожно осмотреть запертую дверь архива и её петли, не пытаясь вскрыть замок.\",\n\"immediateGoal\": \"Мира осторожно осматривает запертую дверь архива и её петли, не трогая замок и не пытаясь открыть дверь. Определить по доступным внешним признакам состояние двери и петель, а также возможную связь двери с проходом к башне, не предполагая обязательного обнаружения новых сведений.\",\n\"transition\": \"continue_scene\",\n\"riskFlags\": []\n}"
+    },
+    {
+      "name": "world_browser_positive",
+      "role": "world_evaluator",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 18800,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 0,
+        "languageScore": 1,
+        "continuityScore": 0,
+        "notes": [
+          "unexpected durable changes or location identity"
+        ]
+      },
+      "output": "{\"changes\":[{\"type\":\"upsert_location\",\"locationId\":\"00000000-0000-4000-8000-000000000302\",\"name\":\"Архив\",\"description\":\"Каменный архив с дубовой дверью. Молния повредила каменный фасад, оставив свежую глубокую трещину. Дубовая дверь уцелела. Здание требует ремонта.\",\"visualAnchorEn\":\"Stone archive with a deep lightning crack in its facade and an intact oak door\",\"evidenceQuote\":\"На его каменном фасаде появилась свежая глубокая трещина, но дубовая дверь уцелела.\"}]}"
+    },
+    {
+      "name": "world_browser_negative",
+      "role": "world_evaluator",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 11000,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\"changes\":[]}"
+    }
+  ],
+  "jsonValid": 7,
+  "jsonTotal": 7,
+  "averageScore": 0.9017020479520479,
+  "averageTokensPerSecond": 0,
+  "averageElapsedMs": 15700
+}

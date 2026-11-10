@@ -209,3 +209,27 @@ func TestConfigurableConcurrencyAndWorkerStatus(t *testing.T) {
 	call(b, "/fail", lease(j))
 	_ = claim(t, b, "worker-two")
 }
+
+func TestWarmupDelaysOnlyNewLeases(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	now := time.Now()
+	b.now = func() time.Time { return now }
+	b.leaseWarmup = 2 * time.Second
+	call(b, "/probes", map[string]int{"count": 3})
+	if w := call(b, "/claim", map[string]string{"worker": "worker-one"}); w.Code != 204 {
+		t.Fatal("lease before warmup", w.Code)
+	}
+	now = now.Add(time.Second)
+	if w := call(b, "/claim", map[string]string{"worker": "worker-one"}); w.Code != 204 {
+		t.Fatal("early lease")
+	}
+	now = now.Add(time.Second)
+	j := claim(t, b, "worker-one")
+	call(b, "/send", lease(j))
+	body := lease(j)
+	body["reply"] = fmt.Sprintf(`{"probe_id":%q,"ok":true,"text":"Фонарь осветил пустую площадь."}`, j.ID)
+	call(b, "/result", body)
+	if w := call(b, "/claim", map[string]string{"worker": "worker-one"}); w.Code != 204 {
+		t.Fatal("new page skipped warmup", w.Code)
+	}
+}

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.5
+// @version      0.1.8
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,18 +13,20 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.1.5';
+  const VERSION='0.1.8';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
   const KEY='story-chatgpt-probe-';
   // Ignore every ordinary user tab. Never inspect account state or cookies.
-  if(location.hash!==MARK && sessionStorage.getItem(KEY+'armed')!=='yes')return;
+  const registered=/^[a-f0-9]{8}-[a-f0-9-]{27}$/i.test(sessionStorage.getItem(KEY+'uuid')||'');
+  if(location.hash!==MARK && !registered && sessionStorage.getItem(KEY+'armed')!=='yes')return;
   const worker=sessionStorage.getItem(KEY+'uuid')||crypto.randomUUID();
   sessionStorage.setItem(KEY+'uuid',worker);
   let token=String(GM_getValue(KEY+'token',''));
   let running=false;
   let lastModelFailure=null;
+  let lastFailure=null;
   const panel=document.createElement('aside');panel.id='story-chatgpt-bridge';
   Object.assign(panel.style,{position:'fixed',right:'12px',top:'70px',zIndex:'2147483647',maxWidth:'330px',background:'#142238',color:'#edf3ff',padding:'14px',border:'1px solid #7ea1d2',borderRadius:'12px',font:'13px system-ui'});
   const title=document.createElement('strong');title.textContent='Мост '+VERSION+' · '+worker.slice(0,8)+' · только тесты';
@@ -34,7 +36,7 @@
   const diagnosticButton=document.createElement('button');diagnosticButton.type='button';diagnosticButton.textContent='Диагностика';
   diagnosticButton.style.cssText=button.style.cssText;diagnosticButton.style.marginLeft='6px';
   diagnosticButton.onclick=async()=>{
-    const report=JSON.stringify({version:VERSION,worker,running,lastModelFailure,current:modelSnapshot()},null,2);
+    const report=JSON.stringify({version:VERSION,worker,running,lastModelFailure,lastFailure,current:modelSnapshot()},null,2);
     try{await navigator.clipboard.writeText(report);show('Диагностика скопирована. Она содержит только состояние элементов управления, без текста чата и токенов.');}
     catch{show('Диагностика: '+report);}
   };
@@ -78,6 +80,16 @@
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     return picker&&controlText(picker)==='Instant';
   }
+  function userMessage(){
+    const heading=roles('user')[0];
+    const bubble=heading?.parentElement.querySelector('[data-user-message-bubble]');
+    const contents=[...bubble?.querySelectorAll('[data-search-result-target]')||[]].filter(e=>{const parent=e.parentElement.closest('[data-search-result-target]');return (!parent||!bubble.contains(parent))&&e.getClientRects().length;});
+    // Long messages add a Show more button inside the bubble. It is not part
+    // of the sent prompt; reading the entire bubble breaks strict correlation.
+    if(contents.length)return {text:contents.map(e=>e.textContent).join('').trim(),source:'data-search-result-target',bubble,more:[...bubble.querySelectorAll('button')].find(e=>['Показать ещё','Показать больше','Show more'].includes(controlText(e)))};
+    if(bubble&&!bubble.querySelector('button,[role="button"]'))return {text:bubble.textContent.trim(),source:'plain-bubble'};
+    return {text:null,source:'unrecognized'};
+  }
   function modelSnapshot(){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     return {
@@ -86,6 +98,14 @@
       menus:[...document.querySelectorAll('[role="menu"]')].filter(e=>e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider]')).map(e=>({state:e.getAttribute('data-state'),hidden:e.getAttribute('aria-hidden'),inert:!!e.closest('[inert]')})),
       sliders:[...document.querySelectorAll('[data-model-picker-power-slider] [role="slider"]')].map(e=>({min:e.getAttribute('aria-valuemin'),value:e.getAttribute('aria-valuenow'),hidden:e.getAttribute('aria-hidden')})),
     };
+  }
+  function pointerClick(element){
+    element.focus();
+    element.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,composed:true,pointerType:'mouse',pointerId:1,isPrimary:true,button:0,buttons:1}));
+    element.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,composed:true,button:0,buttons:1}));
+    element.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,composed:true,pointerType:'mouse',pointerId:1,isPrimary:true,button:0,buttons:0}));
+    element.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,composed:true,button:0,buttons:0}));
+    element.click();
   }
   async function selectGPT6Instant(){
     const getPicker=()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
@@ -117,7 +137,9 @@
     try{
       const picker=await waitFor(getPicker,15000);
       // A previous failure or the user may have left the menu open.
-      if(picker.getAttribute('aria-expanded')!=='true')picker.click();
+      if(picker.getAttribute('aria-expanded')!=='true')pointerClick(picker);
+      stage='подтверждение открытия меню модели';
+      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='true'&&activeMenu(),5000);
       stage='открытие списка моделей';
       (await waitFor(getToggle,5000)).click();
       stage='выбор GPT-6';
@@ -205,13 +227,21 @@
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
         if(!running||!temporary()||!instantLabel()||box.textContent.trim()!==current.prompt)throw Error('Отправка остановлена после разрешения.');
         send.click(); // Exactly one click for this lease.
-        let stable='',since=0;
+        let stable='',since=0,expandedBubble=null;
         const reply=await waitFor(()=>{
           if(!temporary())throw Error('Временный режим больше не подтверждён.');
           const users=roles('user'),assistants=roles('assistant');
           if(users.length>1||assistants.length>1)throw Error('Неожиданный дополнительный ход чата.');
-          const userText=users[0]?.parentElement.querySelector('[data-user-message-bubble]')?.innerText.trim();
-          if(userText&&userText!==current.prompt)throw Error('Ответ принадлежит другому запросу.');
+          const shown=userMessage(),userText=shown.text;
+          if(userText&&userText!==current.prompt){
+            if(current.prompt.startsWith(userText)&&userText.length<current.prompt.length){
+              // ChatGPT only mounts a 10,240-character prefix until expanded.
+              // Expansion is a UI action, never a second model request.
+              if(shown.more&&expandedBubble!==shown.bubble){expandedBubble=shown.bubble;shown.more.click();}
+              return null;
+            }
+            throw Error('Ответ принадлежит другому запросу.');
+          }
           const text=assistants[0]?.parentElement.querySelector('[data-markdown-text-style="assistant-message"]')?.innerText.trim();
           const done=users.length===1&&userText===current.prompt&&assistants.length===1&&text&&
             !exactButton(['Остановить','Stop','Stop generating'])&&!!exactButton(['Копировать','Copy']);
@@ -225,7 +255,9 @@
         if(running){show('Ответ получен. Открываю новый временный чат…');location.replace(FRESH);}return;
       }
     }catch(e){
-      if(current){try{await request('/fail',{worker,id:current.id,lease:current.lease});}catch{/* No resubmission. */}}
+      const shown=userMessage();
+      lastFailure={message:String(e.message||e),temporary:temporary(),userMessage:{source:shown.source,expectedLength:current?.prompt.length??null,actualLength:shown.text?.length??null,matches:current?shown.text===current.prompt:null}};
+      if(current){try{await request('/fail',{worker,id:current.id,lease:current.lease,error:JSON.stringify({version:VERSION,stage:lastModelFailure?.stage||'transport',message:lastFailure.message,expectedLength:lastFailure.userMessage.expectedLength,actualLength:lastFailure.userMessage.actualLength})});}catch{/* No resubmission. */}}
       sessionStorage.removeItem(KEY+'pending');stop(String(e.message||e));
     }
   }

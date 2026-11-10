@@ -1,0 +1,2 @@
+writer_large_context         ok=true  score=0.850 time= 21701ms tps=  0.0 error=
+summary json=1/1 score=0.850 avg_tps=0.0 cold=0ms

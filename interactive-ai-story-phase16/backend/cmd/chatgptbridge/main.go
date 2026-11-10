@@ -22,31 +22,42 @@ import (
 //go:embed web/*
 var assets embed.FS
 
+type workerDiagnostic struct {
+	Version        string `json:"version"`
+	Stage          string `json:"stage"`
+	Message        string `json:"message"`
+	ExpectedLength *int   `json:"expectedLength,omitempty"`
+	ActualLength   *int   `json:"actualLength,omitempty"`
+}
 type job struct {
-	ID       string     `json:"id"`
-	Prompt   string     `json:"prompt"`
-	State    string     `json:"state"`
-	Worker   string     `json:"worker,omitempty"`
-	Lease    string     `json:"lease,omitempty"`
-	Created  time.Time  `json:"created"`
-	Deadline time.Time  `json:"deadline"`
-	Sent     *time.Time `json:"sent,omitempty"`
-	Finished *time.Time `json:"finished,omitempty"`
-	Reply    string     `json:"reply,omitempty"`
-	Error    string     `json:"error,omitempty"`
+	Diagnostic *workerDiagnostic `json:"diagnostic,omitempty"`
+	Kind       string            `json:"kind,omitempty"`
+	ID         string            `json:"id"`
+	Prompt     string            `json:"prompt"`
+	State      string            `json:"state"`
+	Worker     string            `json:"worker,omitempty"`
+	Lease      string            `json:"lease,omitempty"`
+	Created    time.Time         `json:"created"`
+	Deadline   time.Time         `json:"deadline"`
+	Sent       *time.Time        `json:"sent,omitempty"`
+	Finished   *time.Time        `json:"finished,omitempty"`
+	Reply      string            `json:"reply,omitempty"`
+	Error      string            `json:"error,omitempty"`
 }
 type workerState struct {
 	Seen   time.Time `json:"seen"`
 	Status string    `json:"status"`
 }
 type bridge struct {
-	mu        sync.Mutex
-	token     string
-	host      string
-	jobs      []*job
-	workers   map[string]workerState
-	maxActive int
-	now       func() time.Time
+	mu          sync.Mutex
+	token       string
+	host        string
+	jobs        []*job
+	workers     map[string]workerState
+	leaseWarmup time.Duration
+	leaseReady  map[string]time.Time
+	maxActive   int
+	now         func() time.Time
 }
 
 func secret() string {
@@ -57,7 +68,7 @@ func secret() string {
 	return hex.EncodeToString(b[:])
 }
 func newBridge(host string) *bridge {
-	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, maxActive: 3, now: time.Now}
+	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: 3, now: time.Now}
 }
 func active(s string) bool { return s == "queued" || s == "leased" || s == "dispatched" }
 func (b *bridge) expire() {
@@ -76,6 +87,7 @@ func (b *bridge) expire() {
 	for id, t := range b.workers {
 		if now.Sub(t.Seen) > 5*time.Minute {
 			delete(b.workers, id)
+			delete(b.leaseReady, id)
 		}
 	}
 }
@@ -151,6 +163,10 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", 401)
 		return
 	}
+	if r.Method == "POST" && r.URL.Path == "/v1/chat/completions" {
+		b.chatCompletions(w, r)
+		return
+	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.expire()
@@ -162,7 +178,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			v.Lease = ""
 			out = append(out, v)
 		}
-		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive})
+		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive, "lease_warmup_ms": b.leaseWarmup.Milliseconds()})
 		return
 	}
 	if r.Method != "POST" {
@@ -248,6 +264,18 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(204)
 			return
 		}
+		if b.leaseWarmup > 0 {
+			ready, ok := b.leaseReady[in.Worker]
+			if !ok {
+				b.leaseReady[in.Worker] = b.now().Add(b.leaseWarmup)
+				w.WriteHeader(204)
+				return
+			}
+			if b.now().Before(ready) {
+				w.WriteHeader(204)
+				return
+			}
+		}
 		for _, j := range b.jobs {
 			if j.State == "queued" {
 				j.State = "leased"
@@ -283,7 +311,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]bool{"authorized": true})
 	case "/result":
 		if j.State == "complete" && j.Reply == in.Reply {
-			writeJSON(w, map[string]bool{"accepted": true})
+			writeJSON(w, map[string]any{"accepted": true, "state": "complete"})
 			return
 		}
 		if j.State != "dispatched" {
@@ -292,7 +320,13 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		now := b.now()
 		j.Finished = &now
-		if !validReply(in.Reply, j.ID) {
+		delete(b.leaseReady, j.Worker)
+		valid := validReply(in.Reply, j.ID)
+		if j.Kind == "chat" {
+			_, valid = jsonReply(in.Reply)
+			j.Reply = in.Reply
+		}
+		if !valid {
 			j.State = "failed"
 			j.Error = "invalid JSON, probe ID or content"
 		} else {
@@ -313,7 +347,14 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		now := b.now()
 		j.Finished = &now
 		// No browser text, account details or prompt contents in error logs.
+		delete(b.leaseReady, j.Worker)
 		j.Error = "worker stopped; inspect worker tab"
+		if len(in.Error) <= 2048 {
+			var diagnostic workerDiagnostic
+			if json.Unmarshal([]byte(in.Error), &diagnostic) == nil && len(diagnostic.Version) <= 20 && len(diagnostic.Stage) <= 100 && len(diagnostic.Message) <= 300 {
+				j.Diagnostic = &diagnostic
+			}
+		}
 		writeJSON(w, map[string]string{"state": j.State})
 	default:
 		http.NotFound(w, r)
@@ -322,6 +363,21 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	host := "127.0.0.1:8791"
 	b := newBridge(host)
+	b.leaseWarmup = 2 * time.Second
+	if raw := os.Getenv("CHATGPT_BRIDGE_LEASE_WARMUP_MS"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 || n > 10000 {
+			log.Fatal("CHATGPT_BRIDGE_LEASE_WARMUP_MS must be 0..10000")
+		}
+		b.leaseWarmup = time.Duration(n) * time.Millisecond
+	}
+	if path := os.Getenv("CHATGPT_BRIDGE_TOKEN_FILE"); path != "" {
+		token, err := tokenFile(path, b.token)
+		if err != nil {
+			log.Fatal(err)
+		}
+		b.token = token
+	}
 	if raw := os.Getenv("CHATGPT_BRIDGE_MAX_ACTIVE"); raw != "" {
 		n, err := strconv.Atoi(raw)
 		if err != nil || n < 1 || n > 4096 {
@@ -329,7 +385,7 @@ func main() {
 		}
 		b.maxActive = n
 	}
-	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
+	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 5 * time.Minute, IdleTimeout: 30 * time.Second}
 	log.Printf("Synthetic ChatGPT bridge: http://%s (main story generation unchanged)", host)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Print(err)

@@ -1,0 +1,176 @@
+{
+  "status": "interrupted",
+  "expected_cases": 16,
+  "finished": "2026-11-10T12:01:02.650768+00:00",
+  "processes": {
+    "setup": -15,
+    "writer": 0,
+    "evaluators": -15
+  },
+  "count": 12,
+  "transport_ok": 0,
+  "cases": [
+    {
+      "name": "setup_story_bible",
+      "ok": false,
+      "ms": 240001,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "setup_initial_cast",
+      "ok": false,
+      "ms": 9000,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "setup_quest_stages",
+      "ok": false,
+      "ms": 19501,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    },
+    {
+      "name": "setup_prose_second",
+      "ok": false,
+      "ms": 12900,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "director",
+      "ok": false,
+      "ms": 240001,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "writer_continuation",
+      "ok": false,
+      "ms": 8100,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "writer_large_context",
+      "ok": false,
+      "ms": 18200,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    },
+    {
+      "name": "browser_escaping",
+      "ok": false,
+      "ms": 12900,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "state_evaluator",
+      "ok": false,
+      "ms": 240000,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "quest_evaluator",
+      "ok": false,
+      "ms": 7501,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "choices",
+      "ok": false,
+      "ms": 16000,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    },
+    {
+      "name": "image_prompt",
+      "ok": false,
+      "ms": 13101,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "prose": null,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    }
+  ],
+  "notes": [
+    "Frozen synthetic cases using active prompt snapshot; production settings and Canon unchanged.",
+    "Browser temperature, token limits and native JSON schema are not enforced; token usage/TPS unavailable.",
+    "Model messages are serialized into one physical line for the contenteditable transport.",
+    "Role fixtures run independently; this is not a committed full story turn or a comparison with current Google routing."
+  ]
+}

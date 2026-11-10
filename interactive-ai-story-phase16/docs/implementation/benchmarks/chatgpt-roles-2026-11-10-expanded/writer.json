@@ -1,0 +1,53 @@
+{
+  "status": "interrupted",
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "promptRevision": 25,
+  "model": "gpt-6-instant",
+  "endpoint": "http://127.0.0.1:8791/v1/chat/completions",
+  "startedAt": "2026-11-10T12:28:24.119528649Z",
+  "finishedAt": "2026-11-10T12:30:32.122368626Z",
+  "coldStartMs": 0,
+  "cases": [
+    {
+      "name": "director",
+      "role": "director",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 11300,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\"goal\":\"Проверить обман Лады с мнимым сожжением листа: когда она подносит огонь к краю бумаги, не повреждая карту, схема подземного шлюза меняется и обнаруживает новый ориентир на Северной лестнице, а Тихон, поверив, что лист вот-вот сгорит, невольно выдаёт знание о связи карты с исчезновением Мирона. Его реакция заставляет Ладу усомниться в полноте прежнего признания, но прежде чем она успевает добиться объяснений, открытый проход начинает закрываться. Лада должна решить, сохранить ли возможность расспросить Тихона или воспользоваться обнаруженным ориентиром и рискнуть спуститься по лестнице с уцелевшим листом.\"}"
+    },
+    {
+      "name": "writer_continuation",
+      "role": "writer",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard",
+      "elapsedMs": 116701,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job uncertain; inspect local dashboard\n"
+    }
+  ],
+  "jsonValid": 1,
+  "jsonTotal": 2,
+  "averageScore": 0.5,
+  "averageTokensPerSecond": 0,
+  "averageElapsedMs": 64000
+}

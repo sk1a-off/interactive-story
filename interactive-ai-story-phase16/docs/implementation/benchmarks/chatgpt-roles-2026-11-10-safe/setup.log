@@ -1,0 +1,4 @@
+setup_story_bible            ok=true  score=1.000 time= 17000ms tps=  0.0 error=
+setup_initial_cast           ok=true  score=1.000 time= 15300ms tps=  0.0 error=
+setup_quest_stages           ok=false score=0.000 time=  6700ms tps=  0.0 error=HTTP 502: browser test job failed; inspect local dashboard
+summary json=2/3 score=0.667 avg_tps=0.0 cold=0ms

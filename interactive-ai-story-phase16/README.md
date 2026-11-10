@@ -66,3 +66,5 @@ the profile. See [generation profiles](docs/implementation/GENERATION_PROFILES_2
 The project is suitable for a local MVP launch attempt. It is not yet marked production/release PASS until the PostgreSQL + real LLM + browser + Perchance acceptance gates are executed on the target machine.
 
 Experimental browser ChatGPT transport (synthetic probes, visible Chromium windows): [setup and validation](docs/implementation/CHATGPT_BROWSER_BRIDGE_2026-11-10.md).
+
+Browser role-test findings: [2026-11-10 results](docs/implementation/CHATGPT_ROLE_TEST_RESULTS_2026-11-10.md).

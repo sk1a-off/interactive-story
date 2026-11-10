@@ -1,0 +1,5 @@
+setup_story_bible            ok=true  score=1.000 time= 20700ms tps=  0.0 error=
+setup_initial_cast           ok=true  score=1.000 time= 29601ms tps=  0.0 error=
+setup_quest_stages           ok=true  score=1.000 time= 23901ms tps=  0.0 error=
+setup_prose_second           ok=false score=0.000 time=  6401ms tps=  0.0 error=HTTP 502: browser test job uncertain; inspect local dashboard
+summary json=3/4 score=0.750 avg_tps=0.0 cold=0ms

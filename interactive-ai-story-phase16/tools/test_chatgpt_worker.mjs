@@ -15,7 +15,8 @@ function fixture(options={}){
  w.Element.prototype.getClientRects=()=>[{}];
  w.PointerEvent=w.MouseEvent;
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
- const j={id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:'synthetic prompt'};
+ const j={id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
+ let expansionClicks=0;
  const box=w.document.querySelector('[contenteditable]');
  w.document.querySelector('button[aria-haspopup="menu"]').onclick=()=>{personalizationClicks++;};
  const picker=w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]');
@@ -45,12 +46,13 @@ function fixture(options={}){
   power.onkeydown=e=>{if(e.key==='ArrowLeft'){effort=0;slider.setAttribute('aria-valuenow','0');status.textContent='Instant, 1 из 3.';updatePicker('Instant');toggle.textContent='Instant';}};
   menu.append(power,track);if(!options.noAnnouncement)menu.append(status);
  }
- picker.onclick=()=>{
+ const togglePicker=()=>{
   const existing=w.document.querySelector('[role="menu"]');
   if(existing){if(!options.triggerClickCannotClose){existing.remove();picker.setAttribute('aria-expanded','false');}return;}
   picker.setAttribute('aria-expanded','true');
   const menu=w.document.createElement('div');menu.setAttribute('role','menu');renderSimple(menu);w.document.body.append(menu);
  };
+ if(options.triggerPointerOnly){picker.onclick=()=>{};picker.addEventListener('pointerdown',togglePicker);}else{picker.onclick=togglePicker;}
  const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');if(options.closedWrongMode)updatePicker('Medium');};
  w.document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!options.ignoreEscape)closeMenu();});
  w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
@@ -69,7 +71,7 @@ function fixture(options={}){
  w.document.querySelector('button[aria-label="Отправить"]').onclick=()=>{
   clicks++;
   const user=w.document.createElement('div');const heading=w.document.createElement('h4');heading.dataset.conversationRole='user';
-  const bubble=w.document.createElement('div');bubble.dataset.userMessageBubble='true';bubble.textContent=options.wrongUser?'unrelated prompt':j.prompt;user.append(heading,bubble);
+  const bubble=w.document.createElement('div');bubble.dataset.userMessageBubble='true';const content=w.document.createElement('div');content.dataset.searchResultTarget='';content.textContent=options.wrongUser?'unrelated prompt':options.truncatedMessage?j.prompt.slice(0,10240):j.prompt;bubble.append(content);if(options.expandableMessage||options.truncatedMessage){const more=w.document.createElement('button');more.textContent='Показать ещё';more.onclick=()=>{expansionClicks++;if(options.truncatedMessage&&!options.expansionBlocked){content.textContent=options.splitExpanded?j.prompt.slice(0,10240):j.prompt;if(options.splitExpanded){const rest=w.document.createElement('div');rest.dataset.searchResultTarget='';rest.textContent=j.prompt.slice(10240);bubble.insertBefore(rest,more);}}more.textContent='Показать меньше';};bubble.append(more);}user.append(heading,bubble);
   const assistant=w.document.createElement('div');const h=w.document.createElement('h4');h.dataset.conversationRole='assistant';
   const answer=w.document.createElement('div');answer.dataset.markdownTextStyle='assistant-message';answer.textContent='{"probe_id":"job-id","ok":true}';assistant.append(h,answer);
   const copy=w.document.createElement('button');copy.setAttribute('aria-label','Копировать');
@@ -80,8 +82,10 @@ function fixture(options={}){
  if(options.personalized)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Персонализированный');
  if(options.noPersonalizationControl)w.document.querySelector('button[aria-haspopup="menu"]').remove();
  if(options.notTemporary){w.document.querySelector('header').textContent='Regular chat';w.document.querySelector('button').remove();}
+ if(options.withoutMarker)w.history.replaceState(null,'','/?temporary-chat=true');
+ if(options.registeredWorker)w.sessionStorage.setItem('story-chatgpt-probe-uuid','a624163e-3125-4bd7-bd3d-29aab5da74da');
  w.eval(source);
- return {w,requests,get clicks(){return clicks;},get personalizationClicks(){return personalizationClicks;},close:()=>dom.window.close()};
+ return {w,requests,get clicks(){return clicks;},get expansionClicks(){return expansionClicks;},get personalizationClicks(){return personalizationClicks;},close:()=>dom.window.close()};
 }
 test('one send and completed reply correlated to current lease',async()=>{
  const f=fixture({personalized:true});try{await until(()=>f.requests.some(r=>r.path==='/result')).catch(e=>{throw Error(e.message+' '+f.w.document.querySelector('#story-chatgpt-bridge').textContent+' '+JSON.stringify(f.requests));});assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/send','/result']);const body=f.requests.at(-1).body;assert.equal(body.id,'job-id');assert.equal(body.lease,'lease-secret');}finally{f.close();}
@@ -161,8 +165,46 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.1.5');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.1.8');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
+});
+
+test('Show more inside a user bubble is excluded from exact prompt correlation',async()=>{
+ const f=fixture({expandableMessage:true});
+ try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.ok(f.w.document.querySelector('[data-user-message-bubble]').textContent.includes('Показать ещё'));}finally{f.close();}
+});
+test('expandable messages still reject a different user prompt',async()=>{
+ const f=fixture({expandableMessage:true,wrongUser:true});
+ try{
+  await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);
+  assert.ok(!f.requests.some(r=>r.path==='/result'));
+  [...f.w.document.querySelectorAll('#story-chatgpt-bridge button')].find(e=>e.textContent==='Диагностика').click();await pause(5);
+  const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
+  const report=JSON.parse(text.slice('Диагностика: '.length));assert.equal(report.lastFailure.userMessage.matches,false);assert.ok(!text.includes('unrelated prompt'));
+ }finally{f.close();}
+});
+
+test('ordinary unmarked tabs have no worker panel or network activity',async()=>{
+ const f=fixture({unarmed:true,withoutMarker:true});try{assert.equal(f.w.document.querySelector('#story-chatgpt-bridge'),null);assert.equal(f.requests.length,0);}finally{f.close();}
+});
+test('registered worker keeps its paused panel when ChatGPT removes the URL fragment',async()=>{
+ const f=fixture({unarmed:true,withoutMarker:true,registeredWorker:true});
+ try{assert.equal(f.requests.length,0);f.w.document.querySelector('#story-chatgpt-bridge button').click();await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
+});
+
+test('model trigger driven by pointerdown opens before selecting a model',async()=>{
+ const f=fixture({triggerPointerOnly:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
+});
+
+test('expand a 10240-character prefix and require the entire prompt before accepting a reply',async()=>{
+ const f=fixture({truncatedMessage:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.expansionClicks,1);}finally{f.close();}
+});
+test('an unexpandable matching prefix never authorizes a result',async()=>{
+ const f=fixture({truncatedMessage:true,expansionBlocked:true});try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(!f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.expansionClicks,1);}finally{f.close();}
+});
+
+test('expanded user-message segments are combined without accepting only the first chunk',async()=>{
+ const f=fixture({truncatedMessage:true,splitExpanded:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.expansionClicks,1);}finally{f.close();}
 });

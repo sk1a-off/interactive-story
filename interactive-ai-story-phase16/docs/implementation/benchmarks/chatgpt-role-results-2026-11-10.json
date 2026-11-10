@@ -1,0 +1,323 @@
+{
+  "date": "2026-11-10",
+  "status": "coverage_complete_with_retries",
+  "single_clean_full_run": false,
+  "promptRevision": 25,
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "workerVersion": "0.1.8",
+  "leaseWarmupMs": 2000,
+  "uniqueCases": 16,
+  "successfulUniqueCases": 16,
+  "finalPhaseAttempts": 18,
+  "finalPhaseSuccesses": 16,
+  "finalPhaseNonSuccesses": 2,
+  "peakOverlappingSentJobs": 3,
+  "successfulRoleRoundtripSeconds": {
+    "minimum": 10.801,
+    "median": 18.85,
+    "maximum": 21.701
+  },
+  "maxPromptUtf8Bytes": 42406,
+  "maxReplyUtf8Bytes": 5617,
+  "caseResults": [
+    {
+      "name": "state_evaluator",
+      "role": "state_evaluator",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 10801,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "quest_evaluator",
+      "role": "quest_evaluator",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 14100,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "choices",
+      "role": "choices",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 20500,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 0.9127622377622377,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "image_prompt",
+      "role": "image_prompt",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 15800,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "turn_planner_browser",
+      "role": "turn_planner",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 18900,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "world_browser_positive",
+      "role": "world_evaluator",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 18800,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "world_browser_negative",
+      "role": "world_evaluator",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "roundtripMs": 11000,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators-rechecked.json"
+    },
+    {
+      "name": "setup_story_bible",
+      "role": "setup_architect",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/setup.json",
+      "roundtripMs": 17600,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "setup_initial_cast",
+      "role": "setup_architect",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/setup.json",
+      "roundtripMs": 21101,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "setup_quest_stages",
+      "role": "setup_architect",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/setup.json",
+      "roundtripMs": 19700,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "director",
+      "role": "director",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/writer.json",
+      "roundtripMs": 11300,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "action_interpreter",
+      "role": "action_interpreter",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/action_interpreter.json",
+      "roundtripMs": 19001,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "browser_escaping",
+      "role": "writer",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/browser_escaping.json",
+      "roundtripMs": 12000,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": null,
+      "validationRecheck": null
+    },
+    {
+      "name": "setup_prose_second",
+      "role": "setup_architect",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/setup_prose_second.json",
+      "roundtripMs": 19101,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "proseMetrics": {
+        "words": 376,
+        "paragraphs": 3,
+        "repeatedSixGramRatio": 0,
+        "duplicateParagraphs": 0
+      },
+      "validationRecheck": null
+    },
+    {
+      "name": "writer_continuation",
+      "role": "writer",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/writer_continuation.json",
+      "roundtripMs": 19901,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 0.5,
+        "languageScore": 1,
+        "continuityScore": 1,
+        "notes": [
+          "paragraphs=18 expected=3..5"
+        ]
+      },
+      "proseMetrics": {
+        "words": 412,
+        "paragraphs": 18,
+        "repeatedSixGramRatio": 0,
+        "duplicateParagraphs": 0
+      },
+      "validationRecheck": null
+    },
+    {
+      "name": "writer_large_context",
+      "role": "writer",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/writer_large_context.json",
+      "roundtripMs": 21701,
+      "checks": {
+        "schemaScore": 1,
+        "instructionScore": 0.5,
+        "languageScore": 1,
+        "continuityScore": 1,
+        "notes": [
+          "paragraphs=10 expected=3..5"
+        ]
+      },
+      "proseMetrics": {
+        "words": 368,
+        "paragraphs": 10,
+        "repeatedSixGramRatio": 0,
+        "duplicateParagraphs": 0
+      },
+      "validationRecheck": null
+    }
+  ],
+  "nonSuccesses": [
+    {
+      "name": "setup_prose_second",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/setup.json",
+      "error": "HTTP 502: browser test job failed; inspect local dashboard"
+    },
+    {
+      "name": "writer_continuation",
+      "source": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/writer.json",
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard"
+    }
+  ],
+  "sources": [
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/evaluators.json",
+      "sha256": "cd1721052519bb28a15fbfe45b9a8befe1b1d8c45e633a21195157998ccd4376"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/setup.json",
+      "sha256": "554e245b877f09cb47c8f79d3baebc87d7de57134f50e5637475eb8279fec509"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-expanded/writer.json",
+      "sha256": "abf4b8bd85cea9a78a7ac1a886a42f45649a97386ee2a20cb110cdf65c974db1"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/action_interpreter.json",
+      "sha256": "aa0f3996e0d44ca200b4e065b5c3250ce8e323a5f205ee384d987e86c0a0011a"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/browser_escaping.json",
+      "sha256": "4d991c608c52a680c8a412c10d7352b80dc624b8a1eba524cc0069ee20d9db8c"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/setup_prose_second.json",
+      "sha256": "6fc47641d2e18afc866ae7d76c3579471aeac183322c10b82011ad683e002710"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/writer_continuation.json",
+      "sha256": "3a5ef33c29a1eebd041cd7d0acb795e5de99c5aed1e6f3008a3c699445208619"
+    },
+    {
+      "file": "docs/implementation/benchmarks/chatgpt-roles-2026-11-10-remaining/writer_large_context.json",
+      "sha256": "be5ed34c2b9e3d3da30c61d0bf88ae052e2a504d947d626bc76e461e0fdd047e"
+    }
+  ],
+  "notes": [
+    "Independent synthetic role fixtures, no Canon/configuration writes; not a complete committed story turn.",
+    "Coverage combines a 13-case partial run (11 successes) and a 5-case targeted run (5 successes), not an uninterrupted 16/16 run.",
+    "Earlier interrupted experiments are preserved in separate folders and are not part of this final-phase success fraction.",
+    "Journal/world scores were rechecked offline with production gates; original raw reports were not rewritten.",
+    "Time includes queue, UI setup, browser inference, stabilization and upload. No first-token or full-turn speed comparison.",
+    "Native system-role separation, API sampling controls, token usage and streaming are unavailable in this UI transport."
+  ]
+}

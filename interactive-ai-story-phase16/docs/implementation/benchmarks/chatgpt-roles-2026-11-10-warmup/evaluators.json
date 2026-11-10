@@ -1,0 +1,53 @@
+{
+  "status": "interrupted",
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "promptRevision": 25,
+  "model": "gpt-6-instant",
+  "endpoint": "http://127.0.0.1:8791/v1/chat/completions",
+  "startedAt": "2026-11-10T12:18:54.600127927Z",
+  "finishedAt": "2026-11-10T12:19:12.202316439Z",
+  "coldStartMs": 0,
+  "cases": [
+    {
+      "name": "state_evaluator",
+      "role": "state_evaluator",
+      "ok": true,
+      "httpStatus": 200,
+      "elapsedMs": 11400,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "finishReason": "stop",
+      "validation": {
+        "schemaScore": 0.5,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "output": "{\n\"changes\": [\n{\n\"operation\": \"create\",\n\"category\": \"item\",\n\"name\": \"Медный ключ от зала затонувших дел\",\n\"description\": \"Ключ от зала затонувших дел в Архиве приливов.\",\n\"quantity\": 1,\n\"level\": \"получен\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Тихон передал Ладе медный ключ от зала затонувших дел, и она убрала его во внутренний карман.\",\n\"tags\": [\"ключ\", \"архив\", \"доступ\"]\n},\n{\n\"operation\": \"create\",\n\"category\": \"item\",\n\"name\": \"Выписка из журнала\",\n\"description\": \"Полученный за две медные монеты лист с синей архивной печатью.\",\n\"quantity\": 1,\n\"level\": \"получена\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Лада отсчитала две из трёх монет и получила лист с синей архивной печатью.\",\n\"tags\": [\"документ\", \"архив\", \"выписка\"]\n},\n{\n\"operation\": \"update\",\n\"entryId\": \"55555555-5555-4555-8555-555555555555\",\n\"category\": \"currency\",\n\"name\": \"медных монет\",\n\"description\": \"Наличные деньги Лады\",\n\"quantity\": 1,\n\"level\": \"остаток после покупки выписки\",\n\"status\": \"active\",\n\"evidenceQuote\": \"Лада отсчитала две из трёх монет и получила лист с синей архивной печатью.\",\n\"tags\": [\"деньги\", \"наличные\"]\n}\n]\n}"
+    },
+    {
+      "name": "quest_evaluator",
+      "role": "quest_evaluator",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard",
+      "elapsedMs": 6200,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job uncertain; inspect local dashboard\n"
+    }
+  ],
+  "jsonValid": 1,
+  "jsonTotal": 2,
+  "averageScore": 0.4125,
+  "averageTokensPerSecond": 0,
+  "averageElapsedMs": 8800
+}

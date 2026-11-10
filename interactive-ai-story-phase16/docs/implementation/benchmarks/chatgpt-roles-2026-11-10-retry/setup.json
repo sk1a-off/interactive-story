@@ -1,0 +1,89 @@
+{
+  "status": "running",
+  "promptSnapshotSha256": "b40b2217c0223a282bf50d9f15173967642a27e0472a7fa2a0c43711977ea9e9",
+  "promptRevision": 25,
+  "model": "gpt-6-instant",
+  "endpoint": "http://127.0.0.1:8791/v1/chat/completions",
+  "startedAt": "2026-11-10T11:56:04.053747848Z",
+  "finishedAt": "0001-01-01T00:00:00Z",
+  "coldStartMs": 0,
+  "cases": [
+    {
+      "name": "setup_story_bible",
+      "role": "setup_architect",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard",
+      "elapsedMs": 240001,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job failed; inspect local dashboard\n"
+    },
+    {
+      "name": "setup_initial_cast",
+      "role": "setup_architect",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard",
+      "elapsedMs": 9000,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job failed; inspect local dashboard\n"
+    },
+    {
+      "name": "setup_quest_stages",
+      "role": "setup_architect",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job uncertain; inspect local dashboard",
+      "elapsedMs": 19501,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job uncertain; inspect local dashboard\n"
+    },
+    {
+      "name": "setup_prose_second",
+      "role": "setup_architect",
+      "ok": false,
+      "httpStatus": 502,
+      "error": "HTTP 502: browser test job failed; inspect local dashboard",
+      "elapsedMs": 12900,
+      "promptTokens": 0,
+      "completionTokens": 0,
+      "tokensPerSecond": 0,
+      "validation": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "output": "browser test job failed; inspect local dashboard\n"
+    }
+  ],
+  "jsonValid": 0,
+  "jsonTotal": 0,
+  "averageScore": 0,
+  "averageTokensPerSecond": 0,
+  "averageElapsedMs": 0
+}
