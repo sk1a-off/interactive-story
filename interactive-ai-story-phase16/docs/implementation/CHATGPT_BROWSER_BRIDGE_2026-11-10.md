@@ -34,7 +34,7 @@ The default concurrency is 3; configuration accepts 1..4096, as does the window 
 
 1. Open a new root Temporary Chat. Confirm the temporary URL parameter, the UI mode and an empty transcript/composer. An ordinary chat is never a fallback.
 2. Leave personalization controls alone. From userscript **0.1.2**, personalization is neither changed nor required for sending, as requested by the user after the control failed in Chromium. Temporary Chat may still use account personalization; it only provides a fresh conversation here.
-3. Claim an exclusive queue lease. Select **GPT-6**, set power to **Instant**, verify the selected model and minimum power / Instant announcement. Recheck the visible Instant label before sending. An unavailable model/layout stops the worker.
+3. Claim an exclusive queue lease. Select **GPT-6**, set power to **Instant**, verify the selected model while its list is visible, then minimum power and the visible Instant label. Recheck the visible Instant label before sending. An unavailable model/layout stops the worker.
 4. Fill the exact synthetic prompt. Confirm no previous turns. Obtain a one-use send authorization, then click Send once.
 5. Match the visible user turn to the prompt, allow exactly one assistant turn, wait for no Stop control, a Copy control and 2.5 seconds of stable text. Only then upload the reply under the job ID and lease.
 6. The server validates the entire JSON object (optionally one JSON fence), unique probe ID, success value and exact synthetic sentence. A malformed/mismatched reply fails the job.
@@ -74,7 +74,7 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Twelve DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, and clicking Start with an unchanged URL or only a changed fragment. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Fifteen DOM tests cover successful model selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable model, personalized chats and missing personalization controls, clicking Start with an unchanged URL or only a changed fragment, ignored model selection, unmounted model lists, absent live announcements and an already open model menu. DOM tests are simulated contracts, not browser integration proof.
 
 ## Userscript 0.1.1: Start-button fix
 
@@ -85,3 +85,7 @@ To update an already running setup: restart the local bridge so its embedded ass
 ## Userscript 0.1.2: remove personalization requirement
 
 Per the user's request, remove all personalization menu clicks and pre-send checks. Personalized Temporary Chats and chats without this control may proceed, while a fresh empty Temporary Chat and GPT-6 Instant remain mandatory. Two regression tests verify successful sending with personalization enabled or its control absent, and assert zero clicks on personalization. Update the installed userscript to **0.1.2**; when restarting the bridge, copy its newly rotated local token again.
+
+## Userscript 0.1.3: staged model confirmation
+
+Do not require the model radio row and reasoning-power announcement to coexist in the same menu view. Confirm GPT-6 while the model list is visible (reopen to verify if selection changed), then confirm the active slider at minimum and the visible Instant label. Live status announcements are not required. The observed slider input has `aria-hidden=true` itself; its active container, rather than the input's own ARIA visibility, determines which slider to read. Normalize an already-open menu and close it on failure. Errors identify the failed selection stage. DOM fixtures now unmount the model list and include the real slider's ARIA visibility. Live verification in the user's Chromium is still pending; screenshots alone do not identify exactly which old condition failed.

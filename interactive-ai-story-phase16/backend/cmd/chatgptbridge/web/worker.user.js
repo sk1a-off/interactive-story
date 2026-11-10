@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.2
+// @version      0.1.3
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -58,24 +58,51 @@
     return picker&&/^Instant$/.test(picker.innerText.trim());
   }
   async function selectGPT6Instant(){
-    const picker=await waitFor(()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']),15000);
-    picker.click();
-    const toggle=await waitFor(()=>[...document.querySelectorAll('[data-model-picker-view-toggle]')].find(e=>!e.closest('[inert]')),5000);
-    toggle.click();
-    const model=await waitFor(()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert]')&&e.innerText.trim()==='GPT-6'&&e.getAttribute('aria-disabled')!=='true'),5000);
-    model.click();
-    const power=await waitFor(()=>[...document.querySelectorAll('[data-reasoning-slider="true"]')].find(e=>!e.closest('[inert]')),5000);
-    power.focus();
-    for(let i=0;i<3;i++){
-      power.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
-      power.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
-      await pause(100);
+    const getPicker=()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
+    const visible=selector=>[...document.querySelectorAll(selector)].find(e=>!e.closest('[inert],[aria-hidden="true"]'));
+    const getToggle=()=>visible('[data-model-picker-view-toggle]');
+    const getModel=()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert],[aria-hidden="true"]')&&e.innerText.trim()==='GPT-6'&&e.getAttribute('aria-disabled')!=='true');
+    let stage='открытие меню модели';
+    try{
+      let picker=await waitFor(getPicker,15000);
+      // A previous failure or the user may have left the menu open.
+      if(picker.getAttribute('aria-expanded')!=='true')picker.click();
+      stage='открытие списка моделей';
+      (await waitFor(getToggle,5000)).click();
+      stage='выбор GPT-6';
+      let model=await waitFor(getModel,5000);
+      const alreadySelected=model.getAttribute('aria-checked')==='true';
+      model.click();
+      if(!alreadySelected){
+        // Verify while the model list is visible. Other menu views can unmount it.
+        (await waitFor(getToggle,5000)).click();
+        stage='подтверждение выбранной GPT-6';
+        model=await waitFor(()=>{const e=getModel();return e?.getAttribute('aria-checked')==='true'&&e;},5000);
+        model.click();
+      }
+      stage='установка мощности Instant';
+      const power=await waitFor(()=>visible('[data-reasoning-slider="true"]'),5000);
+      // The real slider input itself is aria-hidden; its active parent is not.
+      const slider=()=>[...document.querySelectorAll('[data-model-picker-power-slider] [role="slider"]')].find(e=>!e.closest('[inert]')&&!e.parentElement.closest('[aria-hidden="true"]'));
+      const minimum=()=>{const e=slider();return e&&e.getAttribute('aria-valuenow')===(e.getAttribute('aria-valuemin')||'0');};
+      power.focus();
+      for(let i=0;i<3&&!minimum();i++){
+        power.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
+        power.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
+        await pause(150);
+      }
+      // Live announcements are optional and may not contain a mode index.
+      // Confirm the rendered mode and minimum slider value instead.
+      await waitFor(()=>minimum()&&getToggle()?.innerText.trim()==='Instant',5000);
+      stage='закрытие меню модели';
+      picker=await waitFor(getPicker,5000);
+      if(picker.getAttribute('aria-expanded')==='true')picker.click();
+      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='false'&&instantLabel(),5000);
+    }catch(e){
+      const picker=getPicker();
+      if(picker?.getAttribute('aria-expanded')==='true')picker.click();
+      throw Error('GPT-6 Instant: '+stage+'. '+(e.message||e));
     }
-    await waitFor(()=>[...document.querySelectorAll('[role="menuitemradio"][aria-checked="true"]')].some(e=>e.innerText.trim()==='GPT-6')&&
-      document.querySelector('[data-model-picker-power-slider] [role="slider"]')?.getAttribute('aria-valuenow')==='0'&&
-      [...document.querySelectorAll('[role="menu"] [role="status"]')].some(e=>/^Instant,?\s/.test(e.textContent.trim())),5000);
-    picker.click();
-    await waitFor(()=>picker.getAttribute('aria-expanded')==='false'&&instantLabel(),5000);
   }
   function editor(){return document.querySelector('[contenteditable="true"][role="textbox"]');}
   function empty(){return temporary()&&location.pathname==='/'&&roles('user').length===0&&roles('assistant').length===0&&editor()&&editor().textContent.trim()==='';}
@@ -116,7 +143,7 @@
         const lease={worker,id:current.id,lease:current.lease};
         sessionStorage.setItem(KEY+'pending',JSON.stringify(lease));
         show('Выбор GPT-6 Instant · '+current.id.slice(0,8));
-        await selectGPT6Instant().catch(()=>{throw Error('Не удалось подтвердить GPT-6 Instant. Проверьте доступность модели и рабочую вкладку.');});
+        await selectGPT6Instant();
         if(!running||!empty())throw Error('Страница изменилась до отправки.');
         const box=editor();box.focus();
         // Use the browser editing command so the React composer receives a native input event.
