@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.0
+// @version      0.1.1
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -27,7 +27,8 @@
   Object.assign(panel.style,{position:'fixed',right:'12px',top:'70px',zIndex:'2147483647',maxWidth:'330px',background:'#142238',color:'#edf3ff',padding:'14px',border:'1px solid #7ea1d2',borderRadius:'12px',font:'13px system-ui'});
   const title=document.createElement('strong');title.textContent='Мост · '+worker.slice(0,8)+' · только тесты';
   const status=document.createElement('p');
-  const button=document.createElement('button');button.textContent='Запустить';
+  const button=document.createElement('button');button.type='button';button.textContent='Запустить';
+  Object.assign(button.style,{display:'inline-block',padding:'7px 12px',marginTop:'8px',background:'#315587',color:'#fff',border:'1px solid #8eb7ed',borderRadius:'7px',cursor:'pointer',pointerEvents:'auto'});
   panel.append(title,status,button);document.documentElement.append(panel);
   const show=text=>{status.textContent=text;};
   GM_registerMenuCommand('Токен локального моста',()=>{
@@ -96,7 +97,14 @@
   button.onclick=()=>{
     if(running){stop('Остановлен. Текущий запрос автоматически не повторяется.');void request('/heartbeat',{worker,status:'stopped'}).catch(()=>{});return;}
     if(!token){show('Задайте токен через меню userscript.');return;}
-    sessionStorage.setItem(KEY+'armed','yes');location.assign(FRESH);
+    sessionStorage.setItem(KEY+'armed','yes');
+    // Assigning the already open URL (or changing only its fragment) does not
+    // reload the page. Start here when it is already a fresh Temporary Chat.
+    if(empty()){void work();return;}
+    const target=new URL(FRESH);
+    if(location.origin===target.origin&&location.pathname===target.pathname&&location.search===target.search){
+      location.reload();
+    }else{location.assign(FRESH);}
   };
   async function work(){
     running=true;button.textContent='Остановить';show('Проверка нового временного чата…');

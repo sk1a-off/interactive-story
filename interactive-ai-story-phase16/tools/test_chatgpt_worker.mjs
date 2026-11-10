@@ -61,7 +61,7 @@ function fixture(options={}){
   const copy=w.document.createElement('button');copy.setAttribute('aria-label','Копировать');
   w.document.querySelector('#transcript').append(user,assistant,copy);
  };
- w.sessionStorage.setItem('story-chatgpt-probe-armed','yes');
+ if(!options.unarmed)w.sessionStorage.setItem('story-chatgpt-probe-armed','yes');
  if(options.pending)w.sessionStorage.setItem('story-chatgpt-probe-pending',JSON.stringify({worker:j.worker,id:j.id,lease:j.lease}));
  if(options.personalized||options.personalizationBlocked)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Персонализированный');
  if(options.notTemporary){w.document.querySelector('header').textContent='Regular chat';w.document.querySelector('button').remove();}
@@ -73,4 +73,28 @@ test('one send and completed reply correlated to current lease',async()=>{
 });
 for(const options of [{lostAuthorization:true},{stopDuringAuthorization:true},{wrongUser:true},{rejectedResult:true},{pending:true},{notTemporary:true},{personalizationBlocked:true},{modelUnavailable:true}])test('safe stop '+JSON.stringify(options),async()=>{
  const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(f.clicks<=((options.wrongUser||options.rejectedResult)?1:0));if(!options.rejectedResult)assert.ok(!f.requests.some(r=>r.path==='/result'));assert.ok(f.requests.filter(r=>r.path==='/send').length<=1);if(options.pending||options.notTemporary||options.personalizationBlocked)assert.ok(!f.requests.some(r=>r.path==='/claim'));}finally{f.close();}
+});
+
+// Regression: a newly opened marked tab is not armed. Clicking Start at the
+// exact fresh-chat URL must run without depending on a navigation event.
+test('Start on the already open fresh-chat URL starts the worker immediately',async()=>{
+ const f=fixture({unarmed:true,personalized:true});
+ try{
+  const start=f.w.document.querySelector('#story-chatgpt-bridge button');
+  assert.equal(start.textContent,'Запустить');assert.equal(f.requests.length,0);
+  start.click();
+  assert.equal(start.textContent,'Остановить');
+  assert.equal(f.w.sessionStorage.getItem('story-chatgpt-probe-armed'),'yes');
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);
+ }finally{f.close();}
+});
+test('Start also works when only the worker fragment was removed',async()=>{
+ const f=fixture({unarmed:true});
+ try{
+  f.w.history.replaceState(null,'','/?temporary-chat=true');
+  f.w.document.querySelector('#story-chatgpt-bridge button').click();
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);
+ }finally{f.close();}
 });

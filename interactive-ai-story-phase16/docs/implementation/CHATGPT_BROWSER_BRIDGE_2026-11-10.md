@@ -74,4 +74,10 @@ node tools/test_chatgpt_worker.mjs
 bash -n start-chatgpt-bridge.sh start-chatgpt-browsers.sh
 ```
 
-Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Nine DOM tests cover successful model/privacy selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable personalization and unavailable model. DOM tests are simulated contracts, not browser integration proof.
+Queue tests cover exclusive concurrent claims, configurable concurrency, wrong leases, repeated send authorization, idempotent result upload, expiry without requeue, mismatched JSON, terminal-state preservation, worker attention and HTTP access/body limits. Eleven DOM tests cover successful model/privacy selection, lost authorization, stopping during authorization, unrelated transcript, rejected result, interrupted page, missing temporary mode, unavailable personalization unavailable model, and clicking Start with an unchanged URL or only a changed fragment. DOM tests are simulated contracts, not browser integration proof.
+
+## Userscript 0.1.1: Start-button fix
+
+The original Start handler assigned the fresh-chat URL even when that exact page was already open. Browsers do not reload for that navigation, so the armed flag changed but the worker did not start. Start now calls the worker directly in an already empty Temporary Chat. Otherwise it opens the fresh page, using an explicit reload when only the fragment differs. The button also has explicit styling independent of the page's button reset rules.
+
+To update an already running setup: restart the local bridge so its embedded assets are rebuilt, reopen its userscript link and approve updating the existing script to **0.1.1**, reload the worker tabs, then configure the new local token (bridge restart rotates it). Starting in the current empty Temporary Chat should immediately change the button to **Остановить**. Browser integration still requires checking this in Chromium; the two new regression tests exercise the actual click handler against DOM fixtures.
