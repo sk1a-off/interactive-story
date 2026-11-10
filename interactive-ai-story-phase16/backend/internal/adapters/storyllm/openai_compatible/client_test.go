@@ -134,6 +134,7 @@ func TestGeminiRotatesAndRemembersNextKeyAfterQuotaError(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	rememberKeyCursor(c.cfg.Provider+"\x00"+c.cfg.Model+"\x00"+strings.TrimRight(c.cfg.BaseURL, "/"), 0, len(c.cfg.APIKeys))
 	for range 2 {
 		if _, err = c.Generate(context.Background(), aiport.StoryRequest{Role: "writer", PromptVersion: "v1", Input: []byte(`{}`)}); err != nil {
 			t.Fatal(err)
@@ -159,6 +160,7 @@ func TestGeminiRotatesAfterEmbeddedQuotaErrorInSuccessfulHTTPResponse(t *testing
 	if err != nil {
 		t.Fatal(err)
 	}
+	rememberKeyCursor(c.cfg.Provider+"\x00"+c.cfg.Model+"\x00"+strings.TrimRight(c.cfg.BaseURL, "/"), 0, len(c.cfg.APIKeys))
 	if _, err = c.Generate(context.Background(), aiport.StoryRequest{Role: "writer", PromptVersion: "v1", Input: []byte(`{}`)}); err != nil {
 		t.Fatal(err)
 	}

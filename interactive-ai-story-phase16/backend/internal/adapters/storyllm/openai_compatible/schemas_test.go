@@ -108,9 +108,13 @@ func TestSchemaFallbackDoesNotHideOtherFailures(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			calls := 0
-			c, _ := New(Config{BaseURL: "http://local.test/v1", Model: "local", JSONSchema: true}, &http.Client{Transport: roundTrip(func(*http.Request) (*http.Response, error) { calls++; return schemaHTTP(tt.status, tt.body), nil })})
+			c, _ := New(Config{BaseURL: "http://local.test/v1", Model: "local", JSONSchema: true, Requests: immediateControl()}, &http.Client{Transport: roundTrip(func(*http.Request) (*http.Response, error) { calls++; return schemaHTTP(tt.status, tt.body), nil })})
 			_, err := c.Generate(context.Background(), ai.StoryRequest{Role: "writer", PromptVersion: "v1"})
-			if err == nil || calls != 1 || strings.Contains(err.Error(), "unsupported") {
+			wantCalls := 1
+			if tt.status == 429 {
+				wantCalls = 1 + maxQuotaRetries
+			}
+			if err == nil || calls != wantCalls || strings.Contains(err.Error(), "unsupported") {
 				t.Fatalf("masked failure or raw body leak: calls=%d err=%v", calls, err)
 			}
 		})

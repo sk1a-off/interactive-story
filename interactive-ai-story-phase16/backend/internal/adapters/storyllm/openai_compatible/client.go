@@ -1,12 +1,10 @@
 package openai_compatible
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,6 +28,8 @@ type Config struct {
 	PromptSet           *promptset.Revision
 	JSONSchema          bool
 	RoleReasoningEffort map[string]string
+	// Requests must be shared by all runtime clients to bound aggregate traffic.
+	Requests *RequestControl
 }
 
 var providerKeyCursor = struct {
@@ -67,6 +67,9 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	}
 	cfg.RoleReasoningEffort = overrides
 	cfg.APIKeys = normalizedKeys(cfg.APIKeys, cfg.APIKey)
+	if cfg.Requests == nil {
+		cfg.Requests = NewRequestControl(3, 1)
+	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 120 * time.Second
 	}
@@ -216,6 +219,7 @@ func validJSONObject(s string) ([]byte, bool) {
 
 func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.StoryResponse, error) {
 	role := strings.TrimSpace(req.Role)
+	ctx = requestContext(ctx, role)
 	contract := strings.TrimSpace(c.prompts[role])
 	if contract == "" {
 		var err error
@@ -378,119 +382,11 @@ func googleReasoningEffort(model string) string {
 }
 
 func (c *Client) doWithCredentialRotation(ctx context.Context, body []byte) ([]byte, error) {
-	keys := c.cfg.APIKeys
-	attempts := len(keys)
-	if attempts == 0 {
-		attempts = 1
-	}
-	ringID := c.cfg.Provider + "\x00" + c.cfg.Model + "\x00" + strings.TrimRight(c.cfg.BaseURL, "/")
-	start := keyCursor(ringID, len(keys))
-	lastStatus := 0
-	for offset := 0; offset < attempts; offset++ {
-		index := 0
-		key := ""
-		if len(keys) > 0 {
-			index = (start + offset) % len(keys)
-			key = keys[index]
-		}
-		hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, chatCompletionsEndpoint(c.cfg.BaseURL), bytes.NewReader(body))
-		if err != nil {
-			return nil, err
-		}
-		hreq.Header.Set("Content-Type", "application/json")
-		if key != "" {
-			hreq.Header.Set("Authorization", "Bearer "+key)
-		}
-		resp, err := c.http.Do(hreq)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %v", aiport.ErrUnavailable, err)
-		}
-		raw, readErr := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-		closeErr := resp.Body.Close()
-		if readErr != nil {
-			return nil, readErr
-		}
-		if closeErr != nil {
-			return nil, closeErr
-		}
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			if embeddedStatus, found := embeddedGoogleErrorStatus(raw); found {
-				lastStatus = embeddedStatus
-				if schemaUnsupported(embeddedStatus, raw) {
-					return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
-				}
-				if !c.shouldRotateCredential(embeddedStatus, raw) {
-					return nil, fmt.Errorf("%w: embedded provider status %d", aiport.ErrUnavailable, embeddedStatus)
-				}
-				rememberKeyCursor(ringID, index+1, len(keys))
-				continue
-			}
-			rememberKeyCursor(ringID, index, len(keys))
-			return raw, nil
-		}
-		lastStatus = resp.StatusCode
-		if schemaUnsupported(resp.StatusCode, raw) {
-			return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
-		}
-		if !c.shouldRotateCredential(resp.StatusCode, raw) {
-			return nil, fmt.Errorf("%w: status %d", aiport.ErrUnavailable, resp.StatusCode)
-		}
-		rememberKeyCursor(ringID, index+1, len(keys))
-	}
-	return nil, fmt.Errorf("%w: all configured Google AI API keys are exhausted or unavailable (last status %d)", aiport.ErrUnavailable, lastStatus)
+	return c.bufferedRequest(ctx, body, false)
 }
 
 func (c *Client) doAntigravityWithCredentialRotation(ctx context.Context, body []byte) ([]byte, error) {
-	keys := c.cfg.APIKeys
-	attempts := len(keys)
-	if attempts == 0 {
-		attempts = 1
-	}
-	ringID := c.cfg.Provider + "\x00" + c.cfg.Model + "\x00" + strings.TrimRight(c.cfg.BaseURL, "/")
-	start := keyCursor(ringID, len(keys))
-	lastStatus := 0
-	for offset := 0; offset < attempts; offset++ {
-		index := 0
-		key := ""
-		if len(keys) > 0 {
-			index = (start + offset) % len(keys)
-			key = keys[index]
-		}
-		hreq, err := http.NewRequestWithContext(ctx, http.MethodPost, interactionsEndpoint(c.cfg.BaseURL), bytes.NewReader(body))
-		if err != nil {
-			return nil, err
-		}
-		hreq.Header.Set("Content-Type", "application/json")
-		hreq.Header.Set("Api-Revision", "2026-05-20")
-		if key != "" {
-			hreq.Header.Set("x-goog-api-key", key)
-		}
-		resp, err := c.http.Do(hreq)
-		if err != nil {
-			return nil, fmt.Errorf("%w: %v", aiport.ErrUnavailable, err)
-		}
-		raw, readErr := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-		closeErr := resp.Body.Close()
-		if readErr != nil {
-			return nil, readErr
-		}
-		if closeErr != nil {
-			return nil, closeErr
-		}
-		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			rememberKeyCursor(ringID, index, len(keys))
-			return raw, nil
-		}
-		lastStatus = resp.StatusCode
-		if schemaUnsupported(resp.StatusCode, raw) {
-			return nil, fmt.Errorf("%w: %w", aiport.ErrUnavailable, errSchemaUnsupported)
-		}
-		if !c.shouldRotateCredential(resp.StatusCode, raw) {
-			return nil, fmt.Errorf("%w: status %d", aiport.ErrUnavailable, resp.StatusCode)
-		}
-		rememberKeyCursor(ringID, index+1, len(keys))
-	}
-	return nil, fmt.Errorf("%w: all configured Google AI API keys are exhausted or unavailable (last status %d)", aiport.ErrUnavailable, lastStatus)
+	return c.bufferedRequest(ctx, body, true)
 }
 
 func embeddedGoogleErrorStatus(raw []byte) (int, bool) {

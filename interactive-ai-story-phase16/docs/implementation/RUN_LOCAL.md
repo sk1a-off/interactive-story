@@ -259,6 +259,14 @@ If Perchance asks for Turnstile/CAPTCHA verification, complete it manually. The 
 
 ## 10. Useful diagnostics
 
+The server shares a request gate across all AI/prompt revisions, safe-hybrid
+models, setup, Director and illustration-prompt clients. The startup log reports
+`hosted_provider_parallelism=3` and `local_provider_parallelism=1`. A waiting
+player request precedes a waiting illustration prompt; active calls are allowed
+to finish. The Perchance browser image worker is separate from this Story LLM
+gate. HTTP 429 introduces cancellable shared backoff with at most three quota
+retries per role call. See [request-limit verification](REQUEST_LIMITS_2026-11-10.md).
+
 Backend:
 
 ```bash

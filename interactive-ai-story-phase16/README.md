@@ -42,7 +42,9 @@ Open **AI Settings** from the start screen, select **Google AI**, then choose Ge
 
 Enable **Safe hybrid** to route only action interpretation, pacing, and choices through Gemini 3.5 Flash-Lite. Director, writer, world, journal, quests, setup, repairs, and image prompts remain on Antigravity. If a fast-role request fails, it is retried through Antigravity automatically. The setting is stored in the immutable AI revision; previously queued jobs keep their original revision.
 
-On a `429` quota/rate-limit response the backend advances to the next key and remembers that cursor for later requests. It also handles the successful-HTTP error envelope sometimes returned by Google's compatibility endpoint. Rejected credentials are skipped, while ordinary model, JSON, and server errors do not rotate credentials.
+On a `429` quota/rate-limit response the backend applies exponential jittered backoff, rotates Google credentials, and remembers the cursor. At most three quota retries are allowed per role call, including protocol fallbacks. It also handles the successful-HTTP error envelope sometimes returned by Google's compatibility endpoint. Rejected credentials are skipped, while ordinary model, JSON, and server errors do not rotate credentials.
+
+Runtime clients share a request gate per provider/origin: at most three Google calls or one local OpenAI-compatible call, including open stream bodies. Waiting player requests take priority over illustration prompts, and quota cooldown waits consume no request slot. See [`docs/implementation/REQUEST_LIMITS_2026-11-10.md`](docs/implementation/REQUEST_LIMITS_2026-11-10.md) for retry bounds, verification, and scope.
 
 Gemini quotas are generally enforced per Google Cloud project rather than per key. Multiple keys only provide additional quota when they belong to projects or accounts with independent limits; keys from one project normally share the same RPM, TPM, and RPD budget.
 

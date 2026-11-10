@@ -130,6 +130,7 @@ func main() {
 		}
 		aiSettingsService.Memory = memoryRuntime
 		promptSettingsService := appprompt.Service{Repo: promptRepo}
+		storyRequests := storyllm.NewRequestControl(3, 1)
 		storyClient := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (aiport.StoryLLM, error) {
 			var public domainconfig.PublicSettings
 			_ = json.Unmarshal(rev.Settings, &public)
@@ -142,17 +143,17 @@ func main() {
 				return nil, errors.New("Google AI API key is not configured for the active AI revision")
 			}
 			if public.StoryLLMSafeHybrid {
-				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 1200 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
+				fast, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.Gemini35FlashLiteModel, Profile: "safe-hybrid-fast", Timeout: 1200 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema, Requests: storyRequests}, nil)
 				if err != nil {
 					return nil, err
 				}
-				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 12 * time.Minute, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
+				quality, err := storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: domainconfig.ProviderGoogleGemini, Model: domainconfig.AntigravityModel, Profile: "safe-hybrid-quality", Timeout: 12 * time.Minute, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema, Requests: storyRequests}, nil)
 				if err != nil {
 					return nil, err
 				}
 				return storyrouter.NewSafeHybridWithFastState(fast, quality, cfg.GenerationFastState)
 			}
-			return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: 120 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema}, nil)
+			return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: 120 * time.Second, PromptSet: promptRev, JSONSchema: public.StoryLLMJSONSchema, Requests: storyRequests}, nil)
 		}
 		storyFactory := func(ctx context.Context) (aiport.StoryLLM, error) {
 			rev, err := configRepo.Active(ctx)
@@ -246,7 +247,7 @@ func main() {
 		}
 		promptWorker := appimagegen.PromptJobWorker{Repo: imageGenerationRepo, Images: imageService, Owner: "image-prompt-worker-1", LocalOwnerID: ownerID, LeaseTTL: 10 * time.Minute, ExecutionTimeout: 2 * time.Minute, Now: time.Now, Logger: logger}
 		startWorker = func(ctx context.Context) {
-			logger.Info("generation workers starting", "story_workers", len(workers), "local_provider_parallelism", 1, "image_prompt_workers", 1)
+			logger.Info("generation workers starting", "story_workers", len(workers), "local_provider_parallelism", 1, "hosted_provider_parallelism", 3, "image_prompt_workers", 1)
 			startRestarting := func(name string, run func(context.Context) error) {
 				go func() {
 					for ctx.Err() == nil {
