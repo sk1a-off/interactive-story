@@ -15,7 +15,14 @@ function fixture(options={}){
  w.Element.prototype.getClientRects=()=>[{}];
  w.PointerEvent=w.MouseEvent;
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
- const j={id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
+ const j={recoverSafeFailure:!!options.recoverSafeFailure,id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
+ if(options.readable){
+  j.messageFormat='readable-json-v3';j.messageMarker='Story request job-id';
+  j.messageContent='SYSTEM INSTRUCTIONS\nUse `goal` and **bold**.\n\nUSER INPUT\n{"action":"Осмотреть дверь", "text":"Первая строка\\nВторая строка"}';
+  if(options.truncatedMessage)j.messageContent+='\n'+'Длинный текст '.repeat(1500);
+  j.messageContent=j.messageContent.trim();
+  j.prompt=j.messageMarker+'\nExecute the block.\n```text\n'+j.messageContent+'\n```';
+ }
  let expansionClicks=0;
  const box=w.document.querySelector('[contenteditable]');
  w.document.querySelector('button[aria-haspopup="menu"]').onclick=()=>{personalizationClicks++;};
@@ -28,6 +35,7 @@ function fixture(options={}){
   const visible=w.document.createElement('span');visible.setAttribute('aria-hidden','false');visible.textContent=text;
   picker.replaceChildren(hidden,hiddenOld,visible);
  }
+ let openingAttempts=0;
  let selectedModel=options.modelAlreadySelected?'GPT-6':'GPT-5.6 Sol';
  let effort=options.instantInitially?0:1;
  function renderSimple(menu){
@@ -53,6 +61,7 @@ function fixture(options={}){
   const menu=w.document.createElement('div');menu.setAttribute('role','menu');renderSimple(menu);w.document.body.append(menu);
  };
  if(options.triggerPointerOnly){picker.onclick=()=>{};picker.addEventListener('pointerdown',togglePicker);}else{picker.onclick=togglePicker;}
+ picker.addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&!w.document.querySelector('[role="menu"]')&&++openingAttempts>(options.ignoredOpens||0))togglePicker();});
  const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');if(options.closedWrongMode)updatePicker('Medium');};
  w.document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!options.ignoreEscape)closeMenu();});
  w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
@@ -65,6 +74,7 @@ function fixture(options={}){
   if(path==='/send'&&options.lostAuthorization){queueMicrotask(()=>r.ontimeout());return;}
   if(path==='/send'&&options.stopDuringAuthorization)w.document.querySelector('#story-chatgpt-bridge button').click();
   let value={};if(path==='/claim')value=j;
+  if(path==='/fail')value={state:options.failedState||'uncertain'};
   if(path==='/result')value={state:options.rejectedResult?'failed':'complete'};
   queueMicrotask(()=>r.onload({status:200,responseText:JSON.stringify(value)}));
  };
@@ -73,11 +83,23 @@ function fixture(options={}){
   const user=w.document.createElement('div');const heading=w.document.createElement('h4');heading.dataset.conversationRole='user';
   const bubble=w.document.createElement('div');bubble.dataset.userMessageBubble='true';const content=w.document.createElement('div');content.dataset.searchResultTarget='';content.textContent=options.wrongUser?'unrelated prompt':options.truncatedMessage?j.prompt.slice(0,10240):j.prompt;bubble.append(content);if(options.expandableMessage||options.truncatedMessage){const more=w.document.createElement('button');more.textContent='Показать ещё';more.onclick=()=>{expansionClicks++;if(options.truncatedMessage&&!options.expansionBlocked){content.textContent=options.splitExpanded?j.prompt.slice(0,10240):j.prompt;if(options.splitExpanded){const rest=w.document.createElement('div');rest.dataset.searchResultTarget='';rest.textContent=j.prompt.slice(10240);bubble.insertBefore(rest,more);}}more.textContent='Показать меньше';};bubble.append(more);}user.append(heading,bubble);
   const assistant=w.document.createElement('div');const h=w.document.createElement('h4');h.dataset.conversationRole='assistant';
-  const answer=w.document.createElement('div');answer.dataset.markdownTextStyle='assistant-message';answer.textContent='{"probe_id":"job-id","ok":true}';assistant.append(h,answer);
+  const answer=w.document.createElement('div');answer.dataset.markdownTextStyle='assistant-message';answer.textContent=options.emptyAnswer?'':'{"probe_id":"job-id","ok":true}';assistant.append(h,answer);if(options.externalAnswer)assistant.after(answer);
   const copy=w.document.createElement('button');copy.setAttribute('aria-label','Копировать');
   w.document.querySelector('#transcript').append(user,assistant,copy);
+  if(options.externalAnswer)w.document.querySelector('#transcript').append(answer);
+  if(options.streamingEmpty){const stop=w.document.createElement('button');stop.setAttribute('aria-label','Stop generating');assistant.append(stop);}
+  if(options.userCopyOnly){user.append(copy);}
+  if(options.readable&&!options.rawEnvelope){
+   content.textContent=(options.wrongMarker?'Story request other-job':j.messageMarker)+'\nExecute the block.\n';
+   const code=w.document.createElement('code');content.append(code);
+   code.textContent=options.wrongUser?'Осмотреть другую дверь':options.truncatedMessage?j.messageContent.slice(0,10200):j.messageContent;
+   const more=bubble.querySelector('button');
+   if(more)more.onclick=()=>{expansionClicks++;if(!options.expansionBlocked){code.textContent=j.messageContent;more.textContent='Свернуть';}};
+  }
+
  };
  if(!options.unarmed)w.sessionStorage.setItem('story-chatgpt-probe-armed','yes');
+ if(options.previousSafeFailures)w.sessionStorage.setItem('story-chatgpt-probe-safeFailures',String(options.previousSafeFailures));
  if(options.pending)w.sessionStorage.setItem('story-chatgpt-probe-pending',JSON.stringify({worker:j.worker,id:j.id,lease:j.lease}));
  if(options.personalized)w.document.querySelector('button[aria-haspopup="menu"]').setAttribute('aria-label','Персонализированный');
  if(options.noPersonalizationControl)w.document.querySelector('button[aria-haspopup="menu"]').remove();
@@ -165,7 +187,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.1.8');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.2.1');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -207,4 +229,32 @@ test('an unexpandable matching prefix never authorizes a result',async()=>{
 
 test('expanded user-message segments are combined without accepting only the first chunk',async()=>{
  const f=fixture({truncatedMessage:true,splitExpanded:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.expansionClicks,1);}finally{f.close();}
+});
+
+test('delayed menu handlers are retried before sending, with one model request',async()=>{
+ const f=fixture({ignoredOpens:2});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
+});
+test('benchmark safe pre-send failure moves to a fresh chat without retrying the job',async()=>{
+ const f=fixture({recoverSafeFailure:true,modelUnavailable:true,failedState:'failed'});
+ try{await until(()=>f.w.document.querySelector('#story-chatgpt-bridge p').textContent.startsWith('Задание отклонено'));assert.equal(f.clicks,0);assert.equal(f.requests.filter(r=>r.path==='/claim').length,1);assert.equal(f.w.sessionStorage.getItem('story-chatgpt-probe-armed'),'yes');assert.equal(f.w.sessionStorage.getItem('story-chatgpt-probe-pending'),null);}finally{f.close();}
+});
+for(const options of [{recoverSafeFailure:true,wrongUser:true,failedState:'uncertain'},{recoverSafeFailure:true,modelUnavailable:true,failedState:'failed',previousSafeFailures:2}])test('uncertainty and repeated UI failures still pause '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.equal(f.requests.filter(r=>r.path==='/claim').length,1);assert.ok(!f.requests.some(r=>r.path==='/result'));}finally{f.close();}
+});
+
+for(const options of [{readable:true},{readable:true,rawEnvelope:true},{readable:true,truncatedMessage:true},{externalAnswer:true}])test('readable Markdown preserves exact task and supports scoped fallback '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.ok(f.requests.find(r=>r.path==='/result').body.reply.includes('probe_id'));}finally{f.close();}
+});
+for(const options of [{readable:true,wrongUser:true},{readable:true,wrongMarker:true}])test('readable task correlation rejects different content or marker '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.equal(f.clicks,1);assert.ok(!f.requests.some(r=>r.path==='/result'));}finally{f.close();}
+});
+test('completed empty assistant UI terminates with bounded diagnostics and one send',async()=>{
+ const f=fixture({emptyAnswer:true,rejectedResult:true});try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  const result=f.requests.find(r=>r.path==='/result').body;assert.equal(result.reply,'');assert.equal(f.clicks,1);
+  const d=JSON.parse(result.error);assert.equal(d.stage,'completed-empty-ui');assert.equal(d.assistant.textLength,0);assert.equal(d.assistant.copyVisible,true);assert.ok(!result.error.includes('synthetic prompt'));
+ }finally{f.close();}
+});
+for(const options of [{emptyAnswer:true,streamingEmpty:true},{emptyAnswer:true,userCopyOnly:true}])test('empty streaming UI or user-only copy does not claim completed output '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.ok(!f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);}finally{f.close();}
 });

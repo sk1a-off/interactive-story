@@ -1,0 +1,63 @@
+{
+  "Spec": {
+    "ID": "turn_planner_browser-r2",
+    "CaseID": "turn_planner_browser",
+    "FirstArm": "chatgpt",
+    "AArm": "chatgpt",
+    "Repeat": 2
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 24556,
+      "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+      "Output": {
+        "intent": "Осторожно осмотреть запертую дверь архива и её петли, не пытаясь вскрыть замок.",
+        "immediateGoal": "Осторожно осмотреть петли и конструкцию запертой двери архива, не пытаясь взломать замок.",
+        "transition": "continue_scene",
+        "riskFlags": []
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 5372,
+      "OutputTokens": 75,
+      "StartedAt": "2026-11-10T13:15:26.837620096Z",
+      "FinishedAt": "2026-11-10T13:15:51.394215508Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "provider_or_transport_error",
+      "OK": false,
+      "ElapsedMS": 131800,
+      "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        502
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T13:15:26.837549756Z",
+      "FinishedAt": "2026-11-10T13:17:38.638019243Z"
+    }
+  }
+}

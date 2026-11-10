@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "Arm": "chatgpt",
+    "Model": "gpt-6-instant",
+    "ErrorCode": "deadline_or_cancelled",
+    "OK": false,
+    "ElapsedMS": 60440,
+    "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": null,
+    "InputTokens": 0,
+    "OutputTokens": 0,
+    "StartedAt": "2026-11-10T13:33:21.875788302Z",
+    "FinishedAt": "2026-11-10T13:34:22.315829292Z"
+  },
+  "spec": {
+    "ID": "turn_planner_browser-r2-readable-block-v2",
+    "CaseID": "turn_planner_browser",
+    "Format": "readable-block-v2",
+    "Repeat": 2
+  }
+}

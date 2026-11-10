@@ -171,6 +171,7 @@ type report struct {
 }
 
 func main() {
+	var paired pairedOptions
 	turnOptions := registerTurnBenchmarkFlags(flag.CommandLine)
 	var endpoint, model, output, reasoning, onlyCase, secretStorePath, secretName, scheduleInput string
 	var compareBefore, compareAfter string
@@ -200,7 +201,37 @@ func main() {
 	flag.BoolVar(&browserBench, "browser-bridge-bench", false, "frozen synthetic browser role and large-context suite; no Canon writes")
 	flag.StringVar(&browserPrompts, "browser-prompt-snapshot", "", "read-only active prompt snapshot for browser suite")
 	flag.StringVar(&browserRecheck, "browser-recheck-report", "", "offline recheck of saved browser outputs with production gates")
+	flag.BoolVar(&paired.FormatProbe, "paired-format-probe", false, "controlled legacy/readable browser input experiment")
+	flag.BoolVar(&paired.Smoke, "paired-smoke", false, "read-only Antigravity/browser readiness check")
+	flag.BoolVar(&paired.Resume, "paired-resume", false, "resume unattempted paired jobs without retrying uncertain requests")
+	flag.BoolVar(&paired.Enabled, "paired-compare", false, "frozen randomized paired comparison")
+	flag.StringVar(&paired.DSN, "paired-config-database-url", "", "read-only config database")
+	flag.StringVar(&paired.Secrets, "paired-secret-store", "../data/secrets/provider-keys.json", "existing credentials, never reported")
+	flag.Int64Var(&paired.Seed, "paired-seed", 20261110, "frozen schedule seed")
 	flag.Parse()
+	if paired.FormatProbe {
+		paired.Output = output
+		if err := runPairedFormatProbe(paired); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if paired.Enabled {
+		paired.Output = output
+		if err := runPairedComparison(paired); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if paired.Smoke {
+		if err := runPairedSmoke(paired); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
 	if browserRecheck != "" {
 		if err := recheckBrowserReport(browserRecheck, output); err != nil {
 			fmt.Fprintln(os.Stderr, err)

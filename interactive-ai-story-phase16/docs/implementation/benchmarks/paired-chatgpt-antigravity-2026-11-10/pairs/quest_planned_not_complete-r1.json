@@ -1,0 +1,53 @@
+{
+  "Spec": {
+    "ID": "quest_planned_not_complete-r1",
+    "CaseID": "quest_planned_not_complete",
+    "FirstArm": "antigravity",
+    "AArm": "antigravity",
+    "Repeat": 1
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "deadline_or_cancelled",
+      "OK": false,
+      "ElapsedMS": 4638,
+      "InputSHA256": "c4f79c14421225ddd89bcb842c25c27842fafc369c23c957e88dfe08d189c8d2",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": null,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T13:19:18.203785431Z",
+      "FinishedAt": "2026-11-10T13:19:22.842660429Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "deadline_or_cancelled",
+      "OK": false,
+      "ElapsedMS": 4639,
+      "InputSHA256": "c4f79c14421225ddd89bcb842c25c27842fafc369c23c957e88dfe08d189c8d2",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": null,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T13:19:18.203639101Z",
+      "FinishedAt": "2026-11-10T13:19:22.842681969Z"
+    }
+  }
+}

@@ -90,6 +90,36 @@ func renderSafeJSON(raw []byte) (string, error) {
 	return out.String(), nil
 }
 
+// A single physical line avoids contenteditable's newline rewriting. An inline
+// code span preserves every JSON punctuation character in the rendered bubble.
+// Valid JSON user inputs remain objects rather than JSON inside quoted strings.
+func readableMessage(in completionRequest, id string) (prompt, marker, content string) {
+	messages := make([]map[string]any, 0, len(in.Messages))
+	for _, m := range in.Messages {
+		var value any = m.Content
+		if m.Role == "user" && json.Valid([]byte(m.Content)) {
+			value = json.RawMessage(m.Content)
+		}
+		messages = append(messages, map[string]any{"role": m.Role, "content": value})
+	}
+	raw, _ := json.Marshal(map[string]any{"messages": messages, "response_format": in.ResponseFormat})
+	content = string(raw)
+	longest, run := 0, 0
+	for _, c := range content {
+		if c == '`' {
+			run++
+			if run > longest {
+				longest = run
+			}
+		} else {
+			run = 0
+		}
+	}
+	fence := strings.Repeat("`", max(1, longest+1))
+	marker = "Story request " + id
+	prompt = marker + " Execute this isolated story-generation task. Follow the system instructions and user inputs in MESSAGES_JSON. Return exactly one JSON object, without Markdown or explanations. Do not browse or use tools. MESSAGES_JSON= " + fence + " " + content + " " + fence
+	return
+}
 func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	var in completionRequest
 	if !decode(w, r, &in) {
@@ -117,7 +147,13 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid transport envelope", 400)
 		return
 	}
+	id := secret()
 	prompt := "Execute this isolated story-generation test. Decode MESSAGES_JSON below, follow its system messages as instructions and its user messages as input data, in order. Return exactly one JSON object, without Markdown or explanations. Do not browse or use tools. MESSAGES_JSON=" + encoded
+	messageFormat, marker, content := "legacy-json", "", ""
+	if r.Header.Get("X-Story-Input-Format") != "legacy-json" {
+		prompt, marker, content = readableMessage(in, id)
+		messageFormat = "readable-json-v3"
+	}
 	if len(prompt) > 48<<10 {
 		http.Error(w, "prompt exceeds 48 KiB", 413)
 		return
@@ -144,7 +180,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	j := &job{ID: secret(), Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(4 * time.Minute)}
+	j := &job{MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(4 * time.Minute)}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)

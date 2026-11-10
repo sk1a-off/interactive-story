@@ -1,0 +1,29 @@
+{
+  "outcome": {
+    "Arm": "chatgpt",
+    "Model": "gpt-6-instant",
+    "ErrorCode": "deadline_or_cancelled",
+    "OK": false,
+    "ElapsedMS": 67341,
+    "InputSHA256": "5ae312f7563a778808ead36546a7a16fa3cb3d3471a8a9ccda3c5ef51f6b54c4",
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": null,
+    "InputTokens": 0,
+    "OutputTokens": 0,
+    "StartedAt": "2026-11-10T13:33:14.973895251Z",
+    "FinishedAt": "2026-11-10T13:34:22.315830842Z"
+  },
+  "spec": {
+    "ID": "writer_detective-r2-readable-block-v2",
+    "CaseID": "writer_detective",
+    "Format": "readable-block-v2",
+    "Repeat": 2
+  }
+}

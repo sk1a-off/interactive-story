@@ -1,0 +1,21 @@
+{
+  "Arm": "chatgpt",
+  "Model": "gpt-6-instant",
+  "ErrorCode": "deadline_or_cancelled",
+  "OK": false,
+  "ElapsedMS": 1048,
+  "InputSHA256": "205fdf51614d2bad78f1d88f6d6039c89e92bbbc3b82c01578b1487a3c88ef7e",
+  "Checks": {
+    "schemaScore": 0,
+    "instructionScore": 0,
+    "languageScore": 0,
+    "continuityScore": 0
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": null,
+  "InputTokens": 0,
+  "OutputTokens": 0,
+  "StartedAt": "2026-11-10T13:19:21.794161259Z",
+  "FinishedAt": "2026-11-10T13:19:22.842682789Z"
+}

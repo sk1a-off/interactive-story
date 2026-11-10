@@ -1,0 +1,5 @@
+{
+  "status": "interrupted",
+  "time": "2026-11-10T13:34:22.317852607Z",
+  "reason": "Multiline input insertion rejected before send; replaced by single-line readable-json-v3; do not combine with later runs"
+}

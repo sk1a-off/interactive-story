@@ -1,0 +1,53 @@
+{
+  "Spec": {
+    "ID": "world_browser_negative-r1",
+    "CaseID": "world_browser_negative",
+    "FirstArm": "antigravity",
+    "AArm": "antigravity",
+    "Repeat": 1
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "",
+      "ErrorCode": "not_run_cancelled",
+      "OK": false,
+      "ElapsedMS": 0,
+      "InputSHA256": "",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 0,
+      "HTTPGets": 0,
+      "HTTPStatuses": null,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "",
+      "ErrorCode": "not_run_cancelled",
+      "OK": false,
+      "ElapsedMS": 0,
+      "InputSHA256": "",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 0,
+      "HTTPGets": 0,
+      "HTTPStatuses": null,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "0001-01-01T00:00:00Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  }
+}

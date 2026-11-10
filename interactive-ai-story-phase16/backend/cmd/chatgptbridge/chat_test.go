@@ -132,3 +132,61 @@ func TestRenderedEnvelopePreservesJSONWithoutMarkdown(t *testing.T) {
 		t.Fatal("rendered Markdown syntax leaked", safe)
 	}
 }
+
+func TestReadableMessagePreservesLiteralTaskAndFence(t *testing.T) {
+	var in completionRequest
+	if err := json.Unmarshal([]byte(`{"model":"gpt-6-instant","messages":[{"role":"system","content":"Use `+"`goal` and ``` fenced examples."+`"},{"role":"user","content":"{\"action\":\"Осмотреть дверь\",\"nested\":{\"ok\":true}}"}]}`), &in); err != nil {
+		t.Fatal(err)
+	}
+	prompt, marker, body := readableMessage(in, "test-id")
+	if marker != "Story request test-id" || !strings.Contains(prompt, "```` "+body+" ````") || !strings.Contains(body, `"action":"Осмотреть дверь"`) || strings.Contains(prompt, `\u007b`) || strings.Contains(prompt, "\n") {
+		t.Fatal("unreadable or altered task", prompt)
+	}
+	var decoded struct {
+		Messages []struct {
+			Role    string
+			Content json.RawMessage
+		}
+	}
+	if json.Unmarshal([]byte(body), &decoded) != nil || len(decoded.Messages) != 2 {
+		t.Fatal("invalid envelope")
+	}
+	var system string
+	if json.Unmarshal(decoded.Messages[0].Content, &system) != nil || system != in.Messages[0].Content {
+		t.Fatal("system content changed")
+	}
+	var user map[string]any
+	if json.Unmarshal(decoded.Messages[1].Content, &user) != nil || user["action"] != "Осмотреть дверь" {
+		t.Fatal("user object double encoded")
+	}
+}
+
+func TestEmptyCompletedResultStoresDiagnostic(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	call(b, "/probes", map[string]int{"count": 1})
+	j := claim(t, b, "worker-one")
+	body := lease(j)
+	call(b, "/send", body)
+	body["reply"] = ""
+	body["error"] = `{"version":"0.2.1","stage":"completed-empty-ui","message":"UI completed without extractable text","assistant":{"assistantCount":1,"textLength":0,"copyVisible":true}}`
+	w := call(b, "/result", body)
+	if w.Code != 200 || b.jobs[0].State != "failed" || b.jobs[0].Diagnostic == nil || b.jobs[0].Diagnostic.Assistant == nil || !b.jobs[0].Diagnostic.Assistant.CopyVisible {
+		t.Fatal(w.Body, b.jobs[0])
+	}
+	if b.jobs[0].Diagnostic.Stage != "completed-empty-ui" {
+		t.Fatal("lost failure diagnostic")
+	}
+}
+
+func TestReadableJobsRequireCompatibleWorker(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	b.jobs = append(b.jobs, &job{ID: secret(), MessageFormat: "readable-json-v3", State: "queued", Deadline: b.now().Add(time.Minute)})
+	for _, v := range []string{"", "0.1.9", "0.2.0"} {
+		if w := call(b, "/claim", map[string]string{"worker": "old-worker", "version": v}); w.Code != 204 {
+			t.Fatal("incompatible worker leased readable job", v, w.Code)
+		}
+	}
+	if j := claim(t, b, "new-worker"); j.MessageFormat != "readable-json-v3" {
+		t.Fatal(j)
+	}
+}

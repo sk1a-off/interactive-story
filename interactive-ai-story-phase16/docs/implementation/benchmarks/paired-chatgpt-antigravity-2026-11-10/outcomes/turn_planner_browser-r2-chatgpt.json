@@ -1,0 +1,23 @@
+{
+  "Arm": "chatgpt",
+  "Model": "gpt-6-instant",
+  "ErrorCode": "provider_or_transport_error",
+  "OK": false,
+  "ElapsedMS": 131800,
+  "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+  "Checks": {
+    "schemaScore": 0,
+    "instructionScore": 0,
+    "languageScore": 0,
+    "continuityScore": 0
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    502
+  ],
+  "InputTokens": 0,
+  "OutputTokens": 0,
+  "StartedAt": "2026-11-10T13:15:26.837549756Z",
+  "FinishedAt": "2026-11-10T13:17:38.638019243Z"
+}

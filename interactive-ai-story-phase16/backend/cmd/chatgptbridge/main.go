@@ -22,31 +22,47 @@ import (
 //go:embed web/*
 var assets embed.FS
 
+type assistantDiagnostic struct {
+	AssistantCount int  `json:"assistantCount"`
+	ScopedRoots    int  `json:"scopedRoots"`
+	GlobalRoots    int  `json:"globalRoots"`
+	TextLength     int  `json:"textLength"`
+	CodeBlocks     int  `json:"codeBlocks"`
+	StopVisible    bool `json:"stopVisible"`
+	CopyVisible    bool `json:"copyVisible"`
+}
 type workerDiagnostic struct {
-	Version        string `json:"version"`
-	Stage          string `json:"stage"`
-	Message        string `json:"message"`
-	ExpectedLength *int   `json:"expectedLength,omitempty"`
-	ActualLength   *int   `json:"actualLength,omitempty"`
+	Assistant      *assistantDiagnostic `json:"assistant,omitempty"`
+	Version        string               `json:"version"`
+	Stage          string               `json:"stage"`
+	Message        string               `json:"message"`
+	ExpectedLength *int                 `json:"expectedLength,omitempty"`
+	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
-	Diagnostic *workerDiagnostic `json:"diagnostic,omitempty"`
-	Kind       string            `json:"kind,omitempty"`
-	ID         string            `json:"id"`
-	Prompt     string            `json:"prompt"`
-	State      string            `json:"state"`
-	Worker     string            `json:"worker,omitempty"`
-	Lease      string            `json:"lease,omitempty"`
-	Created    time.Time         `json:"created"`
-	Deadline   time.Time         `json:"deadline"`
-	Sent       *time.Time        `json:"sent,omitempty"`
-	Finished   *time.Time        `json:"finished,omitempty"`
-	Reply      string            `json:"reply,omitempty"`
-	Error      string            `json:"error,omitempty"`
+	MessageFormat      string            `json:"messageFormat,omitempty"`
+	MessageMarker      string            `json:"messageMarker,omitempty"`
+	MessageContent     string            `json:"messageContent,omitempty"`
+	RecoverSafeFailure bool              `json:"recoverSafeFailure,omitempty"`
+	WorkerVersion      string            `json:"workerVersion,omitempty"`
+	Diagnostic         *workerDiagnostic `json:"diagnostic,omitempty"`
+	Kind               string            `json:"kind,omitempty"`
+	ID                 string            `json:"id"`
+	Prompt             string            `json:"prompt"`
+	State              string            `json:"state"`
+	Worker             string            `json:"worker,omitempty"`
+	Lease              string            `json:"lease,omitempty"`
+	Created            time.Time         `json:"created"`
+	Deadline           time.Time         `json:"deadline"`
+	Sent               *time.Time        `json:"sent,omitempty"`
+	Finished           *time.Time        `json:"finished,omitempty"`
+	Reply              string            `json:"reply,omitempty"`
+	Error              string            `json:"error,omitempty"`
 }
 type workerState struct {
-	Seen   time.Time `json:"seen"`
-	Status string    `json:"status"`
+	Version string    `json:"version,omitempty"`
+	Seen    time.Time `json:"seen"`
+	Status  string    `json:"status"`
 }
 type bridge struct {
 	mu          sync.Mutex
@@ -214,12 +230,13 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Worker string `json:"worker"`
-		ID     string `json:"id"`
-		Lease  string `json:"lease"`
-		Reply  string `json:"reply"`
-		Error  string `json:"error"`
-		Status string `json:"status"`
+		Version string `json:"version,omitempty"`
+		Worker  string `json:"worker"`
+		ID      string `json:"id"`
+		Lease   string `json:"lease"`
+		Reply   string `json:"reply"`
+		Error   string `json:"error"`
+		Status  string `json:"status"`
 	}
 	if !decode(w, r, &in) {
 		return
@@ -242,7 +259,15 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	b.workers[in.Worker] = workerState{Seen: b.now(), Status: status}
+	version := in.Version
+	if version == "" {
+		version = b.workers[in.Worker].Version
+	}
+	if len(version) > 20 {
+		http.Error(w, "invalid worker version", 400)
+		return
+	}
+	b.workers[in.Worker] = workerState{Seen: b.now(), Status: status, Version: version}
 	if r.URL.Path == "/heartbeat" {
 		writeJSON(w, map[string]bool{"ok": true})
 		return
@@ -278,8 +303,12 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, j := range b.jobs {
 			if j.State == "queued" {
+				if j.MessageFormat == "readable-json-v3" && version != "0.2.1" {
+					continue
+				}
 				j.State = "leased"
 				j.Worker = in.Worker
+				j.WorkerVersion = version
 				j.Lease = secret()
 				writeJSON(w, j)
 				return
@@ -325,6 +354,12 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if j.Kind == "chat" {
 			_, valid = jsonReply(in.Reply)
 			j.Reply = in.Reply
+		}
+		if len(in.Error) <= 2048 {
+			var diagnostic workerDiagnostic
+			if json.Unmarshal([]byte(in.Error), &diagnostic) == nil && len(diagnostic.Version) <= 20 && len(diagnostic.Stage) <= 100 && len(diagnostic.Message) <= 300 {
+				j.Diagnostic = &diagnostic
+			}
 		}
 		if !valid {
 			j.State = "failed"

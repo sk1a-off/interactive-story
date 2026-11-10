@@ -1,0 +1,92 @@
+{
+  "scope": "Offline transport-size comparison on saved synthetic requests; not token counts or runtime evidence",
+  "sampleCount": 17,
+  "medianSizeReductionPercent": 21.103761885076477,
+  "rows": [
+    {
+      "job": "9404c419917b19df1bd6e8321f0eb5a5da319e6f6707deeb",
+      "oldUTF8Bytes": 4838,
+      "newUTF8Bytes": 3817
+    },
+    {
+      "job": "98c7bf8de0366e39f269be39d85e887bf279a92655ecdd9c",
+      "oldUTF8Bytes": 7298,
+      "newUTF8Bytes": 5410
+    },
+    {
+      "job": "a6983d710a264389e7a201dafc373f881a20fa21e2b20501",
+      "oldUTF8Bytes": 10485,
+      "newUTF8Bytes": 8509
+    },
+    {
+      "job": "203b5a9035b559b94a2ae1c4d7bfdc372297e2cb680e21ca",
+      "oldUTF8Bytes": 10485,
+      "newUTF8Bytes": 8509
+    },
+    {
+      "job": "d7f395490f5dad233ec75720b7c93f6ab144d4b7d118b535",
+      "oldUTF8Bytes": 10387,
+      "newUTF8Bytes": 8416
+    },
+    {
+      "job": "a6bdff55945c9b01c8a4e8f238c2fd325bb0e3c2b6be3233",
+      "oldUTF8Bytes": 6005,
+      "newUTF8Bytes": 4433
+    },
+    {
+      "job": "7f09140c642b4d49dce68b03ea32224373ade95daf67b27f",
+      "oldUTF8Bytes": 33295,
+      "newUTF8Bytes": 29179
+    },
+    {
+      "job": "8bdacaa6bfc43518261fd94ffa5e0279798c4cfd050930f9",
+      "oldUTF8Bytes": 6099,
+      "newUTF8Bytes": 4492
+    },
+    {
+      "job": "b364a97c975b53c99604b4b74b1a36eb1e0b117d6f6d3581",
+      "oldUTF8Bytes": 10765,
+      "newUTF8Bytes": 8614
+    },
+    {
+      "job": "b2ccd3210100969fd16e2d83a96ba373583f6100247e0853",
+      "oldUTF8Bytes": 33295,
+      "newUTF8Bytes": 29179
+    },
+    {
+      "job": "105f9fb8270f0af0fae762b3a7b8af3ad125d626eefec4c6",
+      "oldUTF8Bytes": 10991,
+      "newUTF8Bytes": 8675
+    },
+    {
+      "job": "62f3007912e86910fe01004d6a6a4fbfa0789d9723e6757c",
+      "oldUTF8Bytes": 10438,
+      "newUTF8Bytes": 8027
+    },
+    {
+      "job": "0942f53f8f61117efc2a6ee92b2c30421629225940a219b0",
+      "oldUTF8Bytes": 6037,
+      "newUTF8Bytes": 4469
+    },
+    {
+      "job": "86eed64c5f4ffef6117b586bb5374b9cd84274a70d216247",
+      "oldUTF8Bytes": 10485,
+      "newUTF8Bytes": 8509
+    },
+    {
+      "job": "426fc7f6901186753549ffd461bf141b03db26d3d58cfb90",
+      "oldUTF8Bytes": 6037,
+      "newUTF8Bytes": 4469
+    },
+    {
+      "job": "f7130fec4290434ca8156fe91dd817a2e4f576bd7f0f3271",
+      "oldUTF8Bytes": 10438,
+      "newUTF8Bytes": 8027
+    },
+    {
+      "job": "9cb0bff0e2895828b0bc53abad65f0b36463f22c3ecd9d2c",
+      "oldUTF8Bytes": 5946,
+      "newUTF8Bytes": 4384
+    }
+  ]
+}

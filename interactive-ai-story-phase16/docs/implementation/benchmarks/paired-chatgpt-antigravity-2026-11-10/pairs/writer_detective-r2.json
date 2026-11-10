@@ -1,0 +1,69 @@
+{
+  "Spec": {
+    "ID": "writer_detective-r2",
+    "CaseID": "writer_detective",
+    "FirstArm": "antigravity",
+    "AArm": "antigravity",
+    "Repeat": 2
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 42573,
+      "InputSHA256": "5ae312f7563a778808ead36546a7a16fa3cb3d3471a8a9ccda3c5ef51f6b54c4",
+      "Output": {
+        "text": "Денис отвел взгляд от столешницы и посмотрел на Елену с непринужденным спокойствием, словно его занимал обычный рабочий распорядок. Не меняя позы и не понижая голоса до конспиративного шепота, он спросил:\n\n— Елена, вы случайно не помните, в котором часу здесь был курьер?\n\nЕе ладонь, еще касавшаяся металлического кольца ключей, едва заметно дрогнула. На долю секунды женщина застыла на месте, а ее взгляд метнулся к разложенным бумагам, словно она пыталась быстро сопоставить вопрос с чем-то известным только ей. В ее плечах возникло сухое напряжение, но она тут же взяла себя в руки и медленно убрала ладонь со стола.\n\n— В четырнадцать сорок, — ответила она с подчеркнутой деловитостью, не глядя Денису прямо в глаза. — Расписался за пакет и сразу ушел. На стойке в приемной осталась копия квитанции с его фамилией."
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 0.5,
+        "languageScore": 1,
+        "continuityScore": 1,
+        "notes": [
+          "words=130 expected=220..650"
+        ]
+      },
+      "Prose": {
+        "words": 130,
+        "paragraphs": 4,
+        "repeatedSixGramRatio": 0,
+        "duplicateParagraphs": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 6197,
+      "OutputTokens": 255,
+      "StartedAt": "2026-11-10T13:16:14.150624851Z",
+      "FinishedAt": "2026-11-10T13:16:56.724219806Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "provider_or_transport_error",
+      "OK": false,
+      "ElapsedMS": 131701,
+      "InputSHA256": "5ae312f7563a778808ead36546a7a16fa3cb3d3471a8a9ccda3c5ef51f6b54c4",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        502
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T13:16:14.150606771Z",
+      "FinishedAt": "2026-11-10T13:18:25.851725888Z"
+    }
+  }
+}

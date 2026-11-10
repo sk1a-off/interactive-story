@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.1.8
+// @version      0.2.1
 // @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.1.8';
+  const VERSION='0.2.1';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -36,7 +36,7 @@
   const diagnosticButton=document.createElement('button');diagnosticButton.type='button';diagnosticButton.textContent='Диагностика';
   diagnosticButton.style.cssText=button.style.cssText;diagnosticButton.style.marginLeft='6px';
   diagnosticButton.onclick=async()=>{
-    const report=JSON.stringify({version:VERSION,worker,running,lastModelFailure,lastFailure,current:modelSnapshot()},null,2);
+    const report=JSON.stringify({version:VERSION,worker,running,lastModelFailure,lastFailure,current:modelSnapshot(),assistant:assistantState().diagnostic},null,2);
     try{await navigator.clipboard.writeText(report);show('Диагностика скопирована. Она содержит только состояние элементов управления, без текста чата и токенов.');}
     catch{show('Диагностика: '+report);}
   };
@@ -50,7 +50,7 @@
   });
   const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
   function request(path,body){return new Promise((resolve,reject)=>{
-    GM_xmlhttpRequest({method:'POST',url:API+path,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},data:JSON.stringify(body),timeout:10000,
+    GM_xmlhttpRequest({method:'POST',url:API+path,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},data:JSON.stringify({...body,version:VERSION}),timeout:10000,
       onload:r=>{if(r.status===204){resolve(null);return;}if(r.status<200||r.status>=300){reject(Error('Локальный мост: HTTP '+r.status));return;}try{resolve(JSON.parse(r.responseText));}catch{reject(Error('Неверный ответ локального моста'));}},
       onerror:()=>reject(Error('Нет связи с локальным мостом')),ontimeout:()=>reject(Error('Таймаут локального моста'))});
   });}
@@ -80,15 +80,37 @@
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     return picker&&controlText(picker)==='Instant';
   }
-  function userMessage(){
+  function userMessage(current){
     const heading=roles('user')[0];
     const bubble=heading?.parentElement.querySelector('[data-user-message-bubble]');
     const contents=[...bubble?.querySelectorAll('[data-search-result-target]')||[]].filter(e=>{const parent=e.parentElement.closest('[data-search-result-target]');return (!parent||!bubble.contains(parent))&&e.getClientRects().length;});
+    const more=[...bubble?.querySelectorAll('button')||[]].find(e=>['Показать ещё','Показать больше','Show more'].includes(controlText(e)));
+    if(current?.messageFormat==='readable-json-v3'&&bubble){
+      const codes=[...bubble.querySelectorAll('code')];
+      const markerSeen=bubble.textContent.includes(current.messageMarker);
+      if(markerSeen&&codes.length===1)return {text:codes[0].textContent.trim(),source:'fenced-block',bubble,more};
+      // Raw plain rendering is allowed only when the entire envelope matches.
+      const raw=contents.map(e=>e.textContent).join('').trim();
+      if(raw===current.prompt)return {text:current.messageContent,source:'raw-envelope',bubble,more};
+      return {text:null,source:markerSeen?'block-not-mounted':'marker-missing',bubble,more,invalid:!markerSeen&&!!raw};
+    }
     // Long messages add a Show more button inside the bubble. It is not part
     // of the sent prompt; reading the entire bubble breaks strict correlation.
     if(contents.length)return {text:contents.map(e=>e.textContent).join('').trim(),source:'data-search-result-target',bubble,more:[...bubble.querySelectorAll('button')].find(e=>['Показать ещё','Показать больше','Show more'].includes(controlText(e)))};
     if(bubble&&!bubble.querySelector('button,[role="button"]'))return {text:bubble.textContent.trim(),source:'plain-bubble'};
     return {text:null,source:'unrecognized'};
+  }
+  const normalized=text=>String(text??'').replace(/\r\n?/g,'\n').trim();
+  function editorMatches(box,prompt){return [box.textContent,box.innerText].some(text=>normalized(text)===normalized(prompt));}
+  function assistantState(){
+    const heading=roles('assistant')[0];
+    const scoped=heading?.parentElement.querySelectorAll('[data-markdown-text-style="assistant-message"]')||[];
+    const global=[...document.querySelectorAll('[data-markdown-text-style="assistant-message"]')];
+    const root=scoped.length===1?scoped[0]:roles('assistant').length===1&&global.length===1?global[0]:null;
+    const text=root?(root.innerText??root.textContent??'').trim():'';
+    const stopped=!!exactButton(['Остановить','Stop','Stop generating']);
+    const copy=!!heading&&buttons().some(e=>['Копировать','Copy'].includes(label(e))&&!!(heading.compareDocumentPosition(e)&Node.DOCUMENT_POSITION_FOLLOWING));
+    return {text,diagnostic:{assistantCount:roles('assistant').length,scopedRoots:scoped.length,globalRoots:global.length,textLength:text.length,codeBlocks:root?.querySelectorAll('pre code').length||0,stopVisible:stopped,copyVisible:copy}};
   }
   function modelSnapshot(){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
@@ -137,9 +159,20 @@
     try{
       const picker=await waitFor(getPicker,15000);
       // A previous failure or the user may have left the menu open.
-      if(picker.getAttribute('aria-expanded')!=='true')pointerClick(picker);
       stage='подтверждение открытия меню модели';
-      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='true'&&activeMenu(),5000);
+      // A freshly loaded page can render its controls before event handlers
+      // are ready. ArrowDown requests opening (not a blind toggle).
+      for(let attempt=0;attempt<8;attempt++){
+        const trigger=getPicker();
+        if(trigger?.getAttribute('aria-expanded')==='true'&&activeMenu())break;
+        if(trigger&&!trigger.disabled&&trigger.getAttribute('aria-expanded')!=='true'){
+          trigger.focus();
+          for(const type of ['keydown','keyup'])trigger.dispatchEvent(new KeyboardEvent(type,{key:'ArrowDown',code:'ArrowDown',keyCode:40,bubbles:true,composed:true}));
+          if(attempt===3&&trigger.getAttribute('aria-expanded')!=='true')pointerClick(trigger);
+        }
+        await pause(400);
+      }
+      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='true'&&activeMenu(),1500);
       stage='открытие списка моделей';
       (await waitFor(getToggle,5000)).click();
       stage='выбор GPT-6';
@@ -198,7 +231,8 @@
   };
   async function work(){
     running=true;button.textContent='Остановить';show('Проверка нового временного чата…');
-    let current=null;
+    let current=null,knownTerminal=null;
+    lastModelFailure=null;lastFailure=null;
     try{
       // A reload/crash during a job never resumes sending, even if the click was uncertain.
       const interrupted=sessionStorage.getItem(KEY+'pending');
@@ -220,44 +254,57 @@
         const box=editor();box.focus();
         // Use the browser editing command so the React composer receives a native input event.
         if(!document.execCommand('insertText',false,current.prompt))throw Error('Не удалось заполнить поле.');
-        if(box.textContent.trim()!==current.prompt)throw Error('Текст поля не совпадает с заданием.');
+        if(!editorMatches(box,current.prompt))throw Error('Текст поля не совпадает с заданием.');
         const send=await waitFor(()=>{const e=exactButton(['Отправить','Send']);return e&&!e.disabled&&e;},5000);
         if(!running||!temporary()||!instantLabel()||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
         show('GPT-6 Instant · '+current.id.slice(0,8)+' · ожидание ответа…');
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
-        if(!running||!temporary()||!instantLabel()||box.textContent.trim()!==current.prompt)throw Error('Отправка остановлена после разрешения.');
+        if(!running||!temporary()||!instantLabel()||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         send.click(); // Exactly one click for this lease.
-        let stable='',since=0,expandedBubble=null;
+        let stable='',since=0,emptySince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
           if(!temporary())throw Error('Временный режим больше не подтверждён.');
           const users=roles('user'),assistants=roles('assistant');
           if(users.length>1||assistants.length>1)throw Error('Неожиданный дополнительный ход чата.');
-          const shown=userMessage(),userText=shown.text;
-          if(userText&&userText!==current.prompt){
-            if(current.prompt.startsWith(userText)&&userText.length<current.prompt.length){
-              // ChatGPT only mounts a 10,240-character prefix until expanded.
-              // Expansion is a UI action, never a second model request.
+          const shown=userMessage(current),userText=shown.text;
+          const expected=current.messageFormat==='readable-json-v3'?current.messageContent:current.prompt;
+          if(shown.invalid)throw Error('Ответ принадлежит другому запросу.');
+          if(userText&&userText!==expected){
+            if(expected.startsWith(userText)&&userText.length<expected.length){
               if(shown.more&&expandedBubble!==shown.bubble){expandedBubble=shown.bubble;shown.more.click();}
               return null;
             }
             throw Error('Ответ принадлежит другому запросу.');
           }
-          const text=assistants[0]?.parentElement.querySelector('[data-markdown-text-style="assistant-message"]')?.innerText.trim();
-          const done=users.length===1&&userText===current.prompt&&assistants.length===1&&text&&
-            !exactButton(['Остановить','Stop','Stop generating'])&&!!exactButton(['Копировать','Copy']);
-          if(!done){stable='';since=0;return null;}
+          if(!userText&&shown.more&&expandedBubble!==shown.bubble){expandedBubble=shown.bubble;shown.more.click();return null;}
+          const state=assistantState(),text=state.text,d=state.diagnostic;
+          const done=users.length===1&&userText===expected&&assistants.length===1&&!d.stopVisible&&d.copyVisible;
+          if(done&&!text){
+            if(!emptySince)emptySince=Date.now();
+            // A completed UI with no readable text is a terminal observation,
+            // not proof that the underlying model generated no content.
+            if(Date.now()-emptySince>=5000){emptyReply=true;return {text:''};}
+          }else{emptySince=0;}
+          if(!done||!text){stable='';since=0;return null;}
           if(text!==stable){stable=text;since=Date.now();return null;}
-          return Date.now()-since>=2500 ? text:null;
+          return Date.now()-since>=2500 ? {text}:null;
         },130000);
-        const accepted=await request('/result',{...lease,reply});
-        if(accepted.state!=='complete')throw Error('Мост отклонил ответ: неверный JSON или идентификатор.');
-        sessionStorage.removeItem(KEY+'pending');current=null;
+        const accepted=await request('/result',{...lease,reply:reply.text,error:emptyReply?JSON.stringify({version:VERSION,stage:'completed-empty-ui',message:'UI completed without extractable text',assistant:assistantState().diagnostic}):undefined});
+        knownTerminal=accepted.state;
+        if(accepted.state!=='complete')throw Error(emptyReply?'Ответ завершён в интерфейсе, но читаемый текст отсутствует.':'Мост отклонил ответ: неверный JSON или идентификатор.');
+        sessionStorage.removeItem(KEY+'pending');sessionStorage.removeItem(KEY+'safeFailures');current=null;
         if(running){show('Ответ получен. Открываю новый временный чат…');location.replace(FRESH);}return;
       }
     }catch(e){
-      const shown=userMessage();
-      lastFailure={message:String(e.message||e),temporary:temporary(),userMessage:{source:shown.source,expectedLength:current?.prompt.length??null,actualLength:shown.text?.length??null,matches:current?shown.text===current.prompt:null}};
-      if(current){try{await request('/fail',{worker,id:current.id,lease:current.lease,error:JSON.stringify({version:VERSION,stage:lastModelFailure?.stage||'transport',message:lastFailure.message,expectedLength:lastFailure.userMessage.expectedLength,actualLength:lastFailure.userMessage.actualLength})});}catch{/* No resubmission. */}}
+      const shown=userMessage(current);
+      const expected=current?.messageFormat==='readable-json-v3'?current.messageContent:current?.prompt;
+      lastFailure={message:String(e.message||e),temporary:temporary(),userMessage:{source:shown.source,expectedLength:expected?.length??null,actualLength:shown.text?.length??null,matches:current?shown.text===expected:null}};
+      if(current){try{const failed=await request('/fail',{worker,id:current.id,lease:current.lease,error:JSON.stringify({version:VERSION,stage:lastModelFailure?.stage||'transport',message:lastFailure.message,expectedLength:lastFailure.userMessage.expectedLength,actualLength:lastFailure.userMessage.actualLength,assistant:assistantState().diagnostic})});knownTerminal=failed.state;}catch{/* No resubmission. */}}
+      if(running&&current?.recoverSafeFailure&&knownTerminal==='failed'){
+        const failures=Number(sessionStorage.getItem(KEY+'safeFailures')||0)+1;
+        sessionStorage.setItem(KEY+'safeFailures',String(failures));
+        if(failures<3){sessionStorage.removeItem(KEY+'pending');show('Задание отклонено и не повторяется. Открываю новый чат для следующего задания.');location.replace(FRESH);return;}
+      }
       sessionStorage.removeItem(KEY+'pending');stop(String(e.message||e));
     }
   }
