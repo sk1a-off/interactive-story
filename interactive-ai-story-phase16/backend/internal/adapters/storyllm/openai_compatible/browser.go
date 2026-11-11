@@ -14,6 +14,15 @@ import (
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
 
+// Queue waiting is separate from the model's execution budget. The enclosing
+// application context still bounds the entire operation.
+const BrowserQueueWait = 10 * time.Minute
+const DefaultBrowserParallelism = 32
+
+func BrowserRequestTimeout(effort string) time.Duration {
+	return BrowserQueueWait + BrowserTimeout(effort)
+}
+
 func validBrowserEffort(value string) bool {
 	return value == "" || value == "none" || value == "medium" || value == "high"
 }

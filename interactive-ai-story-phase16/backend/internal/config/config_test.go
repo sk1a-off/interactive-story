@@ -65,3 +65,19 @@ func TestLoadDefaults(t *testing.T) {
 		t.Fatalf("ImageWorkerToken was not loaded and trimmed")
 	}
 }
+
+func TestBrowserParallelism(t *testing.T) {
+	for value, expected := range map[string]int{"": 32, "1": 1, "8": 8, "4096": 4096} {
+		t.Setenv("CHATGPT_BROWSER_PARALLELISM", value)
+		cfg, err := Load()
+		if err != nil || cfg.ChatGPTBrowserParallelism != expected {
+			t.Fatalf("value=%s cfg=%d err=%v", value, cfg.ChatGPTBrowserParallelism, err)
+		}
+	}
+	for _, value := range []string{"0", "-1", "4097", "many"} {
+		t.Setenv("CHATGPT_BROWSER_PARALLELISM", value)
+		if _, err := Load(); err == nil {
+			t.Fatal("invalid parallelism accepted", value)
+		}
+	}
+}

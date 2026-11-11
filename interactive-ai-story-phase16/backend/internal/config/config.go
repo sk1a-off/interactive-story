@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	HTTPAddr                           string
 	DatabaseURL                        string
 	ChatGPTBridgeTokenFile             string
+	ChatGPTBrowserParallelism          int
 	StoryLLMBaseURL                    string
 	StoryLLMAPIKey                     string
 	StoryLLMModel                      string
@@ -64,6 +66,11 @@ func Load() (Config, error) {
 		EmbeddingBaseURL:                   envOrDefault("EMBEDDING_BASE_URL", "http://127.0.0.1:8090"),
 		EmbeddingModel:                     envOrDefault("EMBEDDING_MODEL", "deepvk/USER2-small"),
 	}
+	parallelism, parallelErr := strconv.Atoi(envOrDefault("CHATGPT_BROWSER_PARALLELISM", "32"))
+	if parallelErr != nil || parallelism < 1 || parallelism > 4096 {
+		return Config{}, fmt.Errorf("CHATGPT_BROWSER_PARALLELISM must be 1..4096")
+	}
+	cfg.ChatGPTBrowserParallelism = parallelism
 	if !strings.HasPrefix(cfg.HTTPAddr, ":") && !strings.Contains(cfg.HTTPAddr, ":") {
 		return Config{}, fmt.Errorf("HTTP_ADDR must be a valid listen address: %q", cfg.HTTPAddr)
 	}

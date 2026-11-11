@@ -90,6 +90,9 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	}
 	if cfg.Requests == nil {
 		cfg.Requests = NewRequestControl(3, 1)
+		if cfg.Provider == "chatgpt_browser" {
+			cfg.Requests = NewRequestControl(DefaultBrowserParallelism, DefaultBrowserParallelism)
+		}
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 120 * time.Second

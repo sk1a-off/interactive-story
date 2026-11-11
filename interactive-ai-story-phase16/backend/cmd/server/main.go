@@ -131,7 +131,7 @@ func main() {
 		aiSettingsService.Memory = memoryRuntime
 		promptSettingsService := appprompt.Service{Repo: promptRepo}
 		storyRequests := storyllm.NewRequestControl(3, 1)
-		browserRequests := storyllm.NewRequestControl(1, 1)
+		browserRequests := storyllm.NewRequestControl(cfg.ChatGPTBrowserParallelism, cfg.ChatGPTBrowserParallelism)
 		storyClient := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (aiport.StoryLLM, error) {
 			var public domainconfig.PublicSettings
 			_ = json.Unmarshal(rev.Settings, &public)
@@ -149,7 +149,7 @@ func main() {
 					}
 					keys = []string{token}
 				}
-				return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: storyllm.BrowserTimeout(public.StoryLLMBrowserReasoning), PromptSet: promptRev, JSONSchema: true, Requests: browserRequests, ReasoningEffort: public.StoryLLMBrowserReasoning, BrowserRetries: *public.StoryLLMBrowserRetries}, nil)
+				return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: storyllm.BrowserRequestTimeout(public.StoryLLMBrowserReasoning), PromptSet: promptRev, JSONSchema: true, Requests: browserRequests, ReasoningEffort: public.StoryLLMBrowserReasoning, BrowserRetries: *public.StoryLLMBrowserRetries}, nil)
 			}
 			if rev.StoryLLM.Provider == domainconfig.ProviderGoogleGemini && len(keys) == 0 {
 				return nil, errors.New("Google AI API key is not configured for the active AI revision")
@@ -259,7 +259,7 @@ func main() {
 		}
 		promptWorker := appimagegen.PromptJobWorker{Repo: imageGenerationRepo, Images: imageService, Owner: "image-prompt-worker-1", LocalOwnerID: ownerID, LeaseTTL: 10 * time.Minute, ExecutionTimeout: 2 * time.Minute, Now: time.Now, Logger: logger}
 		startWorker = func(ctx context.Context) {
-			logger.Info("generation workers starting", "story_workers", len(workers), "local_provider_parallelism", 1, "hosted_provider_parallelism", 3, "image_prompt_workers", 1)
+			logger.Info("generation workers starting", "story_workers", len(workers), "local_provider_parallelism", 1, "hosted_provider_parallelism", 3, "browser_provider_parallelism", cfg.ChatGPTBrowserParallelism, "image_prompt_workers", 1)
 			startRestarting := func(name string, run func(context.Context) error) {
 				go func() {
 					for ctx.Err() == nil {

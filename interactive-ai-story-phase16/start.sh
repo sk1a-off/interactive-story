@@ -24,7 +24,7 @@ done
 if [[ -f .env ]]; then
   while IFS='=' read -r key value || [[ -n "$key" ]]; do
     case "$key" in
-      GENERATION_TURN_PLANNER_V1|GENERATION_PROVISIONAL_BEAT_V1|GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1|GENERATION_FAST_STATE_V1|GENERATION_EXECUTION_TIMEOUT|HOST_DATABASE_URL|HOST_HTTP_ADDR|HOST_FRONTEND_HOST|HOST_STORY_LLM_BASE_URL|HOST_SECRET_STORE_PATH|HOST_MEDIA_ROOT|HOST_EMBEDDING_BASE_URL|HOST_OMNIVOICE_BASE_URL|IMAGE_WORKER_TOKEN|CHATGPT_BRIDGE_TOKEN_FILE)
+      GENERATION_TURN_PLANNER_V1|GENERATION_PROVISIONAL_BEAT_V1|GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1|GENERATION_FAST_STATE_V1|GENERATION_EXECUTION_TIMEOUT|HOST_DATABASE_URL|HOST_HTTP_ADDR|HOST_FRONTEND_HOST|HOST_STORY_LLM_BASE_URL|HOST_SECRET_STORE_PATH|HOST_MEDIA_ROOT|HOST_EMBEDDING_BASE_URL|HOST_OMNIVOICE_BASE_URL|IMAGE_WORKER_TOKEN|CHATGPT_BRIDGE_TOKEN_FILE|CHATGPT_BROWSER_PARALLELISM|CHATGPT_BRIDGE_MAX_ACTIVE)
         if [[ ! -v "$key" ]]; then
           value=${value%$'\r'}
           if [[ "$value" == \"*\" || "$value" == \'*\' ]]; then value=${value:1:${#value}-2}; fi
@@ -99,7 +99,9 @@ for value in ports:
     try:
         port = int(value)
         if not 1024 <= port <= 65535: raise ValueError()
-        with socket.socket() as s: s.bind(('127.0.0.1', port))
+        with socket.socket() as s:
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(('127.0.0.1', port))
     except (ValueError, OSError):
         sys.exit(f'Порт {value} занят или некорректен.')
 PY

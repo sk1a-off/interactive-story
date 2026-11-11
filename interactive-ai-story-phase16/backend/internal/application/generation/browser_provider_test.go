@@ -11,7 +11,6 @@ import (
 	browser "github.com/local/interactive-ai-story/backend/internal/adapters/storyllm/openai_compatible"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
-	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 )
 
 func TestBrowserRetryCommitsOneTurnOrNothing(t *testing.T) {
@@ -42,13 +41,13 @@ func TestBrowserRetryCommitsOneTurnOrNothing(t *testing.T) {
 						return
 					}
 				}
-				response, err := source.Generate(r.Context(), ai.StoryRequest{Role: role})
-				if err != nil {
-					t.Error(err)
+				output, ok := source.Responses[role]
+				if !ok {
+					t.Error("unknown role")
 					http.Error(w, "unknown role", 400)
 					return
 				}
-				_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": string(response.Output)}}}})
+				_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": string(output)}}}})
 			}))
 			defer server.Close()
 			client, err := browser.New(browser.Config{BaseURL: server.URL, Provider: "chatgpt_browser", Model: "gpt-6", APIKey: strings.Repeat("a", 48), BrowserRetries: 1, JSONSchema: true}, server.Client())

@@ -91,12 +91,16 @@ GROUP BY cancelled.id`, now); e != nil {
 
 	e = tx.QueryRow(ctx, `
  WITH candidate AS (
-  SELECT id FROM generation_jobs
-  WHERE status='queued' AND available_at <= $1 AND attempt_count < max_attempts
-    AND (provider_name='google_gemini' OR NOT EXISTS (
+  SELECT candidate.id FROM generation_jobs candidate
+  WHERE candidate.status='queued' AND available_at <= $1 AND attempt_count < max_attempts
+    AND (provider_name IN ('google_gemini','chatgpt_browser') OR NOT EXISTS (
       SELECT 1 FROM generation_jobs active
-      WHERE active.status='running' AND active.provider_name<>'google_gemini'
+      WHERE active.status='running' AND active.provider_name NOT IN ('google_gemini','chatgpt_browser')
     ))
+    AND NOT EXISTS (
+      SELECT 1 FROM generation_jobs same_timeline
+      WHERE same_timeline.status='running' AND same_timeline.timeline_id=candidate.timeline_id
+    )
   ORDER BY created_at
   FOR UPDATE SKIP LOCKED
   LIMIT 1

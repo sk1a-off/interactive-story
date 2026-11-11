@@ -1,0 +1,44 @@
+[
+  {
+    "elapsedSeconds": 0.020704029,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-1",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 0.020706909,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-2",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 0.020729049,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-3",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 0.020682989,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-4",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 0.020767938,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-5",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 0.020686219,
+    "error": "ai provider unavailable: запустите рабочее окно ChatGPT с userscript 0.3.0",
+    "ok": false,
+    "probe": "browser-parallel-live-2026-11-11-6",
+    "protocolRetries": 0
+  }
+]

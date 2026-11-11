@@ -82,6 +82,9 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		req.Header.Set("Content-Type", "application/json")
 		if c.cfg.Provider == "chatgpt_browser" {
 			req.Header.Set("X-Story-Project", "1")
+			if state.background {
+				req.Header.Set("X-Story-Priority", "background")
+			}
 		}
 		if stream {
 			req.Header.Set("Accept", "text/event-stream")

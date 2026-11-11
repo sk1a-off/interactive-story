@@ -200,9 +200,13 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			pending++
 		}
 	}
-	if pending >= 12 {
+	capacity := 12
+	if project {
+		capacity = max(128, b.maxActive*2)
+	}
+	if pending >= capacity {
 		b.mu.Unlock()
-		http.Error(w, "test queue is full", 429)
+		http.Error(w, "browser queue is full", 429)
 		return
 	}
 	// Retain active jobs while bounding history.
@@ -214,7 +218,11 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	j := &job{Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(storyllm.BrowserTimeout(in.ReasoningEffort))}
+	queuedBudget := storyllm.BrowserTimeout(in.ReasoningEffort)
+	if project {
+		queuedBudget = storyllm.BrowserQueueWait
+	}
+	j := &job{Background: project && r.Header.Get("X-Story-Priority") == "background", Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(queuedBudget)}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)

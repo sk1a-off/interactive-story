@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	storyllm "github.com/local/interactive-ai-story/backend/internal/adapters/storyllm/openai_compatible"
 )
 
 //go:embed web/*
@@ -41,6 +43,7 @@ type workerDiagnostic struct {
 	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
+	Background         bool              `json:"background,omitempty"`
 	Project            bool              `json:"project,omitempty"`
 	ReasoningEffort    string            `json:"reasoningEffort,omitempty"`
 	ResponseTimeoutMS  int               `json:"responseTimeoutMs,omitempty"`
@@ -89,7 +92,7 @@ func secret() string {
 	return hex.EncodeToString(b[:])
 }
 func newBridge(host string) *bridge {
-	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: 3, now: time.Now}
+	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: storyllm.DefaultBrowserParallelism, now: time.Now}
 }
 func active(s string) bool { return s == "queued" || s == "leased" || s == "dispatched" }
 func (b *bridge) expire() {
@@ -310,13 +313,25 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		for _, j := range b.jobs {
+		// Prefer foreground work without preempting an already leased job.
+		ordered := make([]*job, 0, len(b.jobs))
+		for _, background := range []bool{false, true} {
+			for _, j := range b.jobs {
+				if j.Background == background {
+					ordered = append(ordered, j)
+				}
+			}
+		}
+		for _, j := range ordered {
 			if j.State == "queued" {
 				if (j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none")) && version != "0.3.0" {
 					continue
 				}
 				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" && version != "0.3.0" {
 					continue
+				}
+				if j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none") {
+					j.Deadline = b.now().Add(storyllm.BrowserTimeout(j.ReasoningEffort))
 				}
 				j.State = "leased"
 				j.Worker = in.Worker
@@ -432,8 +447,8 @@ func main() {
 		}
 		b.maxActive = n
 	}
-	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 12 * time.Minute, IdleTimeout: 30 * time.Second}
-	log.Printf("Synthetic ChatGPT bridge: http://%s (main story generation unchanged)", host)
+	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 25 * time.Minute, IdleTimeout: 30 * time.Second}
+	log.Printf("Local ChatGPT bridge: http://%s", host)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Print(err)
 		os.Exit(1)

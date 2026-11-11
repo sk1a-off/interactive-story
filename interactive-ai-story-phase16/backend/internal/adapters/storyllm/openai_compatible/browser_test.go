@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/local/interactive-ai-story/backend/internal/domain/promptset"
 	ai "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 	"net/http"
 	"net/http/httptest"
@@ -133,5 +134,32 @@ func TestBrowserDoesNotRedirectStoryPayload(t *testing.T) {
 	_, err = c.Generate(context.Background(), ai.StoryRequest{Role: "director", PromptVersion: "v1", Input: []byte(`{"intent":"private synthetic input"}`)})
 	if err == nil || forwarded != 0 {
 		t.Fatal("browser payload followed redirect", err, forwarded)
+	}
+}
+
+func TestBrowserTransportPreservesForegroundAndImagePriority(t *testing.T) {
+	for _, role := range []string{"writer", "image_prompt"} {
+		t.Run(role, func(t *testing.T) {
+			priority := "unset"
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				priority = r.Header.Get("X-Story-Priority")
+				fmt.Fprint(w, `{"choices":[{"message":{"content":"{\"text\":\"Готовый ответ\"}"}}]}`)
+			}))
+			defer server.Close()
+			client, err := New(Config{BaseURL: server.URL, Provider: "chatgpt_browser", Model: "gpt-6", APIKey: strings.Repeat("a", 48), PromptSet: &promptset.Revision{Prompts: map[string]string{role: "Return JSON"}}}, server.Client())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := client.Generate(context.Background(), ai.StoryRequest{Role: role, PromptVersion: "v1", Input: []byte(`{}`)}); err != nil {
+				t.Fatal(err)
+			}
+			expected := ""
+			if role == "image_prompt" {
+				expected = "background"
+			}
+			if priority != expected {
+				t.Fatal("wrong queue priority", role, priority)
+			}
+		})
 	}
 }
