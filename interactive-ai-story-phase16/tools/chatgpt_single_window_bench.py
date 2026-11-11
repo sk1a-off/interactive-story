@@ -65,8 +65,8 @@ def main():
                 worker, info = next(iter(live.items()))
                 if expected and worker != expected:
                     raise RuntimeError('Worker changed; no next request sent')
-                if info.get('version') != '0.2.2':
-                    raise RuntimeError('Expected worker 0.2.2')
+                if info.get('version') not in ('0.2.2','0.3.0'):
+                    raise RuntimeError('Expected compatible ChatGPT worker')
                 if info['status'] == 'ready':
                     return worker, state
             time.sleep(1)

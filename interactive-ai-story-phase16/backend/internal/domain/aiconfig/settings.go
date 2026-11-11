@@ -3,6 +3,7 @@ package aiconfig
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"net/url"
 	"strings"
 
@@ -14,6 +15,9 @@ var ErrInvalidPublicSettings = errors.New("invalid public provider settings")
 const (
 	ProviderOpenAICompatible = "openai_compatible"
 	ProviderGoogleGemini     = "google_gemini"
+	ProviderChatGPTBrowser   = "chatgpt_browser"
+	ChatGPTBrowserModel      = "gpt-6"
+	ChatGPTBrowserEndpoint   = "http://127.0.0.1:8791"
 	Gemini36FlashModel       = "gemini-3.6-flash"
 	AntigravityModel         = "antigravity-preview-05-2026"
 	Gemini31FlashLiteModel   = "gemini-3.1-flash-lite"
@@ -37,24 +41,32 @@ func IsSupportedGoogleStoryModel(model string) bool {
 }
 
 type PublicSettings struct {
-	GenerationProfile    GenerationProfile `json:"generationProfile"`
-	StoryLLMEndpoint     string            `json:"storyLlmEndpoint"`
-	StoryLLMContext      int               `json:"storyLlmContext"`
-	StoryLLMKVDType      string            `json:"storyLlmKvDType"`
-	StoryLLMStreamWriter bool              `json:"storyLlmStreamWriter"`
-	StoryLLMJSONSchema   bool              `json:"storyLlmJsonSchema"`
-	StoryLLMSafeHybrid   bool              `json:"storyLlmSafeHybrid"`
-	WorldRulesSafeMode   bool              `json:"worldRulesSafeMode"`
-	EmbeddingEndpoint    string            `json:"embeddingEndpoint"`
-	ImageEndpoint        string            `json:"imageEndpoint"`
-	ImageResolution      string            `json:"image_resolution"`
-	ImageCount           *int              `json:"image_count,omitempty"`
-	MemoryEnabled        bool              `json:"memoryEnabled"`
-	MemoryTopK           *int              `json:"memoryTopK,omitempty"`
-	MemoryTokenBudget    *int              `json:"memoryTokenBudget,omitempty"`
+	GenerationProfile        GenerationProfile `json:"generationProfile"`
+	StoryLLMBrowserReasoning string            `json:"storyLlmBrowserReasoning,omitempty"`
+	StoryLLMBrowserRetries   *int              `json:"storyLlmBrowserRetries,omitempty"`
+	StoryLLMEndpoint         string            `json:"storyLlmEndpoint"`
+	StoryLLMContext          int               `json:"storyLlmContext"`
+	StoryLLMKVDType          string            `json:"storyLlmKvDType"`
+	StoryLLMStreamWriter     bool              `json:"storyLlmStreamWriter"`
+	StoryLLMJSONSchema       bool              `json:"storyLlmJsonSchema"`
+	StoryLLMSafeHybrid       bool              `json:"storyLlmSafeHybrid"`
+	WorldRulesSafeMode       bool              `json:"worldRulesSafeMode"`
+	EmbeddingEndpoint        string            `json:"embeddingEndpoint"`
+	ImageEndpoint            string            `json:"imageEndpoint"`
+	ImageResolution          string            `json:"image_resolution"`
+	ImageCount               *int              `json:"image_count,omitempty"`
+	MemoryEnabled            bool              `json:"memoryEnabled"`
+	MemoryTopK               *int              `json:"memoryTopK,omitempty"`
+	MemoryTokenBudget        *int              `json:"memoryTokenBudget,omitempty"`
 }
 
 func (s PublicSettings) Validate() error {
+	if s.StoryLLMBrowserReasoning != "" && s.StoryLLMBrowserReasoning != "none" && s.StoryLLMBrowserReasoning != "medium" && s.StoryLLMBrowserReasoning != "high" {
+		return ErrInvalidPublicSettings
+	}
+	if s.StoryLLMBrowserRetries != nil && (*s.StoryLLMBrowserRetries < 0 || *s.StoryLLMBrowserRetries > 2) {
+		return ErrInvalidPublicSettings
+	}
 	if !s.GenerationProfile.Available() {
 		return ErrInvalidPublicSettings
 	}
@@ -128,8 +140,13 @@ func (c CreateRevisionCommand) Validate() error {
 		c.Image.Kind != aiport.KindImage || c.Image.Provider == "" || c.Image.Model == "" {
 		return ErrInvalidConfig
 	}
-	if c.StoryLLM.Provider != ProviderOpenAICompatible && c.StoryLLM.Provider != ProviderGoogleGemini {
+	if c.StoryLLM.Provider != ProviderOpenAICompatible && c.StoryLLM.Provider != ProviderGoogleGemini && c.StoryLLM.Provider != ProviderChatGPTBrowser {
 		return ErrInvalidConfig
+	}
+	if c.StoryLLM.Provider == ProviderChatGPTBrowser {
+		if c.StoryLLM.Model != ChatGPTBrowserModel || !IsBrowserEndpoint(c.Public.StoryLLMEndpoint) || c.Public.StoryLLMSafeHybrid || c.Public.StoryLLMStreamWriter {
+			return ErrInvalidConfig
+		}
 	}
 	if c.StoryLLM.Provider == ProviderGoogleGemini {
 		if !IsSupportedGoogleStoryModel(c.StoryLLM.Model) || strings.TrimRight(c.Public.StoryLLMEndpoint, "/") != GeminiOpenAIEndpoint {
@@ -152,4 +169,28 @@ type SafeView struct {
 	Active                   bool                    `json:"active"`
 	StoryLLMSecretConfigured bool                    `json:"storyLlmSecretConfigured"`
 	StoryLLMSecretCount      int                     `json:"storyLlmSecretCount"`
+}
+
+// Local bridge credentials must never be sent to an external endpoint.
+func IsBrowserEndpoint(endpoint string) bool {
+	u, e := url.Parse(strings.TrimSpace(endpoint))
+	if e != nil || u.Scheme != "http" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		return false
+	}
+	host := u.Hostname()
+	ip := net.ParseIP(host)
+	if host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+		return false
+	}
+	return u.Path == "" || u.Path == "/" || u.Path == "/v1" || u.Path == "/v1/chat/completions"
+}
+func (s PublicSettings) WithBrowserDefaults() PublicSettings {
+	if s.StoryLLMBrowserReasoning == "" {
+		s.StoryLLMBrowserReasoning = "none"
+	}
+	if s.StoryLLMBrowserRetries == nil {
+		n := 1
+		s.StoryLLMBrowserRetries = &n
+	}
+	return s
 }

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.2.2
-// @description  Opt-in synthetic probes, one fresh Temporary Chat per request.
+// @version      0.3.0
+// @description  Story generation and probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.2.2';
+  const VERSION='0.3.0';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -29,7 +29,7 @@
   let lastFailure=null;
   const panel=document.createElement('aside');panel.id='story-chatgpt-bridge';
   Object.assign(panel.style,{position:'fixed',right:'12px',top:'70px',zIndex:'2147483647',maxWidth:'330px',background:'#142238',color:'#edf3ff',padding:'14px',border:'1px solid #7ea1d2',borderRadius:'12px',font:'13px system-ui'});
-  const title=document.createElement('strong');title.textContent='Мост '+VERSION+' · '+worker.slice(0,8)+' · только тесты';
+  const title=document.createElement('strong');title.textContent='Мост '+VERSION+' · '+worker.slice(0,8);
   const status=document.createElement('p');
   const button=document.createElement('button');button.type='button';button.textContent='Запустить';
   Object.assign(button.style,{display:'inline-block',padding:'7px 12px',marginTop:'8px',background:'#315587',color:'#fff',border:'1px solid #8eb7ed',borderRadius:'7px',cursor:'pointer',pointerEvents:'auto'});
@@ -76,9 +76,9 @@
       (!!exactButton(['Выйти из режима временного чата','Exit temporary chat']) ||
        /Временный чат|Temporary Chat/i.test(document.querySelector('main header')?.innerText||''));
   }
-  function instantLabel(){
+  function reasoningLabel(effort="none"){
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
-    return picker&&controlText(picker)==='Instant';
+    return picker&&controlText(picker)===({none:'Instant',medium:'Medium',high:'High'}[effort]);
   }
   function userMessage(current){
     const heading=roles('user')[0];
@@ -142,7 +142,9 @@
     element.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,composed:true,button:0,buttons:0}));
     element.click();
   }
-  async function selectGPT6Instant(){
+  async function selectGPT6(effort="none"){
+    const targetMode={none:{index:0,label:'Instant'},medium:{index:1,label:'Medium'},high:{index:2,label:'High'}}[effort];
+    if(!targetMode)throw Error('Неизвестная сила рассуждения');
     const getPicker=()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     const visible=selector=>[...document.querySelectorAll(selector)].find(e=>!e.closest('[inert],[aria-hidden="true"]'));
     const getToggle=()=>visible('[data-model-picker-view-toggle]');
@@ -199,27 +201,25 @@
         model=await waitFor(()=>{const e=getModel();return e?.getAttribute('aria-checked')==='true'&&e;},5000);
         model.click();
       }
-      stage='установка мощности Instant';
+      stage='установка мощности '+targetMode.label;
       const power=await waitFor(()=>visible('[data-reasoning-slider="true"]'),5000);
-      // The real slider input itself is aria-hidden; its active parent is not.
       const slider=()=>[...document.querySelectorAll('[data-model-picker-power-slider] [role="slider"]')].find(e=>!e.closest('[inert]')&&!e.parentElement.closest('[aria-hidden="true"]'));
-      const minimum=()=>{const e=slider();return e&&e.getAttribute('aria-valuenow')===(e.getAttribute('aria-valuemin')||'0');};
+      const selected=()=>{const e=slider();return e&&Number(e.getAttribute('aria-valuenow'))===targetMode.index&&e.getAttribute('aria-valuemin')==='0'&&e.getAttribute('aria-valuemax')==='2';};
       power.focus();
-      for(let i=0;i<3&&!minimum();i++){
-        power.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
-        power.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowLeft',code:'ArrowLeft',bubbles:true}));
+      for(let i=0;i<5&&!selected();i++){
+        const current=slider();if(!current)throw Error('Не найдена шкала рассуждения');
+        const key=Number(current.getAttribute('aria-valuenow'))<targetMode.index?'ArrowRight':'ArrowLeft';
+        for(const type of ['keydown','keyup'])power.dispatchEvent(new KeyboardEvent(type,{key,code:key,bubbles:true}));
         await pause(150);
       }
-      // Live announcements are optional and may not contain a mode index.
-      // Confirm the rendered mode and minimum slider value instead.
-      await waitFor(()=>minimum()&&controlText(getToggle())==='Instant',5000);
+      await waitFor(()=>selected()&&controlText(getToggle())===targetMode.label,5000);
       stage='закрытие меню модели';
       await closeMenu();
-      await waitFor(instantLabel,3000);
+      await waitFor(()=>reasoningLabel(effort),3000);
     }catch(e){
       lastModelFailure={stage,...modelSnapshot()};
       try{await closeMenu();}catch{/* Preserve the original failed stage; never send. */}
-      throw Error('GPT-6 Instant: '+stage+'. '+(e.message||e));
+      throw Error('GPT-6: '+stage+'. '+(e.message||e));
     }
   }
   function editor(){return document.querySelector('[contenteditable="true"][role="textbox"]');}
@@ -258,21 +258,21 @@
       while(running){
         if(!empty())throw Error('Нужен пустой подтверждённый временный чат.');
         current=await request('/claim',{worker});
-        if(!current){show('Готов. Ожидание синтетического задания…');await pause(1500);continue;}
+        if(!current){show('Готов. Ожидание задания…');await pause(1500);continue;}
         const lease={worker,id:current.id,lease:current.lease};
         sessionStorage.setItem(KEY+'pending',JSON.stringify(lease));
-        show('Выбор GPT-6 Instant · '+current.id.slice(0,8));
-        await selectGPT6Instant();
+        show('Выбор GPT-6 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8));
+        await selectGPT6(current.reasoningEffort||"none");
         if(!running||!empty())throw Error('Страница изменилась до отправки.');
         const box=editor();box.focus();
         // Use the browser editing command so the React composer receives a native input event.
         if(!document.execCommand('insertText',false,current.prompt))throw Error('Не удалось заполнить поле.');
         if(!editorMatches(box,current.prompt))throw Error('Текст поля не совпадает с заданием.');
         const send=await waitFor(()=>{const e=exactButton(['Отправить','Send']);return e&&!e.disabled&&e;},5000);
-        if(!running||!temporary()||!instantLabel()||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
-        show('GPT-6 Instant · '+current.id.slice(0,8)+' · ожидание ответа…');
+        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
+        show('GPT-6 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8)+' · ожидание ответа…');
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
-        if(!running||!temporary()||!instantLabel()||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
+        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         send.click(); // Exactly one click for this lease.
         let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
@@ -310,7 +310,7 @@
           if(!done||!text){stable='';since=0;return null;}
           if(text!==stable){stable=text;since=Date.now();return null;}
           return Date.now()-since>=2500 ? {text}:null;
-        },130000);
+        },Math.min(570000,Math.max(130000,current.responseTimeoutMs||130000)));
         const accepted=await request('/result',{...lease,reply:reply.text,error:emptyReply?JSON.stringify({version:VERSION,stage:'completed-empty-ui',message:'UI completed without extractable text',assistant:assistantState().diagnostic}):undefined});
         knownTerminal=accepted.state;
         if(accepted.state!=='complete')throw Error(emptyReply?'Ответ завершён в интерфейсе, но читаемый текст отсутствует.':'Мост отклонил ответ: неверный JSON или идентификатор.');

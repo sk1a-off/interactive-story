@@ -216,3 +216,62 @@ func TestPlainReadableEnvelopeRoundTrip(t *testing.T) {
 	cancel()
 	<-done
 }
+
+func TestProjectRequestRequiresNewWorkerAndPropagatesEffort(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	request := func(ctx context.Context) *httptest.ResponseRecorder {
+		r := httptest.NewRequest("POST", "http://"+b.host+"/v1/chat/completions", strings.NewReader(`{"model":"gpt-6","reasoning_effort":"high","messages":[{"role":"user","content":"Synthetic request"}]}`)).WithContext(ctx)
+		r.Header.Set("Authorization", "Bearer "+b.token)
+		r.Header.Set("X-Story-Project", "1")
+		w := httptest.NewRecorder()
+		b.ServeHTTP(w, r)
+		return w
+	}
+	if w := request(context.Background()); w.Code != 503 || len(b.jobs) != 0 {
+		t.Fatal("old/no worker queued a project request", w.Code)
+	}
+	b.workers["new-worker"] = workerState{Seen: b.now(), Status: "ready", Version: "0.3.0"}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan *httptest.ResponseRecorder, 1)
+	go func() { done <- request(ctx) }()
+	j := waitChatJob(t, b)
+	if !j.Project || !j.RecoverSafeFailure || j.ReasoningEffort != "high" || j.ResponseTimeoutMS != 570000 {
+		t.Fatal(j)
+	}
+	if w := call(b, "/claim", map[string]string{"worker": "old-worker", "version": "0.2.2"}); w.Code != 204 {
+		t.Fatal("old worker claimed project", w.Code)
+	}
+	var leased job
+	w := call(b, "/claim", map[string]string{"worker": "new-worker", "version": "0.3.0"})
+	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &leased) != nil {
+		t.Fatal(w.Body)
+	}
+	body := lease(leased)
+	call(b, "/send", body)
+	body["reply"] = ""
+	call(b, "/result", body)
+	response := <-done
+	if response.Code != 502 || response.Header().Get("X-Story-Bridge-State") != "failed" || response.Header().Get("X-Story-Bridge-Retryable") != "true" {
+		t.Fatal(response.Code, response.Header())
+	}
+}
+
+func TestProjectRequestKeepsBoundedLargerContext(t *testing.T) {
+	b := newBridge("127.0.0.1:8791")
+	b.workers["project-worker"] = workerState{Seen: b.now(), Status: "ready", Version: "0.3.0"}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	body, _ := json.Marshal(map[string]any{"model": "gpt-6", "messages": []any{map[string]string{"role": "user", "content": strings.Repeat("Текст контекста ", 3500)}}})
+	r := httptest.NewRequest("POST", "http://"+b.host+"/v1/chat/completions", strings.NewReader(string(body))).WithContext(ctx)
+	r.Header.Set("Authorization", "Bearer "+b.token)
+	r.Header.Set("X-Story-Project", "1")
+	done := make(chan struct{})
+	go func() { b.ServeHTTP(httptest.NewRecorder(), r); close(done) }()
+	job := waitChatJob(t, b)
+	if len(job.Prompt) < 48<<10 || len(job.Prompt) > 128<<10 {
+		t.Fatal("wrong project context bounds", len(job.Prompt))
+	}
+	cancel()
+	<-done
+}

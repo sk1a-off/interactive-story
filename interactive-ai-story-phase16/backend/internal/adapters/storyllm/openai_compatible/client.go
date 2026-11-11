@@ -2,6 +2,7 @@ package openai_compatible
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	aiconfig "github.com/local/interactive-ai-story/backend/internal/domain/aiconfig"
 	"github.com/local/interactive-ai-story/backend/internal/domain/promptset"
 	aiport "github.com/local/interactive-ai-story/backend/internal/ports/ai"
 	promptcatalog "github.com/local/interactive-ai-story/backend/prompts"
@@ -26,6 +28,8 @@ type Config struct {
 	Provider            string
 	Timeout             time.Duration
 	PromptSet           *promptset.Revision
+	ReasoningEffort     string
+	BrowserRetries      int
 	JSONSchema          bool
 	RoleReasoningEffort map[string]string
 	// Requests must be shared by all runtime clients to bound aggregate traffic.
@@ -55,6 +59,14 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	if cfg.Model == "" {
 		return nil, errors.New("Story LLM model is required")
 	}
+	if cfg.Provider == "chatgpt_browser" {
+		if cfg.Model != "gpt-6" || !validBrowserEffort(cfg.ReasoningEffort) || cfg.BrowserRetries < 0 || cfg.BrowserRetries > 2 {
+			return nil, errors.New("invalid ChatGPT browser settings")
+		}
+		if cfg.ReasoningEffort == "" {
+			cfg.ReasoningEffort = "none"
+		}
+	}
 	if cfg.Provider == "" {
 		cfg.Provider = "openai_compatible"
 	}
@@ -67,6 +79,15 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	}
 	cfg.RoleReasoningEffort = overrides
 	cfg.APIKeys = normalizedKeys(cfg.APIKeys, cfg.APIKey)
+	if cfg.Provider == "chatgpt_browser" {
+		if !aiconfig.IsBrowserEndpoint(cfg.BaseURL) || len(cfg.APIKeys) != 1 {
+			return nil, errors.New("ChatGPT browser requires a loopback bridge and one local token")
+		}
+		raw, err := hex.DecodeString(cfg.APIKeys[0])
+		if err != nil || len(raw) != 24 {
+			return nil, errors.New("invalid local bridge token")
+		}
+	}
 	if cfg.Requests == nil {
 		cfg.Requests = NewRequestControl(3, 1)
 	}
@@ -78,6 +99,11 @@ func New(cfg Config, hc *http.Client) (*Client, error) {
 	}
 	if hc == nil {
 		hc = &http.Client{Timeout: cfg.Timeout}
+	}
+	if cfg.Provider == "chatgpt_browser" {
+		localHTTP := *hc
+		localHTTP.CheckRedirect = func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+		hc = &localHTTP
 	}
 
 	// Snapshot the prompt revision into the client. Prompt-set revisions are
@@ -217,7 +243,7 @@ func validJSONObject(s string) ([]byte, bool) {
 	return raw, true
 }
 
-func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.StoryResponse, error) {
+func (c *Client) generateOnce(ctx context.Context, req aiport.StoryRequest) (aiport.StoryResponse, error) {
 	role := strings.TrimSpace(req.Role)
 	ctx = requestContext(ctx, role)
 	contract := strings.TrimSpace(c.prompts[role])
@@ -269,6 +295,9 @@ func (c *Client) Generate(ctx context.Context, req aiport.StoryRequest) (aiport.
 		TopP:           settings.TopP,
 		MaxTokens:      maxTokens,
 		ResponseFormat: responseFormat{Type: "json_object"},
+	}
+	if c.cfg.Provider == "chatgpt_browser" {
+		chat.ReasoningEffort = c.cfg.ReasoningEffort
 	}
 	if c.cfg.Provider == "google_gemini" {
 		chat.ReasoningEffort = googleReasoningEffort(c.cfg.Model)

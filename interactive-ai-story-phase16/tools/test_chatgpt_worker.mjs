@@ -15,7 +15,7 @@ function fixture(options={}){
  w.Element.prototype.getClientRects=()=>[{}];
  w.PointerEvent=w.MouseEvent;
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
- const j={recoverSafeFailure:!!options.recoverSafeFailure,id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
+ const j={reasoningEffort:options.reasoningEffort||'none',recoverSafeFailure:!!options.recoverSafeFailure,id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
  if(options.readable){
   j.messageFormat='readable-json-v3';j.messageMarker='Story request job-id';
   j.messageContent='SYSTEM INSTRUCTIONS\nUse `goal` and **bold**.\n\nUSER INPUT\n{"action":"Осмотреть дверь", "text":"Первая строка\\nВторая строка"}';
@@ -37,10 +37,11 @@ function fixture(options={}){
  }
  let openingAttempts=0;
  let selectedModel=options.modelAlreadySelected?'GPT-6':'GPT-5.6 Sol';
- let effort=options.instantInitially?0:1;
+ let effort=options.effortInitially??(options.instantInitially?0:1);
+ const modeLabel=()=>['Instant','Medium','High'][effort];
  function renderSimple(menu){
   menu.replaceChildren();
-  const toggle=w.document.createElement('div');toggle.dataset.modelPickerViewToggle='true';toggle.textContent=effort===0?'Instant':'Medium';menu.append(toggle);
+  const toggle=w.document.createElement('div');toggle.dataset.modelPickerViewToggle='true';toggle.textContent=modeLabel();menu.append(toggle);
   toggle.onclick=()=>{
    menu.replaceChildren();
    if(options.modelUnavailable)return;
@@ -49,9 +50,9 @@ function fixture(options={}){
   };
   const power=w.document.createElement('div');power.dataset.reasoningSlider='true';
   const track=w.document.createElement('div');track.dataset.modelPickerPowerSlider='';
-  const slider=w.document.createElement('span');slider.setAttribute('role','slider');slider.setAttribute('aria-hidden','true');slider.setAttribute('aria-valuemin','0');slider.setAttribute('aria-valuenow',String(effort));track.append(slider);
+  const slider=w.document.createElement('span');slider.setAttribute('role','slider');slider.setAttribute('aria-hidden','true');slider.setAttribute('aria-valuemin','0');slider.setAttribute('aria-valuemax',options.unknownSlider?'4':'2');slider.setAttribute('aria-valuenow',String(effort));track.append(slider);
   const status=w.document.createElement('span');status.setAttribute('role','status');status.textContent=effort===0?'Instant, 1 из 3.':'Medium, 2 из 3.';
-  power.onkeydown=e=>{if(e.key==='ArrowLeft'){effort=0;slider.setAttribute('aria-valuenow','0');status.textContent='Instant, 1 из 3.';updatePicker('Instant');toggle.textContent='Instant';}};
+  power.onkeydown=e=>{if(!options.ignoreReasoning&&['ArrowLeft','ArrowRight'].includes(e.key)){effort=Math.max(0,Math.min(2,effort+(e.key==='ArrowLeft'?-1:1)));slider.setAttribute('aria-valuenow',String(effort));status.textContent=modeLabel();updatePicker(modeLabel());toggle.textContent=modeLabel();}};
   menu.append(power,track);if(!options.noAnnouncement)menu.append(status);
  }
  const togglePicker=()=>{
@@ -65,7 +66,7 @@ function fixture(options={}){
  const closeMenu=()=>{w.document.querySelector('[role="menu"]')?.remove();picker.setAttribute('aria-expanded','false');if(options.closedWrongMode)updatePicker('Medium');};
  w.document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!options.ignoreEscape)closeMenu();});
  w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
- updatePicker(effort===0?'Instant':'Medium');
+ updatePicker(modeLabel());
  if(options.menuInitiallyOpen)picker.click();
  w.document.execCommand=(_cmd,_ui,text)=>{box.textContent=text;return true;};
  w.GM_getValue=()=> 'a'.repeat(48);w.GM_setValue=()=>{};w.GM_registerMenuCommand=()=>{};
@@ -193,7 +194,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.2.2');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.3.0');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -281,4 +282,11 @@ test('an empty reply after restored full correlation is reported once',async()=>
   await until(()=>f.requests.some(r=>r.path==='/result'));const result=f.requests.find(r=>r.path==='/result').body;
   assert.equal(result.reply,'');assert.equal(JSON.parse(result.error).assistant.rawTextLength,0);assert.equal(f.clicks,1);
  }finally{f.close();}
+});
+
+for(const reasoningEffort of ['none','medium','high'])test('select and verify requested reasoning '+reasoningEffort,async()=>{
+ const f=fixture({reasoningEffort,effortInitially:reasoningEffort==='medium'?2:0});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.w.document.querySelector('button[aria-label="Выбрать модель ChatGPT"]').textContent,({none:'Instant',medium:'Medium',high:'High'})[reasoningEffort]);}finally{f.close();}
+});
+for(const options of [{reasoningEffort:'high',ignoreReasoning:true},{reasoningEffort:'medium',unknownSlider:true},{reasoningEffort:'unknown'}])test('unconfirmed reasoning blocks sending '+JSON.stringify(options),async()=>{
+ const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.equal(f.clicks,0);assert.ok(!f.requests.some(r=>r.path==='/send'));}finally{f.close();}
 });

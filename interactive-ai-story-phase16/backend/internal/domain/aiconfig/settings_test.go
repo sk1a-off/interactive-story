@@ -146,3 +146,35 @@ func TestWriterStreamingLegacyOffAndRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestBrowserProviderSettings(t *testing.T) {
+	command := googleCommand(AntigravityModel)
+	command.StoryLLM.Provider = ProviderChatGPTBrowser
+	command.StoryLLM.Model = ChatGPTBrowserModel
+	command.Public.StoryLLMEndpoint = ChatGPTBrowserEndpoint
+	if err := command.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, endpoint := range []string{"https://example.com", "http://127.0.0.1.example.com:8791", "http://user:token@127.0.0.1:8791", "http://127.0.0.1:8791/?token=x"} {
+		command.Public.StoryLLMEndpoint = endpoint
+		if command.Validate() == nil {
+			t.Fatal("external or unsafe bridge accepted", endpoint)
+		}
+	}
+	command.Public.StoryLLMEndpoint = ChatGPTBrowserEndpoint
+	command.Public.StoryLLMBrowserReasoning = "unknown"
+	if command.Validate() == nil {
+		t.Fatal("unknown reasoning accepted")
+	}
+	command.Public.StoryLLMBrowserReasoning = "high"
+	for _, n := range []int{-1, 3} {
+		command.Public.StoryLLMBrowserRetries = &n
+		if command.Validate() == nil {
+			t.Fatal("invalid retry budget")
+		}
+	}
+	defaults := (PublicSettings{}).WithBrowserDefaults()
+	if defaults.StoryLLMBrowserReasoning != "none" || *defaults.StoryLLMBrowserRetries != 1 {
+		t.Fatal(defaults)
+	}
+}

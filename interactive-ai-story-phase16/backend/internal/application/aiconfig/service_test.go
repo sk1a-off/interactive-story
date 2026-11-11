@@ -233,3 +233,29 @@ func TestGeminiRevisionCanInheritOnlyGeminiCredential(t *testing.T) {
 		t.Fatal("Gemini credential was not safely inherited")
 	}
 }
+
+func TestBrowserSettingsRoundTripWithoutLeakingOrInheritingOtherProviderKeys(t *testing.T) {
+	r := &repo{}
+	svc := Service{Repo: r}
+	c := command("gpt-6")
+	c.StoryLLM.Provider = domain.ProviderChatGPTBrowser
+	c.Public.StoryLLMEndpoint = domain.ChatGPTBrowserEndpoint
+	c.Public.StoryLLMBrowserReasoning = "medium"
+	zero := 0
+	c.Public.StoryLLMBrowserRetries = &zero
+	view, err := svc.Create(context.Background(), UpdateRequest{Config: c, Activate: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Public.StoryLLMBrowserReasoning != "medium" || *view.Public.StoryLLMBrowserRetries != 0 || view.StoryLLMSecretConfigured {
+		t.Fatal(view)
+	}
+	active, err := svc.Active(context.Background())
+	if err != nil || active.ID != view.ID || active.StoryLLM.Provider != domain.ProviderChatGPTBrowser {
+		t.Fatal(active, err)
+	}
+	bad := "not-a-bridge-token"
+	if _, err = svc.Create(context.Background(), UpdateRequest{Config: c, StoryLLMAPIKey: &bad}); err == nil {
+		t.Fatal("invalid local bridge token accepted")
+	}
+}

@@ -80,6 +80,9 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 			return nil, err
 		}
 		req.Header.Set("Content-Type", "application/json")
+		if c.cfg.Provider == "chatgpt_browser" {
+			req.Header.Set("X-Story-Project", "1")
+		}
 		if stream {
 			req.Header.Set("Accept", "text/event-stream")
 		}
@@ -146,6 +149,12 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 			resp.Body = io.NopCloser(bytes.NewReader(raw))
 			rememberKeyCursor(ringID, index, len(keys))
 			return resp, nil
+		}
+		if c.cfg.Provider == "chatgpt_browser" && resp.Header.Get("X-Story-Bridge-State") == "unavailable" {
+			return nil, fmt.Errorf("%w: запустите рабочее окно ChatGPT с userscript 0.3.0", ai.ErrUnavailable)
+		}
+		if c.cfg.Provider == "chatgpt_browser" && resp.Header.Get("X-Story-Bridge-State") == "failed" && resp.Header.Get("X-Story-Bridge-Retryable") == "true" {
+			return nil, fmt.Errorf("%w: browser returned an invalid response", ai.ErrInvalidOutput)
 		}
 		if schemaUnsupported(status, raw) {
 			return nil, fmt.Errorf("%w: %w", ai.ErrUnavailable, errSchemaUnsupported)

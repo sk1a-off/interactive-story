@@ -15,7 +15,10 @@ import (
 	"github.com/local/interactive-ai-story/backend/internal/ports/jobqueue"
 )
 
-type dq struct{ jobs map[string]domainjob.Job }
+type dq struct {
+	jobs     map[string]domainjob.Job
+	attempts int
+}
 
 type capturedSink struct{ updates []Update }
 
@@ -23,7 +26,8 @@ func (s *capturedSink) Publish(_ context.Context, update Update) {
 	s.updates = append(s.updates, update)
 }
 
-func (q *dq) Enqueue(_ context.Context, j domainjob.Job, _ int) error {
+func (q *dq) Enqueue(_ context.Context, j domainjob.Job, attempts int) error {
+	q.attempts = attempts
 	if q.jobs == nil {
 		q.jobs = map[string]domainjob.Job{}
 	}
@@ -187,5 +191,21 @@ func TestRebindOptionalStageLLMsUsesObservedPipelineClient(t *testing.T) {
 	extractor, ok := pipeline.Extractor.(LLMCanonExtractor)
 	if !ok || extractor.LLM != observedLLM {
 		t.Fatalf("extractor did not use observed pipeline client: %#v", pipeline.Extractor)
+	}
+}
+
+func TestBrowserDurableTurnDoesNotMultiplyProviderRetries(t *testing.T) {
+	r, q, tid := durableRunnerFixture(t)
+	cfg, _ := r.Config.Active(context.Background())
+	cfg.StoryLLM.Provider = domaincfg.ProviderChatGPTBrowser
+	r.Config = cfgRepo{cfg}
+	r.MaxAttempts = 3
+	first, err := r.Submit(context.Background(), "browser-request", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Осмотреть дверь"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, err := r.Submit(context.Background(), "browser-request", PlayerAction{TimelineID: tid, ExpectedHead: 4, Text: "Осмотреть дверь"})
+	if err != nil || first != second || q.attempts != 1 || len(q.jobs) != 1 {
+		t.Fatal("turn was duplicated or has outer retries", err, q.attempts, len(q.jobs))
 	}
 }

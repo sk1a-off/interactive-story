@@ -24,7 +24,7 @@ done
 if [[ -f .env ]]; then
   while IFS='=' read -r key value || [[ -n "$key" ]]; do
     case "$key" in
-      GENERATION_TURN_PLANNER_V1|GENERATION_PROVISIONAL_BEAT_V1|GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1|GENERATION_FAST_STATE_V1|GENERATION_EXECUTION_TIMEOUT|HOST_DATABASE_URL|HOST_HTTP_ADDR|HOST_FRONTEND_HOST|HOST_STORY_LLM_BASE_URL|HOST_SECRET_STORE_PATH|HOST_MEDIA_ROOT|HOST_EMBEDDING_BASE_URL|HOST_OMNIVOICE_BASE_URL|IMAGE_WORKER_TOKEN)
+      GENERATION_TURN_PLANNER_V1|GENERATION_PROVISIONAL_BEAT_V1|GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1|GENERATION_FAST_STATE_V1|GENERATION_EXECUTION_TIMEOUT|HOST_DATABASE_URL|HOST_HTTP_ADDR|HOST_FRONTEND_HOST|HOST_STORY_LLM_BASE_URL|HOST_SECRET_STORE_PATH|HOST_MEDIA_ROOT|HOST_EMBEDDING_BASE_URL|HOST_OMNIVOICE_BASE_URL|IMAGE_WORKER_TOKEN|CHATGPT_BRIDGE_TOKEN_FILE)
         if [[ ! -v "$key" ]]; then
           value=${value%$'\r'}
           if [[ "$value" == \"*\" || "$value" == \'*\' ]]; then value=${value:1:${#value}-2}; fi
@@ -194,6 +194,21 @@ import json, sys
 with open(sys.argv[1]) as f: h = json.load(f)
 sys.exit(0 if h.get('model') == 'deepvk/USER2-small' and h.get('dimensions') == 384 else 1)
 PY
+fi
+
+story_provider=$(db_query "SELECT c.story_llm_provider FROM ai_config_revisions c JOIN ai_active_config a ON a.config_revision_id=c.id WHERE a.singleton=true")
+if [[ "$story_provider" == chatgpt_browser ]]; then
+  bridge_endpoint=$(db_query "SELECT c.settings->>'storyLlmEndpoint' FROM ai_config_revisions c JOIN ai_active_config a ON a.config_revision_id=c.id WHERE a.singleton=true")
+  case "$bridge_endpoint" in
+    http://127.0.0.1:8791|http://127.0.0.1:8791/|http://127.0.0.1:8791/v1|http://127.0.0.1:8791/v1/chat/completions|http://localhost:8791|http://localhost:8791/|http://localhost:8791/v1|http://localhost:8791/v1/chat/completions)
+      if ! curl --fail --silent --max-time 2 http://127.0.0.1:8791/ >/dev/null; then
+        say 'Запускаю локальный мост ChatGPT…'
+        (cd backend && go build -o "$ROOT/data/run/chatgptbridge" ./cmd/chatgptbridge) >>"$LOG_DIR/build.log" 2>&1 || die 'Не удалось собрать мост ChatGPT.'
+        start_process chatgpt-bridge.log "$ROOT" env CHATGPT_BRIDGE_TOKEN_FILE="${CHATGPT_BRIDGE_TOKEN_FILE:-$ROOT/data/secrets/chatgpt-bridge-token}" "$ROOT/data/run/chatgptbridge"
+        wait_http http://127.0.0.1:8791/ "${children[-1]}" 30 || die 'Мост ChatGPT не запустился.'
+      fi ;;
+    *) say 'Для ChatGPT оставь запущенным мост по адресу, сохранённому в настройках ИИ.' ;;
+  esac
 fi
 
 say '5/5 — Запускаю приложение…'

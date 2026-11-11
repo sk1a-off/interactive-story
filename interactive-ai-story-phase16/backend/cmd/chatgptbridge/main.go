@@ -1,4 +1,4 @@
-// chatgptbridge is an opt-in, synthetic-only browser transport experiment.
+// chatgptbridge provides opt-in local browser transport for project and diagnostic requests.
 package main
 
 import (
@@ -41,6 +41,9 @@ type workerDiagnostic struct {
 	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
+	Project            bool              `json:"project,omitempty"`
+	ReasoningEffort    string            `json:"reasoningEffort,omitempty"`
+	ResponseTimeoutMS  int               `json:"responseTimeoutMs,omitempty"`
 	InputEncoding      string            `json:"inputEncoding,omitempty"`
 	MessageFormat      string            `json:"messageFormat,omitempty"`
 	MessageMarker      string            `json:"messageMarker,omitempty"`
@@ -114,7 +117,11 @@ func writeJSON(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 func decode(w http.ResponseWriter, r *http.Request, v any) bool {
-	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	limit := int64(64 << 10)
+	if r.URL.Path == "/result" || (r.URL.Path == "/v1/chat/completions" && r.Header.Get("X-Story-Project") == "1") {
+		limit = 512 << 10
+	}
+	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	d.DisallowUnknownFields()
 	if err := d.Decode(v); err != nil {
 		http.Error(w, "invalid body", 400)
@@ -305,7 +312,10 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, j := range b.jobs {
 			if j.State == "queued" {
-				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" {
+				if (j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none")) && version != "0.3.0" {
+					continue
+				}
+				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" && version != "0.3.0" {
 					continue
 				}
 				j.State = "leased"
@@ -422,7 +432,7 @@ func main() {
 		}
 		b.maxActive = n
 	}
-	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 5 * time.Minute, IdleTimeout: 30 * time.Second}
+	srv := &http.Server{Addr: host, Handler: b, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 12 * time.Minute, IdleTimeout: 30 * time.Second}
 	log.Printf("Synthetic ChatGPT bridge: http://%s (main story generation unchanged)", host)
 	if err := srv.ListenAndServe(); err != nil {
 		log.Print(err)

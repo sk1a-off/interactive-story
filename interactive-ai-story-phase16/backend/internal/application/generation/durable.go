@@ -106,6 +106,11 @@ func (r *DurableRunner) Submit(ctx context.Context, key string, action PlayerAct
 	if attempts < 1 {
 		attempts = 3
 	}
+	// Browser retries belong to one validated LLM call. A failed/lost browser
+	// request must not replay an entire turn through the durable worker.
+	if cfg.StoryLLM.Provider == domaincfg.ProviderChatGPTBrowser {
+		attempts = 1
+	}
 	if err = r.Queue.Enqueue(ctx, job, attempts); err != nil {
 		if key != "" {
 			if existing, ok, findErr := r.Queue.FindByRequest(ctx, id.ID(action.TimelineID), key); findErr == nil && ok {

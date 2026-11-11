@@ -2,6 +2,7 @@ package aiconfig
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	domain "github.com/local/interactive-ai-story/backend/internal/domain/aiconfig"
@@ -58,6 +59,17 @@ func (s Service) Create(ctx context.Context, r UpdateRequest) (domain.SafeView, 
 		return domain.SafeView{}, e
 	}
 	keys := normalizeAPIKeys(r.StoryLLMAPIKeys, r.StoryLLMAPIKey)
+	if r.Config.StoryLLM.Provider == domain.ProviderChatGPTBrowser {
+		if len(keys) > 1 {
+			return domain.SafeView{}, domain.ErrInvalidConfig
+		}
+		if len(keys) == 1 {
+			raw, err := hex.DecodeString(keys[0])
+			if err != nil || len(raw) != 24 {
+				return domain.SafeView{}, domain.ErrInvalidConfig
+			}
+		}
+	}
 	if r.Config.StoryLLM.Provider == domain.ProviderGoogleGemini && len(keys) == 0 {
 		current, currentErr := s.Repo.Active(ctx)
 		canInherit := currentErr == nil && current.StoryLLM.Provider == domain.ProviderGoogleGemini && len(CredentialKeys(ctx, s.Secrets, current.ID)) > 0
@@ -109,7 +121,7 @@ func (s Service) Activate(ctx context.Context, i id.ID) (domain.SafeView, error)
 func (s Service) safe(ctx context.Context, v domain.Revision, active bool) domain.SafeView {
 	var pub domain.PublicSettings
 	_ = json.Unmarshal(v.Settings, &pub)
-	pub = pub.WithImageDefaults().WithMemoryDefaults().WithGenerationDefaults()
+	pub = pub.WithImageDefaults().WithMemoryDefaults().WithGenerationDefaults().WithBrowserDefaults()
 	keyCount := len(CredentialKeys(ctx, s.Secrets, v.ID))
 	return domain.SafeView{ID: v.ID.String(), Revision: v.Revision, StoryLLM: v.StoryLLM, Embedding: v.Embedding, Image: v.Image, Public: pub, Active: active, StoryLLMSecretConfigured: keyCount > 0, StoryLLMSecretCount: keyCount}
 }

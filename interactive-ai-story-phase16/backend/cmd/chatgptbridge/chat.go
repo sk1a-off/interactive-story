@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	storyllm "github.com/local/interactive-ai-story/backend/internal/adapters/storyllm/openai_compatible"
 )
 
 // This endpoint is experimental and never registered in the story application's router.
@@ -125,10 +127,18 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
-	if in.Stream || in.Model != "gpt-6-instant" || len(in.Messages) < 1 || len(in.Messages) > 8 {
+	if in.Stream || (in.Model != "gpt-6-instant" && in.Model != "gpt-6") || len(in.Messages) < 1 || len(in.Messages) > 8 {
 		http.Error(w, "only buffered gpt-6-instant with 1..8 text messages is supported", 400)
 		return
 	}
+	if in.ReasoningEffort == "" {
+		in.ReasoningEffort = "none"
+	}
+	if (in.ReasoningEffort != "none" && in.ReasoningEffort != "medium" && in.ReasoningEffort != "high") || (in.Model == "gpt-6-instant" && in.ReasoningEffort != "none") {
+		http.Error(w, "unsupported browser reasoning effort", 400)
+		return
+	}
+	project := r.Header.Get("X-Story-Project") == "1"
 	for _, m := range in.Messages {
 		if (m.Role != "system" && m.Role != "user") || strings.TrimSpace(m.Content) == "" {
 			http.Error(w, "only nonempty system/user messages are supported", 400)
@@ -160,12 +170,30 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			inputEncoding = "readable-plain-json"
 		}
 	}
-	if len(prompt) > 48<<10 {
-		http.Error(w, "prompt exceeds 48 KiB", 413)
+	limit := 48 << 10
+	if project {
+		limit = 128 << 10
+	}
+	if len(prompt) > limit {
+		http.Error(w, "prompt exceeds browser context limit", 413)
 		return
 	}
 	b.mu.Lock()
 	b.expire()
+	if project || in.ReasoningEffort != "none" {
+		compatible := false
+		for _, worker := range b.workers {
+			if worker.Version == "0.3.0" && (worker.Status == "ready" || worker.Status == "busy") && b.now().Sub(worker.Seen) < 15*time.Second {
+				compatible = true
+			}
+		}
+		if !compatible {
+			b.mu.Unlock()
+			w.Header().Set("X-Story-Bridge-State", "unavailable")
+			http.Error(w, "Start ChatGPT worker 0.3.0 before using the browser provider", 503)
+			return
+		}
+	}
 	pending := 0
 	for _, j := range b.jobs {
 		if active(j.State) {
@@ -186,7 +214,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	j := &job{InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(4 * time.Minute)}
+	j := &job{Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(storyllm.BrowserTimeout(in.ReasoningEffort))}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)
@@ -211,12 +239,17 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			b.mu.Lock()
 			b.expire()
 			state, reply := j.State, j.Reply
+			retryable := state == "failed" && j.Sent != nil && j.Error == "invalid JSON, probe ID or content"
 			b.mu.Unlock()
 			if active(state) {
 				continue
 			}
 			if state != "complete" {
-				http.Error(w, "browser test job "+state+"; inspect local dashboard", 502)
+				w.Header().Set("X-Story-Bridge-State", state)
+				if retryable {
+					w.Header().Set("X-Story-Bridge-Retryable", "true")
+				}
+				http.Error(w, "browser job "+state+"; inspect local dashboard", 502)
 				return
 			}
 			normalized, ok := jsonReply(reply)
@@ -224,7 +257,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "invalid JSON response", 502)
 				return
 			}
-			writeJSON(w, map[string]any{"id": j.ID, "object": "chat.completion", "model": "gpt-6-instant", "choices": []any{map[string]any{"index": 0, "message": map[string]string{"role": "assistant", "content": normalized}, "finish_reason": "stop"}}})
+			writeJSON(w, map[string]any{"id": j.ID, "object": "chat.completion", "model": in.Model, "choices": []any{map[string]any{"index": 0, "message": map[string]string{"role": "assistant", "content": normalized}, "finish_reason": "stop"}}})
 			return
 		}
 	}

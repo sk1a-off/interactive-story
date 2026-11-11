@@ -47,11 +47,11 @@ def main():
     if any(j['state'] in ('queued', 'leased', 'dispatched') for j in before['jobs']):
         raise SystemExit('Another request is active; no replay sent')
     now = dt.datetime.now(dt.timezone.utc)
-    ready = [w for w in before['workers'].values() if w.get('version') == '0.2.2'
+    ready = [w for w in before['workers'].values() if w.get('version') in ('0.2.2','0.3.0')
              and w.get('status') == 'ready'
              and (now - dt.datetime.fromisoformat(w['seen'].replace('Z', '+00:00'))).total_seconds() < 15]
     if not ready:
-        raise SystemExit('No ready 0.2.2 worker; no replay sent')
+        raise SystemExit('No ready compatible worker; no replay sent')
     if args.output.exists():
         raise SystemExit('Output already exists; refusing duplicate replay')
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -60,7 +60,7 @@ def main():
         json.dump({'sourceJobPrefix': args.job_prefix, 'started': now.isoformat()}, f)
     save(pathlib.Path(str(args.output) + '.bridge-before.json'), before)
     row = {'scope': 'Independent diagnostic replay, not a replacement for a failed benchmark attempt',
-           'sourceJobPrefix': args.job_prefix, 'workerVersion': '0.2.2',
+           'sourceJobPrefix': args.job_prefix, 'workerVersion': ready[0]['version'],
            'requestSHA256': hashlib.sha256(payload).hexdigest(), 'started': now.isoformat()}
     start = time.monotonic()
     request = urllib.request.Request('http://127.0.0.1:8791/v1/chat/completions',

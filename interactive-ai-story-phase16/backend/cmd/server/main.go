@@ -131,6 +131,7 @@ func main() {
 		aiSettingsService.Memory = memoryRuntime
 		promptSettingsService := appprompt.Service{Repo: promptRepo}
 		storyRequests := storyllm.NewRequestControl(3, 1)
+		browserRequests := storyllm.NewRequestControl(1, 1)
 		storyClient := func(ctx context.Context, rev domainconfig.Revision, promptRev *domainprompt.Revision) (aiport.StoryLLM, error) {
 			var public domainconfig.PublicSettings
 			_ = json.Unmarshal(rev.Settings, &public)
@@ -139,6 +140,17 @@ func main() {
 				endpoint = cfg.StoryLLMBaseURL
 			}
 			keys := appaiconfig.CredentialKeys(ctx, secretStore, rev.ID)
+			if rev.StoryLLM.Provider == domainconfig.ProviderChatGPTBrowser {
+				public = public.WithBrowserDefaults()
+				if len(keys) == 0 {
+					token, err := storyllm.LoadBrowserToken(cfg.ChatGPTBridgeTokenFile)
+					if err != nil {
+						return nil, err
+					}
+					keys = []string{token}
+				}
+				return storyllm.New(storyllm.Config{BaseURL: endpoint, APIKeys: keys, Provider: rev.StoryLLM.Provider, Model: rev.StoryLLM.Model, Profile: rev.StoryLLM.Profile, Timeout: storyllm.BrowserTimeout(public.StoryLLMBrowserReasoning), PromptSet: promptRev, JSONSchema: true, Requests: browserRequests, ReasoningEffort: public.StoryLLMBrowserReasoning, BrowserRetries: *public.StoryLLMBrowserRetries}, nil)
+			}
 			if rev.StoryLLM.Provider == domainconfig.ProviderGoogleGemini && len(keys) == 0 {
 				return nil, errors.New("Google AI API key is not configured for the active AI revision")
 			}

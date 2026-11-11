@@ -11,6 +11,7 @@ type Config struct {
 	AppEnv                             string
 	HTTPAddr                           string
 	DatabaseURL                        string
+	ChatGPTBridgeTokenFile             string
 	StoryLLMBaseURL                    string
 	StoryLLMAPIKey                     string
 	StoryLLMModel                      string
@@ -40,6 +41,7 @@ const DefaultGenerationExecutionTimeout = 25 * time.Minute
 
 func Load() (Config, error) {
 	cfg := Config{
+		ChatGPTBridgeTokenFile:             envOrDefault("CHATGPT_BRIDGE_TOKEN_FILE", "../data/secrets/chatgpt-bridge-token"),
 		AppEnv:                             envOrDefault("APP_ENV", "development"),
 		HTTPAddr:                           envOrDefault("HTTP_ADDR", "127.0.0.1:8787"),
 		DatabaseURL:                        strings.TrimSpace(os.Getenv("DATABASE_URL")),
