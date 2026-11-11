@@ -1,0 +1,72 @@
+{
+  "synthetic": true,
+  "total": 6,
+  "completed": 6,
+  "peakConcurrentDispatched": 2,
+  "workerCounts": {
+    "d495f45c-2a34-4f1b-809a-d0ecd2fce23d": 3,
+    "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23": 3
+  },
+  "jobs": [
+    {
+      "id": "7b7f261e85aa662227e843ca8afa339477502022d02945ed",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777601579+03:00",
+      "sent": "2026-11-11T13:42:49.951072078+03:00",
+      "finished": "2026-11-11T13:42:55.007702327+03:00",
+      "reasoningEffort": "none"
+    },
+    {
+      "id": "488d1dc3f58b93ae90f885d3ed25e46bc0fe5dbe5c665216",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777609509+03:00",
+      "sent": "2026-11-11T13:42:50.899554794+03:00",
+      "finished": "2026-11-11T13:42:55.508372277+03:00",
+      "reasoningEffort": "none"
+    },
+    {
+      "id": "0c7bb48177886cacac518600e478cc08343dfc8662622ea9",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777611359+03:00",
+      "sent": "2026-11-11T13:43:00.74914793+03:00",
+      "finished": "2026-11-11T13:43:05.849931369+03:00",
+      "reasoningEffort": "none"
+    },
+    {
+      "id": "9b9f0a00b89f33f8369e90ceba61e00fc5becc370f3104a2",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777659829+03:00",
+      "sent": "2026-11-11T13:43:01.094480903+03:00",
+      "finished": "2026-11-11T13:43:06.160162255+03:00",
+      "reasoningEffort": "none"
+    },
+    {
+      "id": "eed45b10d15b8d522c5752b0391ef761b17760cd44df5e21",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777688079+03:00",
+      "sent": "2026-11-11T13:43:11.340208174+03:00",
+      "finished": "2026-11-11T13:43:16.381372498+03:00",
+      "reasoningEffort": "none"
+    },
+    {
+      "id": "fa74334402ea3eddeeded2977a796dd3e90e5ac2579842f0",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.3.0",
+      "state": "complete",
+      "created": "2026-11-11T13:42:48.777733668+03:00",
+      "sent": "2026-11-11T13:43:11.650912578+03:00",
+      "finished": "2026-11-11T13:43:16.202353933+03:00",
+      "reasoningEffort": "none"
+    }
+  ]
+}
