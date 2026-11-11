@@ -262,14 +262,14 @@ func TestProjectRequestKeepsBoundedLargerContext(t *testing.T) {
 	b.workers["project-worker"] = workerState{Seen: b.now(), Status: "ready", Version: "0.3.0"}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	body, _ := json.Marshal(map[string]any{"model": "gpt-6", "messages": []any{map[string]string{"role": "user", "content": strings.Repeat("Текст контекста ", 3500)}}})
+	body, _ := json.Marshal(map[string]any{"model": "gpt-6", "messages": []any{map[string]string{"role": "user", "content": strings.Repeat("Текст контекста ", 10000)}}})
 	r := httptest.NewRequest("POST", "http://"+b.host+"/v1/chat/completions", strings.NewReader(string(body))).WithContext(ctx)
 	r.Header.Set("Authorization", "Bearer "+b.token)
 	r.Header.Set("X-Story-Project", "1")
 	done := make(chan struct{})
 	go func() { b.ServeHTTP(httptest.NewRecorder(), r); close(done) }()
 	job := waitChatJob(t, b)
-	if len(job.Prompt) < 48<<10 || len(job.Prompt) > 128<<10 {
+	if len(job.Prompt) <= 128<<10 || len(job.Prompt) > b.maxPromptBytes {
 		t.Fatal("wrong project context bounds", len(job.Prompt))
 	}
 	cancel()

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.3.0
+// @version      0.4.0
 // @description  Story generation and probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.3.0';
+  const VERSION='0.4.0';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -80,11 +80,52 @@
     const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
     return picker&&controlText(picker)===({none:'Instant',medium:'Medium',high:'High'}[effort]);
   }
+  function fileNameSeen(root,file,excluded=[]){
+    if(!root||!file)return false;
+    const stem=file.name.replace(/\.txt$/,'');
+    return [...root.querySelectorAll('*')].some(e=>!panel.contains(e)&&!excluded.some(x=>x?.contains(e))&&e.getClientRects().length&&
+      [e.getAttribute('title'),e.getAttribute('aria-label'),controlText(e)].some(text=>text===file.name||text===stem));
+  }
+  function attachmentState(file){
+    const box=editor(),root=box?.closest('form')||document.querySelector('main');
+    const pending=!!root?.querySelector('[role="progressbar"],[aria-busy="true"]');
+    const alert=[...root?.querySelectorAll('[role="alert"]')||[]].filter(e=>e.getClientRects().length&&controlText(e));
+    const remove=[...root?.querySelectorAll('button')||[]].filter(e=>/^(Remove file|Remove attachment|Удалить файл|Удалить вложение)/i.test(label(e)));
+    return {present:fileNameSeen(root,file,[box]),pending,error:alert.length>0,extra:remove.length>1};
+  }
+  async function attachText(file,lease){
+    const bytes=new TextEncoder().encode(file.content);
+    const upload=new File([bytes],file.name,{type:'text/plain;charset=utf-8'});
+    const digest=await crypto.subtle.digest('SHA-256',await upload.arrayBuffer());
+    const hash=[...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+    if(upload.size!==file.bytes||hash!==file.sha256)throw Error('TXT: размер или SHA-256 не совпадает с заданием.');
+    const inputs=[...document.querySelectorAll('input[type="file"]')];
+    const input=inputs.find(e=>!e.accept||['*','*/*'].includes(e.accept)||/text\/plain|\.txt/i.test(e.accept));
+    if(!input)throw Error('TXT: не найдено поле загрузки файлов.');
+    const transfer=new DataTransfer();transfer.items.add(upload);
+    input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+    let since=0;
+    await waitFor(()=>{
+      const state=attachmentState(file);
+      if(state.error||state.extra)throw Error('TXT: ошибка загрузки или постороннее вложение.');
+      const send=exactButton(['Отправить','Send']);
+      if(!state.present||state.pending||!send||send.disabled){since=0;return false;}
+      if(!since)since=Date.now();return Date.now()-since>=1500;
+    },60000);
+    const accepted=await request('/attachment',{...lease,fileName:file.name,fileSha256:hash,fileBytes:upload.size});
+    if(!accepted.verified)throw Error('TXT: мост не подтвердил вложение.');
+  }
   function userMessage(current){
     const heading=roles('user')[0];
     const bubble=heading?.parentElement.querySelector('[data-user-message-bubble]');
     const contents=[...bubble?.querySelectorAll('[data-search-result-target]')||[]].filter(e=>{const parent=e.parentElement.closest('[data-search-result-target]');return (!parent||!bubble.contains(parent))&&e.getClientRects().length;});
     const more=[...bubble?.querySelectorAll('button')||[]].find(e=>['Показать ещё','Показать больше','Show more'].includes(controlText(e)));
+    if(current?.messageFormat==='attachment-txt-v1'&&bubble){
+      const raw=contents.map(e=>e.textContent).join('').trim();
+      const fileSeen=fileNameSeen(heading.parentElement,current.attachment,contents);
+      if(raw===current.prompt&&fileSeen)return {text:current.prompt,source:'attached-txt',bubble};
+      return {text:null,source:fileSeen?'attachment-text-pending':'attachment-missing',bubble,invalid:!!raw&&raw!==current.prompt};
+    }
     if(current?.messageFormat==='readable-json-v3'&&bubble){
       const codes=[...bubble.querySelectorAll('code')];
       const markerSeen=bubble.textContent.includes(current.messageMarker);
@@ -268,11 +309,13 @@
         // Use the browser editing command so the React composer receives a native input event.
         if(!document.execCommand('insertText',false,current.prompt))throw Error('Не удалось заполнить поле.');
         if(!editorMatches(box,current.prompt))throw Error('Текст поля не совпадает с заданием.');
+        if(current.attachment){show('Загружаю TXT · '+current.attachment.bytes+' байт…');await attachText(current.attachment,lease);}
         const send=await waitFor(()=>{const e=exactButton(['Отправить','Send']);return e&&!e.disabled&&e;},5000);
         if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
         show('GPT-6 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8)+' · ожидание ответа…');
         await request('/send',lease); // A failed/ambiguous authorization NEVER leads to a click or retry.
         if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
+        if(current.attachment){const state=attachmentState(current.attachment);if(!state.present||state.pending||state.error||state.extra)throw Error('TXT исчез или изменился перед отправкой.');}
         send.click(); // Exactly one click for this lease.
         let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
@@ -320,7 +363,7 @@
     }catch(e){
       const shown=userMessage(current);
       const expected=current?.messageFormat==='readable-json-v3'?current.messageContent:current?.prompt;
-      lastFailure={message:String(e.message||e),temporary:temporary(),userMessage:{source:shown.source,expectedLength:expected?.length??null,actualLength:shown.text?.length??null,matches:current?shown.text===expected:null}};
+      lastFailure={message:String(e.message||e),temporary:temporary(),fileInputs:[...document.querySelectorAll('input[type="file"]')].map(e=>({accept:e.accept,multiple:e.multiple})),attachment:current?.attachment?attachmentState(current.attachment):null,userMessage:{source:shown.source,expectedLength:expected?.length??null,actualLength:shown.text?.length??null,matches:current?shown.text===expected:null}};
       if(current){try{const failed=await request('/fail',{worker,id:current.id,lease:current.lease,error:JSON.stringify({version:VERSION,stage:lastModelFailure?.stage||'transport',message:lastFailure.message,expectedLength:lastFailure.userMessage.expectedLength,actualLength:lastFailure.userMessage.actualLength,assistant:assistantState().diagnostic})});knownTerminal=failed.state;}catch{/* No resubmission. */}}
       if(running&&current?.recoverSafeFailure&&knownTerminal==='failed'){
         const failures=Number(sessionStorage.getItem(KEY+'safeFailures')||0)+1;

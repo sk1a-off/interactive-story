@@ -4,9 +4,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +29,28 @@ type completionRequest struct {
 	MaxTokens       int             `json:"max_tokens"`
 	ReasoningEffort string          `json:"reasoning_effort,omitempty"`
 	ResponseFormat  json.RawMessage `json:"response_format"`
+}
+
+// This is a local transport guard, not a claim about the model context window.
+const defaultProjectPromptBytes = 1 << 20
+
+func projectPromptLimit(raw string) (int, error) {
+	if raw == "" {
+		return defaultProjectPromptBytes, nil
+	}
+	kib, err := strconv.Atoi(raw)
+	if err != nil || kib < 128 || kib > 4096 {
+		return 0, fmt.Errorf("CHATGPT_BRIDGE_MAX_PROMPT_KIB must be 128..4096")
+	}
+	return kib << 10, nil
+}
+func rejectSize(w http.ResponseWriter, actual int64, limit int, scope string) {
+	if actual >= 0 {
+		w.Header().Set("X-Story-Bridge-Request-Bytes", strconv.FormatInt(actual, 10))
+	}
+	w.Header().Set("X-Story-Bridge-Limit-Bytes", strconv.Itoa(limit))
+	w.Header().Set("X-Story-Bridge-Limit-Scope", scope)
+	http.Error(w, "browser transport size limit exceeded", http.StatusRequestEntityTooLarge)
 }
 
 func jsonReply(reply string) (string, bool) {
@@ -124,7 +148,7 @@ func readableMessage(in completionRequest, id string) (prompt, marker, content s
 }
 func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	var in completionRequest
-	if !decode(w, r, &in) {
+	if !b.decode(w, r, &in) {
 		return
 	}
 	if in.Stream || (in.Model != "gpt-6-instant" && in.Model != "gpt-6") || len(in.Messages) < 1 || len(in.Messages) > 8 {
@@ -170,12 +194,22 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			inputEncoding = "readable-plain-json"
 		}
 	}
+	var attachment *promptAttachment
+	if project && (b.projectInputFormat == "txt" || r.Header.Get("X-Story-Input-Format") == attachmentFormat) {
+		prompt, attachment = textAttachment(in, id)
+		messageFormat, marker, content = attachmentFormat, "Story request "+id, ""
+		inputEncoding = attachmentFormat
+	}
 	limit := 48 << 10
 	if project {
-		limit = 128 << 10
+		limit = b.maxPromptBytes
 	}
-	if len(prompt) > limit {
-		http.Error(w, "prompt exceeds browser context limit", 413)
+	size := len(prompt)
+	if attachment != nil {
+		size += attachment.Bytes
+	}
+	if size > limit {
+		rejectSize(w, int64(size), limit, "prompt")
 		return
 	}
 	b.mu.Lock()
@@ -183,14 +217,19 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	if project || in.ReasoningEffort != "none" {
 		compatible := false
 		for _, worker := range b.workers {
-			if worker.Version == "0.3.0" && (worker.Status == "ready" || worker.Status == "busy") && b.now().Sub(worker.Seen) < 15*time.Second {
+			if supportsProject(worker.Version) && (attachment == nil || supportsAttachment(worker.Version)) && (worker.Status == "ready" || worker.Status == "busy") && b.now().Sub(worker.Seen) < 15*time.Second {
 				compatible = true
 			}
 		}
 		if !compatible {
 			b.mu.Unlock()
 			w.Header().Set("X-Story-Bridge-State", "unavailable")
-			http.Error(w, "Start ChatGPT worker 0.3.0 before using the browser provider", 503)
+			required := "0.3.0"
+			if attachment != nil {
+				required = "0.4.0"
+			}
+			w.Header().Set("X-Story-Bridge-Worker-Version", required)
+			http.Error(w, "Start ChatGPT worker "+required+" before using the browser provider", 503)
 			return
 		}
 	}
@@ -222,7 +261,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	if project {
 		queuedBudget = storyllm.BrowserQueueWait
 	}
-	j := &job{Background: project && r.Header.Get("X-Story-Priority") == "background", Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(queuedBudget)}
+	j := &job{Attachment: attachment, Background: project && r.Header.Get("X-Story-Priority") == "background", Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(queuedBudget)}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)

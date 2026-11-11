@@ -1,0 +1,44 @@
+[
+  {
+    "elapsedSeconds": 26.201741381,
+    "goal": "browser-parallel-live-2026-11-11-1",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-1",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 24.50138831,
+    "goal": "browser-parallel-live-2026-11-11-2",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-2",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 39.501604086,
+    "goal": "browser-parallel-live-2026-11-11-3",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-3",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 10.101037222,
+    "goal": "browser-parallel-live-2026-11-11-4",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-4",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 39.401019983,
+    "goal": "browser-parallel-live-2026-11-11-5",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-5",
+    "protocolRetries": 0
+  },
+  {
+    "elapsedSeconds": 11.900894748,
+    "goal": "browser-parallel-live-2026-11-11-6",
+    "ok": true,
+    "probe": "browser-parallel-live-2026-11-11-6",
+    "protocolRetries": 0
+  }
+]

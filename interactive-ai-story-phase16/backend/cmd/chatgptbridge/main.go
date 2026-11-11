@@ -8,6 +8,7 @@ import (
 	"embed"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -43,6 +44,8 @@ type workerDiagnostic struct {
 	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
+	Attachment         *promptAttachment `json:"attachment,omitempty"`
+	AttachmentVerified bool              `json:"attachmentVerified,omitempty"`
 	Background         bool              `json:"background,omitempty"`
 	Project            bool              `json:"project,omitempty"`
 	ReasoningEffort    string            `json:"reasoningEffort,omitempty"`
@@ -73,15 +76,17 @@ type workerState struct {
 	Status  string    `json:"status"`
 }
 type bridge struct {
-	mu          sync.Mutex
-	token       string
-	host        string
-	jobs        []*job
-	workers     map[string]workerState
-	leaseWarmup time.Duration
-	leaseReady  map[string]time.Time
-	maxActive   int
-	now         func() time.Time
+	mu                 sync.Mutex
+	token              string
+	host               string
+	jobs               []*job
+	workers            map[string]workerState
+	leaseWarmup        time.Duration
+	leaseReady         map[string]time.Time
+	projectInputFormat string
+	maxPromptBytes     int
+	maxActive          int
+	now                func() time.Time
 }
 
 func secret() string {
@@ -92,7 +97,7 @@ func secret() string {
 	return hex.EncodeToString(b[:])
 }
 func newBridge(host string) *bridge {
-	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: storyllm.DefaultBrowserParallelism, now: time.Now}
+	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: storyllm.DefaultBrowserParallelism, maxPromptBytes: defaultProjectPromptBytes, now: time.Now}
 }
 func active(s string) bool { return s == "queued" || s == "leased" || s == "dispatched" }
 func (b *bridge) expire() {
@@ -119,14 +124,23 @@ func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
 }
-func decode(w http.ResponseWriter, r *http.Request, v any) bool {
+func (b *bridge) decode(w http.ResponseWriter, r *http.Request, v any) bool {
 	limit := int64(64 << 10)
-	if r.URL.Path == "/result" || (r.URL.Path == "/v1/chat/completions" && r.Header.Get("X-Story-Project") == "1") {
+	if r.URL.Path == "/result" {
 		limit = 512 << 10
+	}
+	if r.URL.Path == "/v1/chat/completions" && r.Header.Get("X-Story-Project") == "1" {
+		// Wire JSON can escape every byte of readable content as \u00XX.
+		limit = int64(6*b.maxPromptBytes + (64 << 10))
 	}
 	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, limit))
 	d.DisallowUnknownFields()
 	if err := d.Decode(v); err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			rejectSize(w, r.ContentLength, int(limit), "body")
+			return false
+		}
 		http.Error(w, "invalid body", 400)
 		return false
 	}
@@ -206,7 +220,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			v.Lease = ""
 			out = append(out, v)
 		}
-		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive, "lease_warmup_ms": b.leaseWarmup.Milliseconds()})
+		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive, "max_prompt_bytes": b.maxPromptBytes, "project_input_format": b.projectInputFormat, "lease_warmup_ms": b.leaseWarmup.Milliseconds()})
 		return
 	}
 	if r.Method != "POST" {
@@ -217,7 +231,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		var in struct {
 			Count int `json:"count"`
 		}
-		if !decode(w, r, &in) {
+		if !b.decode(w, r, &in) {
 			return
 		}
 		if in.Count != 1 && in.Count != 3 {
@@ -242,15 +256,18 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Version string `json:"version,omitempty"`
-		Worker  string `json:"worker"`
-		ID      string `json:"id"`
-		Lease   string `json:"lease"`
-		Reply   string `json:"reply"`
-		Error   string `json:"error"`
-		Status  string `json:"status"`
+		Version    string `json:"version,omitempty"`
+		Worker     string `json:"worker"`
+		ID         string `json:"id"`
+		Lease      string `json:"lease"`
+		Reply      string `json:"reply"`
+		Error      string `json:"error"`
+		Status     string `json:"status"`
+		FileName   string `json:"fileName"`
+		FileSHA256 string `json:"fileSha256"`
+		FileBytes  int    `json:"fileBytes"`
 	}
-	if !decode(w, r, &in) {
+	if !b.decode(w, r, &in) {
 		return
 	}
 	if len(in.Worker) < 8 || len(in.Worker) > 80 {
@@ -324,10 +341,13 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, j := range ordered {
 			if j.State == "queued" {
-				if (j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none")) && version != "0.3.0" {
+				if j.Attachment != nil && !supportsAttachment(version) {
 					continue
 				}
-				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" && version != "0.3.0" {
+				if (j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none")) && !supportsProject(version) {
+					continue
+				}
+				if j.MessageFormat == "readable-json-v3" && version != "0.2.2" && !supportsProject(version) {
 					continue
 				}
 				if j.Project || (j.ReasoningEffort != "" && j.ReasoningEffort != "none") {
@@ -356,8 +376,15 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch r.URL.Path {
+	case "/attachment":
+		if j.State != "leased" || j.Attachment == nil || in.FileName != j.Attachment.Name || in.FileSHA256 != j.Attachment.SHA256 || in.FileBytes != j.Attachment.Bytes {
+			http.Error(w, "attachment does not match lease", 409)
+			return
+		}
+		j.AttachmentVerified = true
+		writeJSON(w, map[string]bool{"verified": true})
 	case "/send":
-		if j.State != "leased" {
+		if j.State != "leased" || (j.Attachment != nil && !j.AttachmentVerified) {
 			http.Error(w, "send already authorized or expired", 409)
 			return
 		}
@@ -439,6 +466,18 @@ func main() {
 			log.Fatal(err)
 		}
 		b.token = token
+	}
+	b.projectInputFormat = os.Getenv("CHATGPT_BRIDGE_INPUT_FORMAT")
+	if b.projectInputFormat == "" {
+		b.projectInputFormat = "txt"
+	}
+	if b.projectInputFormat != "txt" && b.projectInputFormat != "text" {
+		log.Fatal("CHATGPT_BRIDGE_INPUT_FORMAT must be txt or text")
+	}
+	var limitErr error
+	b.maxPromptBytes, limitErr = projectPromptLimit(os.Getenv("CHATGPT_BRIDGE_MAX_PROMPT_KIB"))
+	if limitErr != nil {
+		log.Fatal(limitErr)
 	}
 	if raw := os.Getenv("CHATGPT_BRIDGE_MAX_ACTIVE"); raw != "" {
 		n, err := strconv.Atoi(raw)

@@ -174,7 +174,7 @@ func TestAccessBoundaries(t *testing.T) {
 	if w := call(b, "/probes", map[string]int{"count": 2}); w.Code != 400 {
 		t.Fatal("invalid count", w.Code)
 	}
-	if w := call(b, "/claim", map[string]string{"worker": "worker-oversize", "reply": strings.Repeat("x", 70<<10)}); w.Code != 400 {
+	if w := call(b, "/claim", map[string]string{"worker": "worker-oversize", "reply": strings.Repeat("x", 70<<10)}); w.Code != 413 {
 		t.Fatal("unbounded body", w.Code)
 	}
 }

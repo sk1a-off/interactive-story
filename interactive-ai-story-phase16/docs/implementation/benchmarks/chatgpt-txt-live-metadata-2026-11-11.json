@@ -1,0 +1,148 @@
+{
+  "synthetic": true,
+  "completed": 8,
+  "peakParallelTXTRequests": 2,
+  "parallelWorkerCounts": {
+    "d495f45c-2a34-4f1b-809a-d0ecd2fce23d": 3,
+    "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23": 3
+  },
+  "largeFileBytes": 225937,
+  "jobs": [
+    {
+      "id": "a825f8f3338d94f7aaf85daf3a139998c98b1f8273f1805c",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:09.662693198+03:00",
+      "sent": "2026-11-11T15:52:15.148695986+03:00",
+      "finished": "2026-11-11T15:52:20.268070996+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-a825f8f3338d94f7aaf85daf3a139998c98b1f8273f1805c.txt",
+        "bytes": 988,
+        "sha256": "556e8998f8799113696941a639d47a507699c19aedc9ab71dbba93194808bacc"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "5528b2c2c8b29579bcda226f74ca58924f0a2ab84d168477",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.969670756+03:00",
+      "sent": "2026-11-11T15:53:04.964593097+03:00",
+      "finished": "2026-11-11T15:53:10.061819969+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-5528b2c2c8b29579bcda226f74ca58924f0a2ab84d168477.txt",
+        "bytes": 855,
+        "sha256": "8236ecdde314195cadc2a7150b2c29f571ceb189566bced649b8f674c2f6a0bd"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "59ba81f30e185906e6202789ff3886625491ed4854c0286d",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.969679946+03:00",
+      "sent": "2026-11-11T15:53:05.675563884+03:00",
+      "finished": "2026-11-11T15:53:11.826591939+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-59ba81f30e185906e6202789ff3886625491ed4854c0286d.txt",
+        "bytes": 855,
+        "sha256": "6900c55d5eb1508b49008e6b87f45ef991aab48bfa0e99eb07b744edba9af829"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "fd179b31bf18c1e8f1040e56fa54dd67cee1b75ad7df2f15",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.969681156+03:00",
+      "sent": "2026-11-11T15:53:19.271213727+03:00",
+      "finished": "2026-11-11T15:53:24.407054623+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-fd179b31bf18c1e8f1040e56fa54dd67cee1b75ad7df2f15.txt",
+        "bytes": 855,
+        "sha256": "53082c40e6550e9461fe884fb2d19ca1905bfa35856326b7b1ea0e3ef2144c9b"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "0b9ec9cd22e78c8856638cc046e7d5a02a09ba513e685111",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.969740536+03:00",
+      "sent": "2026-11-11T15:53:21.055006716+03:00",
+      "finished": "2026-11-11T15:53:26.120385148+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-0b9ec9cd22e78c8856638cc046e7d5a02a09ba513e685111.txt",
+        "bytes": 855,
+        "sha256": "14d96b751ce9e9877ae4139cda5a040803ebe6a9b13b25da65ff6da4c391b202"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "bf13f39024fa8fa9422fc172458e2ab0903d1a86f7bd0d0a",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.969773386+03:00",
+      "sent": "2026-11-11T15:53:33.665986369+03:00",
+      "finished": "2026-11-11T15:53:39.28281496+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-bf13f39024fa8fa9422fc172458e2ab0903d1a86f7bd0d0a.txt",
+        "bytes": 855,
+        "sha256": "1431b53a5ed4371648b7b36a7960e31061c86941f5d2bc88d2b150c9957f90c2"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "89b361890c790d0a74048ea38d28644a3eb647e9d8ca48a1",
+      "worker": "7e0ee6c8-c92b-4d7b-b998-df48bc7a9e23",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:52:59.970049385+03:00",
+      "sent": "2026-11-11T15:53:34.831964089+03:00",
+      "finished": "2026-11-11T15:53:39.376401348+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-89b361890c790d0a74048ea38d28644a3eb647e9d8ca48a1.txt",
+        "bytes": 855,
+        "sha256": "68d51f477b1985e5f5d1292dcda0e15f4582ba622734ecf15c871879d1860d58"
+      },
+      "composerBytes": 375
+    },
+    {
+      "id": "fe7e42dbf5542a3b9e155cef75d38e6e4c3c376d048eeab6",
+      "worker": "d495f45c-2a34-4f1b-809a-d0ecd2fce23d",
+      "workerVersion": "0.4.0",
+      "state": "complete",
+      "created": "2026-11-11T15:53:00.833673174+03:00",
+      "sent": "2026-11-11T15:53:49.600126046+03:00",
+      "finished": "2026-11-11T15:53:59.180138992+03:00",
+      "attachmentVerified": true,
+      "messageFormat": "attachment-txt-v1",
+      "file": {
+        "name": "story-fe7e42dbf5542a3b9e155cef75d38e6e4c3c376d048eeab6.txt",
+        "bytes": 225937,
+        "sha256": "02a642445e4718dd7d309dfa917d977ccdf4568a787f3f44ef6af82b26cd3cea"
+      },
+      "composerBytes": 375
+    }
+  ]
+}

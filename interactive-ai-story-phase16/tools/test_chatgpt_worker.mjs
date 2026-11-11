@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash,webcrypto} from 'node:crypto';
 const require=createRequire(new URL('../frontend/package.json',import.meta.url));
 const {JSDOM,VirtualConsole}=require('jsdom');
 const source=readFileSync(new URL('../backend/cmd/chatgptbridge/web/worker.user.js',import.meta.url),'utf8');
@@ -22,6 +23,25 @@ function fixture(options={}){
   if(options.truncatedMessage)j.messageContent+='\n'+'Длинный текст '.repeat(1500);
   j.messageContent=j.messageContent.trim();
   j.prompt=j.messageMarker+'\nExecute the block.\n```text\n'+j.messageContent+'\n```';
+ }
+ if(options.attachment){
+  const content='SYSTEM INSTRUCTIONS\nВерни JSON.\nUSER INPUT\nПроверить дверь.';
+  j.messageFormat='attachment-txt-v1';j.messageMarker='Story request job-id';j.prompt='Story request job-id. Execute attached story-job-id.txt.';
+  j.attachment={name:'story-job-id.txt',content,bytes:Buffer.byteLength(content),sha256:createHash('sha256').update(content).digest('hex')};
+  if(options.badFileHash)j.attachment.sha256='0'.repeat(64);
+  w.TextEncoder=TextEncoder;w.File=File;Object.defineProperty(w.crypto,'subtle',{value:webcrypto.subtle});
+  w.DataTransfer=class{constructor(){this.files=[];this.items={add:file=>this.files.push(file)}}};
+  if(!options.missingFileInput){
+   const input=w.document.createElement('input');input.type='file';input.multiple=true;input.accept='.txt';
+   let files=[];Object.defineProperty(input,'files',{get:()=>files,set:value=>{files=value}});
+   input.onchange=()=>{
+    const card=w.document.createElement('div');card.id='upload-card';card.textContent=files[0].name;
+    const remove=w.document.createElement('button');remove.setAttribute('aria-label','Remove file');card.append(remove);w.document.querySelector('main').append(card);
+    if(options.uploadPending)card.setAttribute('aria-busy','true');
+    if(options.uploadError){const alert=w.document.createElement('div');alert.setAttribute('role','alert');alert.textContent='Upload failed';card.append(alert);}
+   };
+   w.document.querySelector('main').append(input);
+  }
  }
  let expansionClicks=0;
  const box=w.document.querySelector('[contenteditable]');
@@ -73,8 +93,10 @@ function fixture(options={}){
  w.GM_xmlhttpRequest=r=>{
   const path=new URL(r.url).pathname,body=JSON.parse(r.data);requests.push({path,body});
   if(path==='/send'&&options.lostAuthorization){queueMicrotask(()=>r.ontimeout());return;}
+  if(path==='/send'&&options.removeFileDuringAuthorization)w.document.querySelector('#upload-card')?.remove();
   if(path==='/send'&&options.stopDuringAuthorization)w.document.querySelector('#story-chatgpt-bridge button').click();
   let value={};if(path==='/claim')value=j;
+  if(path==='/attachment')value={verified:!options.uploadAckRejected};
   if(path==='/fail')value={state:options.failedState||'uncertain'};
   if(path==='/result')value={state:options.rejectedResult?'failed':'complete'};
   queueMicrotask(()=>r.onload({status:200,responseText:JSON.stringify(value)}));
@@ -83,6 +105,8 @@ function fixture(options={}){
   clicks++;
   const user=w.document.createElement('div');const heading=w.document.createElement('h4');heading.dataset.conversationRole='user';
   const bubble=w.document.createElement('div');bubble.dataset.userMessageBubble='true';const content=w.document.createElement('div');content.dataset.searchResultTarget='';content.textContent=options.wrongUser?'unrelated prompt':options.truncatedMessage?j.prompt.slice(0,10240):j.prompt;bubble.append(content);if(options.expandableMessage||options.truncatedMessage){const more=w.document.createElement('button');more.textContent='Показать ещё';more.onclick=()=>{expansionClicks++;if(options.truncatedMessage&&!options.expansionBlocked){content.textContent=options.splitExpanded?j.prompt.slice(0,10240):j.prompt;if(options.splitExpanded){const rest=w.document.createElement('div');rest.dataset.searchResultTarget='';rest.textContent=j.prompt.slice(10240);bubble.insertBefore(rest,more);}}more.textContent='Показать меньше';};bubble.append(more);}user.append(heading,bubble);
+  if(options.attachment){const card=w.document.querySelector('#upload-card');if(card&&!options.sentFileMissing)user.append(card);else card?.remove();}
+
   const assistant=w.document.createElement('div');const h=w.document.createElement('h4');h.dataset.conversationRole='assistant';
   const answer=w.document.createElement('div');answer.dataset.markdownTextStyle='assistant-message';answer.textContent=options.emptyAnswer?'':'{"probe_id":"job-id","ok":true}';assistant.append(h,answer);if(options.externalAnswer)assistant.after(answer);
   const copy=w.document.createElement('button');copy.setAttribute('aria-label','Копировать');
@@ -194,7 +218,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.3.0');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.4.0');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -289,4 +313,17 @@ for(const reasoningEffort of ['none','medium','high'])test('select and verify re
 });
 for(const options of [{reasoningEffort:'high',ignoreReasoning:true},{reasoningEffort:'medium',unknownSlider:true},{reasoningEffort:'unknown'}])test('unconfirmed reasoning blocks sending '+JSON.stringify(options),async()=>{
  const f=fixture(options);try{await until(()=>f.w.sessionStorage.getItem('story-chatgpt-probe-armed')===null);assert.equal(f.clicks,0);assert.ok(!f.requests.some(r=>r.path==='/send'));}finally{f.close();}
+});
+
+test('TXT: upload acknowledgement precedes one send and filename-correlated result',async()=>{
+ const f=fixture({attachment:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/attachment','/send','/result']);const ack=f.requests.find(r=>r.path==='/attachment').body;assert.equal(ack.fileName,'story-job-id.txt');assert.equal(ack.fileSha256.length,64);assert.ok(ack.fileBytes>0);}finally{f.close();}
+});
+for(const condition of ['badFileHash','missingFileInput','uploadPending','uploadError','uploadAckRejected'])test('TXT: no send on '+condition,async()=>{
+ const f=fixture({attachment:true,[condition]:true});try{await until(()=>f.requests.some(r=>r.path==='/fail'));assert.equal(f.clicks,0);assert.equal(f.requests.filter(r=>r.path==='/send').length,0);}finally{f.close();}
+});
+test('TXT: removed attachment after authorization never clicks send',async()=>{
+ const f=fixture({attachment:true,removeFileDuringAuthorization:true});try{await until(()=>f.requests.some(r=>r.path==='/fail'));assert.equal(f.clicks,0);assert.equal(f.requests.filter(r=>r.path==='/send').length,1);}finally{f.close();}
+});
+test('TXT: missing filename in sent turn cannot accept another answer',async()=>{
+ const f=fixture({attachment:true,sentFileMissing:true});try{await until(()=>f.requests.some(r=>r.path==='/fail'));assert.equal(f.clicks,1);assert.equal(f.requests.filter(r=>r.path==='/result').length,0);}finally{f.close();}
 });

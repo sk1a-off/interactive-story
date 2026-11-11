@@ -43,7 +43,7 @@ func waitPairedWorkers(ctx context.Context) error {
 				for _, value := range workers {
 					w, _ := value.(map[string]any)
 					seen, _ := time.Parse(time.RFC3339Nano, fmt.Sprint(w["seen"]))
-					if w["status"] == "ready" && (w["version"] == "0.2.2" || w["version"] == "0.3.0") && time.Since(seen) < 15*time.Second {
+					if w["status"] == "ready" && (w["version"] == "0.2.2" || w["version"] == "0.3.0" || w["version"] == "0.4.0") && time.Since(seen) < 15*time.Second {
 						ready++
 					}
 				}

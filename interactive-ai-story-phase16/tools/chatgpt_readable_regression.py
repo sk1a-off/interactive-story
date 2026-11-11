@@ -47,7 +47,7 @@ def main():
     if any(j['state'] in ('queued', 'leased', 'dispatched') for j in before['jobs']):
         raise SystemExit('Another request is active; no replay sent')
     now = dt.datetime.now(dt.timezone.utc)
-    ready = [w for w in before['workers'].values() if w.get('version') in ('0.2.2','0.3.0')
+    ready = [w for w in before['workers'].values() if w.get('version') in ('0.2.2','0.3.0','0.4.0')
              and w.get('status') == 'ready'
              and (now - dt.datetime.fromisoformat(w['seen'].replace('Z', '+00:00'))).total_seconds() < 15]
     if not ready:

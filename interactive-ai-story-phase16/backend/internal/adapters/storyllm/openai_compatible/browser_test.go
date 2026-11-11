@@ -27,6 +27,8 @@ func TestBrowserRetriesOnlyRejectedOrInvalidReplies(t *testing.T) {
 					t.Error("missing browser configuration")
 				}
 				if mode == "oversized" {
+					w.Header().Set("X-Story-Bridge-Request-Bytes", "200000")
+					w.Header().Set("X-Story-Bridge-Limit-Bytes", "131072")
 					http.Error(w, "too large", 413)
 					return
 				}
@@ -58,7 +60,7 @@ func TestBrowserRetriesOnlyRejectedOrInvalidReplies(t *testing.T) {
 				t.Fatal("unvalidated writer text leaked")
 			}
 			if mode == "oversized" {
-				if !errors.Is(err, ai.ErrUnavailable) || calls != 1 || !strings.Contains(err.Error(), "лимит контекста") {
+				if !errors.Is(err, ai.ErrUnavailable) || calls != 1 || !strings.Contains(err.Error(), "196 КиБ") || !strings.Contains(err.Error(), "128 КиБ") {
 					t.Fatal("oversized request retried or hidden", calls, err)
 				}
 				return
