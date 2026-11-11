@@ -150,6 +150,9 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 			rememberKeyCursor(ringID, index, len(keys))
 			return resp, nil
 		}
+		if c.cfg.Provider == "chatgpt_browser" && status == http.StatusRequestEntityTooLarge {
+			return nil, fmt.Errorf("%w: запрос превышает лимит контекста моста ChatGPT; проверьте версию запущенного моста", ai.ErrUnavailable)
+		}
 		if c.cfg.Provider == "chatgpt_browser" && resp.Header.Get("X-Story-Bridge-State") == "unavailable" {
 			return nil, fmt.Errorf("%w: запустите рабочее окно ChatGPT с userscript 0.3.0", ai.ErrUnavailable)
 		}

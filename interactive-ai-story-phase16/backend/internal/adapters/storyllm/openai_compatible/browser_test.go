@@ -13,7 +13,7 @@ import (
 )
 
 func TestBrowserRetriesOnlyRejectedOrInvalidReplies(t *testing.T) {
-	for _, mode := range []string{"rejected", "shape", "uncertain", "exhausted"} {
+	for _, mode := range []string{"rejected", "shape", "uncertain", "oversized", "exhausted"} {
 		t.Run(mode, func(t *testing.T) {
 			calls := 0
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -24,6 +24,10 @@ func TestBrowserRetriesOnlyRejectedOrInvalidReplies(t *testing.T) {
 				}
 				if request.ReasoningEffort != "high" || r.Header.Get("X-Story-Project") != "1" {
 					t.Error("missing browser configuration")
+				}
+				if mode == "oversized" {
+					http.Error(w, "too large", 413)
+					return
 				}
 				if mode == "uncertain" {
 					w.Header().Set("X-Story-Bridge-State", "uncertain")
@@ -52,6 +56,13 @@ func TestBrowserRetriesOnlyRejectedOrInvalidReplies(t *testing.T) {
 			if callbacks != 0 {
 				t.Fatal("unvalidated writer text leaked")
 			}
+			if mode == "oversized" {
+				if !errors.Is(err, ai.ErrUnavailable) || calls != 1 || !strings.Contains(err.Error(), "лимит контекста") {
+					t.Fatal("oversized request retried or hidden", calls, err)
+				}
+				return
+			}
+
 			if mode == "uncertain" {
 				if err == nil || calls != 1 {
 					t.Fatal("uncertain outcome resent", calls, err)

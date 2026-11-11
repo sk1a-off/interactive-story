@@ -278,6 +278,7 @@ function Reader(){
   <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации'}</button></div>
   {regenerate.error&&<p className="error scene-image-error">{regenerate.error.message}</p>}
   {paragraphImage.error&&<p className="error scene-image-error">{paragraphImage.error.message}</p>}
+  {generationError&&<p className="error" role="alert">{generationError}<br/><small>Действие не применено — его можно отправить повторно.</small></p>}
   {busy
    ? <section className="generation-wait" aria-live="polite" aria-busy="true">
       <div className="generation-status"><span className="generation-spinner" aria-hidden="true"/><div><strong role="status">{generationPhaseLabel(pendingGeneration?.phase??'syncing')}…</strong><small>Повторная отправка заблокирована до результата.</small></div></div>
@@ -292,7 +293,6 @@ function Reader(){
        <button className="primary" type="submit" disabled={!customAction.trim()}>Отправить свой вариант</button>
       </form>
      </>}
-  {generationError&&<p className="error" role="alert">{generationError}<br/><small>Действие не применено — его можно отправить повторно.</small></p>}
  </section>
  <aside className="narrator-aside"><Narrator timelineId={timelineId} paragraphs={narrationParagraphs} requestedStart={narrationStart} onCurrentChange={setNarrationCurrent}/></aside>
  </div></main>
