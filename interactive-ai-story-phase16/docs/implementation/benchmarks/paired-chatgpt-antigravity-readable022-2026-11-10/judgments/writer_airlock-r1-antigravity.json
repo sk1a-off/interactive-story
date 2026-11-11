@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 22820,
+    "InputSHA256": "1d212b8a8abf069db4ade2a560c91df98459584ce2021922a1932569cf3b92f0",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 4,
+        "sceneProgress": 4,
+        "prose": 4,
+        "nonRepetition": 3
+      },
+      "winner": "A",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Вариант A отлично подхватывает действие без лишнего пересказа предыдущего бита, точно следует интенту игрока и завершается четкой локальной развилкой (дистанционная диагностика интерфейса или осмотр внешних соединений). Вариант B тратит весь первый абзац на избыточный пересказ уже известных фактов о вакууме и пустом баллоне, а также предлагает абстрактный поиск заправленного баллона вместо немедленного решения текущей проблемы на месте."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 5901,
+    "OutputTokens": 180,
+    "StartedAt": "2026-11-10T14:19:19.964074866Z",
+    "FinishedAt": "2026-11-10T14:19:42.784755873Z"
+  },
+  "pair": "writer_airlock-r1",
+  "validVerdict": true
+}

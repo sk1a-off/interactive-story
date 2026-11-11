@@ -1,0 +1,1752 @@
+{
+  "status": {
+    "phase": "finished",
+    "status": "complete",
+    "time": "2026-11-10T14:30:57.459136382Z"
+  },
+  "scope": [
+    "Primary baseline is pure antigravity-preview-05-2026, not the configured Flash/Antigravity hybrid.",
+    "Each pair uses byte-identical logical input and the same frozen active prompt contract. Transport wrappers and native system-role handling differ.",
+    "Both primary role arms use buffered JSON without native schema enforcement. Sampling controls are not comparable in the browser/managed agent.",
+    "Three temporally matched pairs run concurrently; each pair waits for both arms before its worker advances.",
+    "No failed outcome is dropped, retried for best-of selection, or converted to a model quality score. Native protocol retries/HTTP statuses are retained.",
+    "Writer judgments are blinded and order-counterbalanced across both model judges; self-preference remains a limitation.",
+    "No real story, Canon, production configuration or database fixtures are written."
+  ],
+  "planVersion": "paired-readable-v3-worker022",
+  "promptRevision": 25,
+  "configRevision": 28,
+  "plannedPairs": 48,
+  "recordedPairs": 48,
+  "missingPairs": 0,
+  "arms": {
+    "all": {
+      "planned": 48,
+      "recorded": 48,
+      "chatgpt": {
+        "validJSONObjects": 45,
+        "strictAllScoresPerfect": 21,
+        "schemaInstructionContinuityPass": 23,
+        "errors": {
+          "provider_or_transport_error": 3
+        },
+        "medianSuccessfulSeconds": 11.5,
+        "p90SuccessfulSeconds": 14.161000000000001,
+        "actualHTTPPosts": 48,
+        "medianObservedAttemptSeconds": 11.651
+      },
+      "antigravity": {
+        "validJSONObjects": 48,
+        "strictAllScoresPerfect": 28,
+        "schemaInstructionContinuityPass": 30,
+        "errors": {},
+        "medianSuccessfulSeconds": 26.345,
+        "p90SuccessfulSeconds": 64.76780000000002,
+        "actualHTTPPosts": 48,
+        "medianObservedAttemptSeconds": 26.345
+      }
+    },
+    "writer": {
+      "planned": 24,
+      "recorded": 24,
+      "chatgpt": {
+        "validJSONObjects": 21,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "errors": {
+          "provider_or_transport_error": 3
+        },
+        "medianSuccessfulSeconds": 12.301,
+        "p90SuccessfulSeconds": 14.201,
+        "actualHTTPPosts": 24,
+        "medianObservedAttemptSeconds": 12.400500000000001
+      },
+      "antigravity": {
+        "validJSONObjects": 24,
+        "strictAllScoresPerfect": 6,
+        "schemaInstructionContinuityPass": 6,
+        "errors": {},
+        "medianSuccessfulSeconds": 38.3715,
+        "p90SuccessfulSeconds": 65.45739999999999,
+        "actualHTTPPosts": 24,
+        "medianObservedAttemptSeconds": 38.3715
+      }
+    },
+    "structured": {
+      "planned": 24,
+      "recorded": 24,
+      "chatgpt": {
+        "validJSONObjects": 24,
+        "strictAllScoresPerfect": 21,
+        "schemaInstructionContinuityPass": 23,
+        "errors": {},
+        "medianSuccessfulSeconds": 10.201,
+        "p90SuccessfulSeconds": 14.040700000000001,
+        "actualHTTPPosts": 24,
+        "medianObservedAttemptSeconds": 10.201
+      },
+      "antigravity": {
+        "validJSONObjects": 24,
+        "strictAllScoresPerfect": 22,
+        "schemaInstructionContinuityPass": 24,
+        "errors": {},
+        "medianSuccessfulSeconds": 16.924500000000002,
+        "p90SuccessfulSeconds": 54.11839999999998,
+        "actualHTTPPosts": 24,
+        "medianObservedAttemptSeconds": 16.924500000000002
+      }
+    }
+  },
+  "latency": {
+    "all": {
+      "bothValidOnly": {
+        "estimate": -0.7778708621339155,
+        "ci95": [
+          -1.0555807057950144,
+          -0.6214525223731031
+        ],
+        "pairs": 45,
+        "scenarioFamilies": 20,
+        "ratio": 0.4593830606692343,
+        "ratioCI95": [
+          0.34799028864310766,
+          0.5371636284722222
+        ]
+      },
+      "failurePenaltySensitivity": {
+        "estimate": -0.7311893221369409,
+        "ci95": [
+          -0.8819256446750098,
+          -0.5657568373259181
+        ],
+        "pairs": 48,
+        "scenarioFamilies": 20,
+        "ratio": 0.4813361857522557,
+        "ratioCI95": [
+          0.4139849557128233,
+          0.5679301533219762
+        ]
+      }
+    },
+    "writer": {
+      "bothValidOnly": {
+        "estimate": -1.154942211255792,
+        "ci95": [
+          -1.4300407710182517,
+          -0.8019015518323025
+        ],
+        "pairs": 21,
+        "scenarioFamilies": 8,
+        "ratio": 0.3150757442089078,
+        "ratioCI95": [
+          0.23929916557421396,
+          0.44847535365168445
+        ]
+      },
+      "failurePenaltySensitivity": {
+        "estimate": -0.9560822275208607,
+        "ci95": [
+          -1.366705308932969,
+          -0.7694058772488689
+        ],
+        "pairs": 24,
+        "scenarioFamilies": 8,
+        "ratio": 0.3843959155276595,
+        "ratioCI95": [
+          0.2549455441625519,
+          0.4632882366429718
+        ]
+      }
+    },
+    "structured": {
+      "bothValidOnly": {
+        "estimate": -0.5936046798495106,
+        "ci95": [
+          -0.6766192315301227,
+          -0.40451884240727515
+        ],
+        "pairs": 24,
+        "scenarioFamilies": 12,
+        "ratio": 0.5523327094036874,
+        "ratioCI95": [
+          0.5083326455987597,
+          0.6672978090343522
+        ]
+      },
+      "failurePenaltySensitivity": {
+        "estimate": -0.5936046798495106,
+        "ci95": [
+          -0.6766192315301227,
+          -0.40451884240727515
+        ],
+        "pairs": 24,
+        "scenarioFamilies": 12,
+        "ratio": 0.5523327094036874,
+        "ratioCI95": [
+          0.5083326455987597,
+          0.6672978090343522
+        ]
+      }
+    }
+  },
+  "quality": {
+    "eligibleWriterPairsBothOutputs": 21,
+    "judgeRecords": 42,
+    "validVerdicts": 41,
+    "primaryPairsWithTwoValidJudges": 20,
+    "primaryWeightedDeltaCGminusAG": {
+      "estimate": -0.06125000000000007,
+      "ci95": [
+        -0.5065930451127821,
+        0.43194444444444435
+      ],
+      "pairs": 20,
+      "scenarioFamilies": 8
+    },
+    "primaryWeightedWinners": {
+      "antigravity": 11,
+      "chatgpt": 8,
+      "tie": 1
+    },
+    "weightedJudgeAgreementPairs": 12,
+    "perJudgeMeanDelta": {
+      "antigravity": -0.47619047619047633,
+      "chatgpt": 0.295
+    },
+    "declaredWinnersByJudge": {
+      "antigravity": {
+        "chatgpt": 7,
+        "antigravity": 14
+      },
+      "chatgpt": {
+        "chatgpt": 12,
+        "antigravity": 8
+      }
+    },
+    "criticalErrorAllegationsByJudge": {
+      "chatgpt": {
+        "antigravity": 7,
+        "chatgpt": 1
+      },
+      "antigravity": {
+        "chatgpt": 2,
+        "antigravity": 1
+      }
+    },
+    "dimensionMeansAcrossValidJudgments": {
+      "chatgpt": {
+        "agency": 4.463414634146342,
+        "continuity": 4.780487804878049,
+        "nonRepetition": 4.390243902439025,
+        "prose": 4.219512195121951,
+        "sceneProgress": 3.707317073170732
+      },
+      "antigravity": {
+        "agency": 4.439024390243903,
+        "continuity": 4.560975609756097,
+        "nonRepetition": 4.463414634146342,
+        "prose": 4.439024390243903,
+        "sceneProgress": 4.365853658536586
+      }
+    },
+    "criticalErrorFlags": [
+      {
+        "pair": "writer_archive-r1",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "Лада теперь знала наверняка: уничтожать записи Мирона он не собирался вовсе."
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_archive-r3",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "agency",
+            "quote": "Лада демонстративно наклонила находку к раскаленному стеклу настольной лампы"
+          },
+          {
+            "type": "continuity",
+            "quote": "Единственный известный путь наружу оказался отрезан"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_berries-r1",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "Плотная зелень с нижней стороны оказалась покрыта жестковатыми светлыми волосками"
+          },
+          {
+            "type": "continuity",
+            "quote": "кроме прошлогодних лесных орехов в дуплах или жестких молодых побегов"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_berries-r2",
+        "judge": "antigravity",
+        "arm": "chatgpt",
+        "errors": [
+          {
+            "type": "agency",
+            "quote": "куст с яркими плодами остался позади"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_berries-r2",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "можно поискать прошлогодние орехи или дикий лук"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_desert-r2",
+        "judge": "antigravity",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "Северный путь через открытые пески короче и ровнее"
+          },
+          {
+            "type": "agency",
+            "quote": "Рашид остановился рядом, вглядываясь в надвигающиеся сумерки.\n— Здешних мест я не знаю, — сказал он"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_desert-r2",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "от стоянки в разные стороны расходились две старые дороги: одна забирала в сторону каменистых возвышенностей, а вторая уходила прямо по песчаной равнине"
+          },
+          {
+            "type": "continuity",
+            "quote": "Каменистый подъем на первой дороге действительно темнел в вечерних тенях"
+          },
+          {
+            "type": "agency",
+            "quote": "Путь к каменистым холмам надежнее: там грунт плотнее, дорогу не заметает песком"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_detective-r2",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "журнал входящей корреспонденции"
+          },
+          {
+            "type": "continuity",
+            "quote": "корешок накладной со свежим чернильным штампом службы доставки: там стояло время четырнадцать тридцать"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_detective-r3",
+        "judge": "antigravity",
+        "arm": "chatgpt",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "перевела взгляд на нотариуса"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_market-r3",
+        "judge": "chatgpt",
+        "arm": "chatgpt",
+        "errors": [
+          {
+            "type": "agency",
+            "quote": "Если согласна, объясню, что и куда переносить."
+          },
+          {
+            "type": "agency",
+            "quote": "Ничего особенного, но времени займёт немало."
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      },
+      {
+        "pair": "writer_storm-r3",
+        "judge": "chatgpt",
+        "arm": "antigravity",
+        "errors": [
+          {
+            "type": "continuity",
+            "quote": "петля на массивной опоре выдержала двойной рывок"
+          },
+          {
+            "type": "continuity",
+            "quote": "контрольный конец достаточен по длине"
+          }
+        ],
+        "interpretation": "Judge allegation with quote validation; not independent human adjudication"
+      }
+    ],
+    "caveat": "Only two valid judges per pair enter primary quality; failed deliveries and missing judgments are reported separately. Self-preference and common rubric bias remain. Scenario families are fixed, not a random user sample."
+  },
+  "analysisRevision": 2,
+  "scoreInterpretation": "languageScore is a continuous character ratio; strictAllScoresPerfect is not a production acceptance gate. schemaInstructionContinuityPass excludes that language ratio.",
+  "logicalInputsMatch": true,
+  "hashesPresent": true,
+  "exploratoryReliabilityDifferenceCGminusAG": {
+    "estimate": -0.0625,
+    "ci95": [
+      -0.16,
+      0.0
+    ],
+    "pairs": 48,
+    "scenarioFamilies": 20
+  },
+  "exploratoryMeanPenaltyDifferenceSecondsCGminusAG": {
+    "estimate": -11.445291666666666,
+    "ci95": [
+      -26.33497074468085,
+      7.904915349264703
+    ],
+    "pairs": 48,
+    "scenarioFamilies": 20
+  },
+  "cases": [
+    {
+      "case": "state_evaluator",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 13.501000000000001,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 77.089,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "quest_evaluator",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 15.950500000000002,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 32.007999999999996,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "choices",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 10.901,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 17.1915,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "turn_planner_browser",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 9.001000000000001,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 19.5585,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "world_browser_positive",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 10.451,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 19.798499999999997,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "world_browser_negative",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 9.4505,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 15.1785,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "writer_archive",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 12.5,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 208,
+        "medianWriterParagraphs": 7
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 39.673,
+        "strictAllScoresPerfect": 1,
+        "schemaInstructionContinuityPass": 1,
+        "medianWriterWords": 174,
+        "medianWriterParagraphs": 3
+      }
+    },
+    {
+      "case": "writer_airlock",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 1,
+        "medianSuccessfulSeconds": 10.102,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 181,
+        "medianWriterParagraphs": 5
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 20.929,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 130,
+        "medianWriterParagraphs": 2
+      }
+    },
+    {
+      "case": "writer_detective",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 12.5,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 197,
+        "medianWriterParagraphs": 9
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 43.326,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 197,
+        "medianWriterParagraphs": 4
+      }
+    },
+    {
+      "case": "writer_market",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 11.201,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 160,
+        "medianWriterParagraphs": 7
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 59.086,
+        "strictAllScoresPerfect": 3,
+        "schemaInstructionContinuityPass": 3,
+        "medianWriterWords": 323,
+        "medianWriterParagraphs": 4
+      }
+    },
+    {
+      "case": "writer_berries",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 12.701,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 216,
+        "medianWriterParagraphs": 7
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 25.941,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 148,
+        "medianWriterParagraphs": 2
+      }
+    },
+    {
+      "case": "writer_storm",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 12.301,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 202,
+        "medianWriterParagraphs": 5
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 45.164,
+        "strictAllScoresPerfect": 1,
+        "schemaInstructionContinuityPass": 1,
+        "medianWriterWords": 200,
+        "medianWriterParagraphs": 3
+      }
+    },
+    {
+      "case": "writer_apology",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 14.201,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 263,
+        "medianWriterParagraphs": 10
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 26.615,
+        "strictAllScoresPerfect": 1,
+        "schemaInstructionContinuityPass": 1,
+        "medianWriterWords": 246,
+        "medianWriterParagraphs": 4
+      }
+    },
+    {
+      "case": "writer_desert",
+      "writer": true,
+      "recorded": 3,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 14.201,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 267.0,
+        "medianWriterParagraphs": 7.0
+      },
+      "antigravity": {
+        "validJSONObjects": 3,
+        "medianSuccessfulSeconds": 46.589,
+        "strictAllScoresPerfect": 0,
+        "schemaInstructionContinuityPass": 0,
+        "medianWriterWords": 197,
+        "medianWriterParagraphs": 3
+      }
+    },
+    {
+      "case": "journal_planned_purchase",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 9.400500000000001,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 11.663,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "journal_metaphor",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 8.1005,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 10.916,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "journal_consumption",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 10.051,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 48.535,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "world_absence",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 10.201,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 13.951,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "world_new_npc",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 13.350999999999999,
+        "strictAllScoresPerfect": 1,
+        "schemaInstructionContinuityPass": 1,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 27.463500000000003,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    },
+    {
+      "case": "quest_planned_not_complete",
+      "writer": false,
+      "recorded": 2,
+      "chatgpt": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 8.350999999999999,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      },
+      "antigravity": {
+        "validJSONObjects": 2,
+        "medianSuccessfulSeconds": 11.885000000000002,
+        "strictAllScoresPerfect": 2,
+        "schemaInstructionContinuityPass": 2,
+        "medianWriterWords": null,
+        "medianWriterParagraphs": null
+      }
+    }
+  ],
+  "exploratoryCaveat": "Reliability difference, mean penalty difference and case breakdown are exploratory. Failed outputs cost the predeclared 180-second penalty; this is not observed waiting time.",
+  "fullTurns": [
+    {
+      "arm": "antigravity",
+      "calls": [
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 0.143038,
+          "EndMS": 15575.67878,
+          "ElapsedMS": 15575.535742,
+          "InputTokens": 5909,
+          "OutputTokens": 60,
+          "InputBytes": 2231,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 15575.770099,
+          "EndMS": 55865.774657,
+          "ElapsedMS": 40290.004558,
+          "InputTokens": 6690,
+          "OutputTokens": 348,
+          "InputBytes": 2395,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "state_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 55866.317382,
+          "EndMS": 69647.790624,
+          "ElapsedMS": 13781.473242,
+          "InputTokens": 6529,
+          "OutputTokens": 4,
+          "InputBytes": 4583,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "world_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 55866.290422,
+          "EndMS": 87893.08331,
+          "ElapsedMS": 32026.792888,
+          "InputTokens": 6360,
+          "OutputTokens": 4,
+          "InputBytes": 4609,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "quest_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 55866.287392,
+          "EndMS": 95355.302616,
+          "ElapsedMS": 39489.015224,
+          "InputTokens": 7054,
+          "OutputTokens": 254,
+          "InputBytes": 4705,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "choices",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 95355.494204,
+          "EndMS": 110430.176639,
+          "ElapsedMS": 15074.682435,
+          "InputTokens": 6506,
+          "OutputTokens": 97,
+          "InputBytes": 6150,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 110430,
+      "failure": "",
+      "firstTextMs": 55866.233543,
+      "fixture": "conversation",
+      "ok": true,
+      "readyMs": 110430.275708,
+      "text": "Илья чуть опустил край листа, не выпуская карту водовода из пальцев, и перевел взгляд на свою спутницу. Сырой вечерний воздух архивной пристани холодил лицо, а плеск подступающей к каменным плитам реки глухо отдавался в стенах, заставляя говорить негромко, но прямо.\n\n— Ты обещала показать дорогу в обход паводка, — произнес он спокойно, кивнув на запертую дверь перед ними. — Где именно начинается проход к башне?\n\nМира не спешила с ответом. Сдержанная и сосредоточенная, она провела ладонью по тяжелым доскам створки, словно прислушиваясь к тому, что происходило по ту сторону камня, и лишь затем повернулась к нему. В ее голосе звучала привычная осторожность хранительницы, для которой безопасность залов стояла наравне с собственной жизнью.\n\n— Он начинается прямо здесь, за этим порогом, — ответила архивистка, указав на массивную запертую дверь. — Внутренний коридор архива врезан в скалу выше уровня затопленной площади. Если вода не пробила нижние заглушки, мы пройдем подгорными галереями прямо к подножию северной башни, не касаясь паводка.\n\nОна выжидающе посмотрела на Илью, явно рассчитывая, что перед тем как браться за замок, путник сверит ее слова с отметками на своей карте."
+    },
+    {
+      "arm": "chatgpt",
+      "calls": [
+        {
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "gpt-6-instant",
+          "StartMS": 0.156829,
+          "EndMS": 12500.629979,
+          "ElapsedMS": 12500.47315,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2231,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "gpt-6-instant",
+          "StartMS": 12500.759488,
+          "EndMS": 25001.490841,
+          "ElapsedMS": 12500.731353,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2627,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "world_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 25002.339894,
+          "EndMS": 36803.505895,
+          "ElapsedMS": 11801.166001,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 4972,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 36803.641323,
+          "EndMS": 44704.946302,
+          "ElapsedMS": 7901.304979,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 4946,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "quest_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 44705.014561,
+          "EndMS": 57705.672816,
+          "ElapsedMS": 13000.658255,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5300,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "choices",
+          "model": "gpt-6-instant",
+          "StartMS": 57705.935284,
+          "EndMS": 75407.615572,
+          "ElapsedMS": 17701.680288,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 6417,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 75407,
+      "failure": "",
+      "firstTextMs": 25002.297024,
+      "fixture": "conversation",
+      "ok": true,
+      "readyMs": 75407.726811,
+      "text": "Илья опустил взгляд на карту, затем спокойно посмотрел на Миру. Он не торопил её, ожидая, пока архивистка сама укажет нужное направление.\n\n— Вы говорили, что через архив есть проход к северной башне. Где он начинается?\n\nМира перевела взгляд с запертой двери на карту в руках путника. Несколько секунд она молчала, словно решая, насколько подробно стоит объяснять. Наконец женщина указала на противоположную сторону помещения.\n\n— Не за этой дверью. Проход начинается ниже, от старого водовода. Раньше по нему доставляли воду к башне, а потом его приспособили для перемещения между зданиями. Часть пути проходит непосредственно под архивом.\n\nОна помедлила и продолжила уже тише:\n\n— Вход находится со стороны затопленной площади. Нужно попасть к нижнему уровню пристани. Там есть спуск к водоводу. Но после паводка я сама не проверяла, насколько высоко поднялась вода внутри. Последний раз проход был доступен.\n\nМира посмотрела на карту Ильи, стараясь соотнести её обозначения со своим объяснением.\n\n— Если на вашей карте отмечены старые водяные каналы, ищите ответвление под архивом. Оно должно вывести к северному направлению. Я могу показать, где именно искать вход, но сначала нужно добраться до нижнего уровня.\n\nОна замолчала, оставляя Илье время осмыслить услышанное. Теперь у него было конкретное направление, однако состояние подземного пути после паводка оставалось неизвестным."
+    },
+    {
+      "arm": "antigravity",
+      "calls": [
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 0.141139,
+          "EndMS": 15508.554415,
+          "ElapsedMS": 15508.413276,
+          "InputTokens": 5913,
+          "OutputTokens": 71,
+          "InputBytes": 2238,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 15508.648094,
+          "EndMS": 38630.056798,
+          "ElapsedMS": 23121.408704,
+          "InputTokens": 6701,
+          "OutputTokens": 221,
+          "InputBytes": 2439,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 38630.421545,
+          "EndMS": 50972.837652,
+          "ElapsedMS": 12342.416107,
+          "InputTokens": 6410,
+          "OutputTokens": 4,
+          "InputBytes": 3716,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "world_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 38630.445435,
+          "EndMS": 61704.457943,
+          "ElapsedMS": 23074.012508,
+          "InputTokens": 6241,
+          "OutputTokens": 4,
+          "InputBytes": 3742,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 24751,
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "quest_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 38630.415875,
+          "EndMS": 108064.222596,
+          "ElapsedMS": 69433.806721,
+          "InputTokens": 37518,
+          "OutputTokens": 105,
+          "InputBytes": 3875,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "choices",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 108064.279665,
+          "EndMS": 121870.105087,
+          "ElapsedMS": 13805.825422,
+          "InputTokens": 5965,
+          "OutputTokens": 118,
+          "InputBytes": 3433,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 121870,
+      "failure": "",
+      "firstTextMs": 38630.287406,
+      "fixture": "danger",
+      "ok": true,
+      "readyMs": 121870.180206,
+      "text": "Илья жестом показал Мире замереть и сделал два неслышных шага назад, укрывшись за широкой каменной колонной у входа. Придержав край развернутой карты водовода, чтобы она не шуршала на сквозняке, он прижался плечом к влажной кладке и сосредоточился на звуках, доносившихся из-за закрытых створок. Синий дорожный плащ помог ему слиться с вечерней тенью у каменной стены.\n\nЗа толстым деревом запертой двери не слышалось ни шагов, ни голосов, ни признаков движения. Лишь глухой, монотонный плеск паводка отдавался легкой вибрацией в толще камня да изнутри изредка долетал мерный стук капель, сочащихся сквозь своды. По ту сторону прохода стояла настороженная тишина затопленного здания, не выдавая явной угрозы."
+    },
+    {
+      "arm": "chatgpt",
+      "calls": [
+        {
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "gpt-6-instant",
+          "StartMS": 0.143189,
+          "EndMS": 10101.570584,
+          "ElapsedMS": 10101.427395,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2238,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "gpt-6-instant",
+          "StartMS": 10101.673693,
+          "EndMS": 23102.633998,
+          "ElapsedMS": 13000.960305,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2703,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "world_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 23103.507051,
+          "EndMS": 31904.596035,
+          "ElapsedMS": 8801.088984,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5529,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 31904.671924,
+          "EndMS": 39205.938593,
+          "ElapsedMS": 7301.266669,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5503,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "quest_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 39206.013983,
+          "EndMS": 47506.937113,
+          "ElapsedMS": 8300.92313,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5926,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "choices",
+          "model": "gpt-6-instant",
+          "StartMS": 47507.021723,
+          "EndMS": 58908.867232,
+          "ElapsedMS": 11401.845509,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5220,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 58908,
+      "failure": "",
+      "firstTextMs": 23103.472011,
+      "fixture": "danger",
+      "ok": true,
+      "readyMs": 58908.971201,
+      "text": "Илья медленно отступил от двери, стараясь не задеть каменные обломки под ногами. За широкой колонной он остановился и прислонился плечом к холодной поверхности. Отсюда запертая дверь оставалась вне прямой видимости, зато звуки из-за неё были слышны достаточно отчётливо. Мира тоже не стала приближаться, выдержав небольшую паузу.\n\nСначала доносился только глухой шум воды, похожий на течение в узком каменном канале. Затем сквозь него пробились три коротких звука: два негромких удара с небольшим промежутком и один протяжный скрежет. Илья затаил дыхание и прислушался внимательнее. Удары повторились, но на этот раз звучали тише, словно что-то соприкасалось с камнем по другую сторону двери. Определить точное расстояние до источника не получалось: вода искажала направление звука.\n\n— Слышишь? — едва слышно спросила Мира.\n\nИлья кивнул. Архивистка нахмурилась, но не стала выдвигать предположений.\n\n— За этой дверью раньше проходил водовод, — прошептала она. — Но я не знаю, в каком он сейчас состоянии. После паводка там могло многое измениться.\n\nНаступила короткая тишина. Затем раздался ещё один скрежет, более продолжительный, чем предыдущие. Он оборвался резко, после чего остался лишь привычный гул воды. Ни голосов, ни других звуков, которые позволили бы уверенно определить присутствие человека или животного, Илья не услышал.\n\nКолонна надёжно закрывала его от пространства перед дверью, но оставалась неясной сама природа происходящего за ней. Мира ждала, не пытаясь нарушить тишину. Теперь можно было продолжить наблюдение, осторожно проверить карту водовода в поисках возможного обходного маршрута или обсудить с Мирой, что она помнит о внутренней планировке архива."
+    },
+    {
+      "arm": "antigravity",
+      "calls": [
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 0.207619,
+          "EndMS": 20588.959975,
+          "ElapsedMS": 20588.752356,
+          "InputTokens": 5913,
+          "OutputTokens": 75,
+          "InputBytes": 2233,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 20589.052664,
+          "EndMS": 46829.529652,
+          "ElapsedMS": 26240.476988,
+          "InputTokens": 6705,
+          "OutputTokens": 246,
+          "InputBytes": 2445,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 46829.82502,
+          "EndMS": 61034.494691,
+          "ElapsedMS": 14204.669671,
+          "InputTokens": 6435,
+          "OutputTokens": 4,
+          "InputBytes": 3954,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "world_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 46829.948289,
+          "EndMS": 67706.803522,
+          "ElapsedMS": 20876.855233,
+          "InputTokens": 6266,
+          "OutputTokens": 4,
+          "InputBytes": 3980,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "quest_evaluator",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 46829.79973,
+          "EndMS": 81823.429414,
+          "ElapsedMS": 34993.629684,
+          "InputTokens": 6971,
+          "OutputTokens": 222,
+          "InputBytes": 4124,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "cachedInputTokens": 0,
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "choices",
+          "model": "antigravity-preview-05-2026",
+          "StartMS": 81823.589663,
+          "EndMS": 100629.984784,
+          "ElapsedMS": 18806.395121,
+          "InputTokens": 6368,
+          "OutputTokens": 103,
+          "InputBytes": 5529,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 100630,
+      "failure": "",
+      "firstTextMs": 46829.75225,
+      "fixture": "inspection",
+      "ok": true,
+      "readyMs": 100630.072174,
+      "text": "Илья сложил карту и подошел ближе к тяжелой деревянной двери. При вечернем свете полотно казалось неповрежденным, хотя по низу каменного косяка уже темнели следы сырости от поднявшейся реки. Не прикасаясь к замку, путник внимательно осмотрел кованые петли, державшие массивную створку. Широкие полосы железа глубоко уходили в кладку: штыри сидели крепко, без зазоров или следов расшатанного раствора, а слой ржавчины на металле был лишь поверхностным.\n\nМира не вмешивалась, молча наблюдая за его действиями со своего места. Илья осторожно нажал ладонью на край полотна возле косяка, проверяя устойчивость конструкции. Дверь не подалась ни на миллиметр, глухо упираясь в каменную четверть с той стороны. Петли оказались недосягаемы для простого рычага, и стало ясно, что снять створку с петель без шума и специальных инструментов не получится."
+    },
+    {
+      "arm": "chatgpt",
+      "calls": [
+        {
+          "responseFormat": "json_object",
+          "sequence": 1,
+          "role": "turn_planner",
+          "model": "gpt-6-instant",
+          "StartMS": 0.150179,
+          "EndMS": 10101.512705,
+          "ElapsedMS": 10101.362526,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2233,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 2,
+          "role": "writer",
+          "model": "gpt-6-instant",
+          "StartMS": 10101.594525,
+          "EndMS": 21603.079469,
+          "ElapsedMS": 11501.484944,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 2816,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 3,
+          "role": "world_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 21603.821363,
+          "EndMS": 33804.945598,
+          "ElapsedMS": 12201.124235,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5100,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 4,
+          "role": "state_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 33805.026708,
+          "EndMS": 41505.537433,
+          "ElapsedMS": 7700.510725,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5074,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 5,
+          "role": "quest_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 41505.621513,
+          "EndMS": 55906.7711,
+          "ElapsedMS": 14401.149587,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5615,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 6,
+          "role": "quest_evaluator",
+          "model": "gpt-6-instant",
+          "StartMS": 55906.913198,
+          "EndMS": 67607.884318,
+          "ElapsedMS": 11700.97112,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 5185,
+          "Repair": true,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        },
+        {
+          "responseFormat": "json_object",
+          "sequence": 7,
+          "role": "choices",
+          "model": "gpt-6-instant",
+          "StartMS": 67607.951957,
+          "EndMS": 76608.465619,
+          "ElapsedMS": 9000.513662,
+          "InputTokens": 0,
+          "OutputTokens": 0,
+          "InputBytes": 4801,
+          "Repair": false,
+          "Failed": false,
+          "HTTPPosts": 1,
+          "HTTPGets": 0,
+          "TransportFailures": 0,
+          "HTTPStatuses": [
+            200
+          ],
+          "memoryDocuments": 0
+        }
+      ],
+      "choices": 4,
+      "elapsedMs": 76608,
+      "failure": "",
+      "firstTextMs": 21603.776643,
+      "fixture": "inspection",
+      "ok": true,
+      "readyMs": 76608.550088,
+      "text": "Илья внимательно осмотрел дверь, начав с её общего состояния. Каменная рама выглядела массивной, а сама створка плотно сидела в проёме. Он проследил взглядом вдоль её края, стараясь заметить перекосы, щели или следы деформации. При слабом вечернем освещении мелкие детали различались не сразу, поэтому путник несколько раз менял угол обзора.\n\nЗатем его внимание переключилось на петли. Он осмотрел каждую доступную часть креплений, проверяя, нет ли заметных трещин, разошедшихся соединений или следов сильной коррозии. Петли оставались на своих местах; явных повреждений, которые можно было бы уверенно определить из такого осмотра, не обнаружилось. Вместе с тем по одному лишь внешнему виду нельзя было установить, насколько свободно они способны двигаться под весом створки.\n\nИлья не стал приближать руки к замку и не проверял дверь на прочность. Запирающий механизм оставался нетронутым, а створка — неподвижной. Осмотр позволил исключить некоторые очевидные внешние признаки неисправности, но не дал ответа на главный вопрос: можно ли пройти через эту дверь, не повредив её и не рискуя оказаться запертым с другой стороны.\n\nМира наблюдала за ним молча, ожидая результата.\n\n— Снаружи ничего явно сломанного, — негромко произнёс Илья. — Но пока неясно, что именно удерживает дверь и как она поведёт себя при открытии.\n\nАрхивистка чуть кивнула. За стенами по-прежнему шумела вода. Дверь оставалась закрытой, и путь через архив ещё предстояло выяснить."
+    }
+  ],
+  "bridgeJobStatesByPhase": {
+    "roles": {
+      "complete": 45,
+      "failed": 3
+    },
+    "judges": {
+      "complete": 21
+    },
+    "after": {
+      "complete": 19
+    }
+  }
+}

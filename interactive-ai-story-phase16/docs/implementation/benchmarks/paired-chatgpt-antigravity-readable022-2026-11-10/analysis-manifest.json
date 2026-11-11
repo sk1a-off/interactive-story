@@ -1,0 +1,9 @@
+{
+  "analysisDate": "2026-11-11",
+  "sourceCommit": "d303c5e",
+  "frozenSourceHashesVerified": true,
+  "analysisFiles": {
+    "tools/analyze_paired_models.py": "42e2b2ab11f90e597992252f9589875462fffc04517620bec3d154cbcd9f3cff",
+    "tools/test_analyze_paired_models.py": "7194a43bd25263c08af77a3c41f6ee5c67c661fbb367b1f6132231e5b176829d"
+  }
+}

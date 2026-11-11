@@ -1,0 +1,29 @@
+{
+  "Arm": "chatgpt",
+  "Model": "gpt-6-instant",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 8701,
+  "InputSHA256": "55ffcc98506e6a5d9626fed673442e34e782ee23072f01ad7ab7060690df3234",
+  "Output": {
+    "intent": "Осторожно осмотреть запертую дверь архива и её петли, не пытаясь вскрыть замок.",
+    "immediateGoal": "Внимательно осмотреть внешнюю сторону запертой двери архива, состояние её петель и видимые элементы крепления, не прикасаясь к замку и не пытаясь открыть дверь. Определить, можно ли заметить особенности конструкции, которые помогут оценить возможность дальнейшего прохода к башне, не изменяя состояние двери.",
+    "transition": "continue_scene",
+    "riskFlags": []
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 0,
+  "OutputTokens": 0,
+  "StartedAt": "2026-11-10T14:14:14.50587514Z",
+  "FinishedAt": "2026-11-10T14:14:23.206918476Z"
+}

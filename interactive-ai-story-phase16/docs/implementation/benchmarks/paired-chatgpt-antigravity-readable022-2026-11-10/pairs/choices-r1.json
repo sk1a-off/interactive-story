@@ -1,0 +1,97 @@
+{
+  "Spec": {
+    "ID": "choices-r1",
+    "CaseID": "choices",
+    "FirstArm": "chatgpt",
+    "AArm": "chatgpt",
+    "Repeat": 1
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 15028,
+      "InputSHA256": "bd3bca801bdd08749cbe8b767e21894a0bbb6b4002b14f941d18284c2fe85248",
+      "Output": {
+        "choices": [
+          {
+            "id": "choice_1",
+            "label": "Попробовать проникнуть в кабинет смотрителя за журналом дежурного хранителя"
+          },
+          {
+            "id": "choice_2",
+            "label": "Направиться к залу затонувших дел и отпереть проход медным ключом"
+          },
+          {
+            "id": "choice_3",
+            "label": "Расспросить Тихона о Мироне и о том, что ударило в дверь"
+          },
+          {
+            "id": "choice_4",
+            "label": "Осторожно подойти к двери прохода и прислушаться к звукам за стеной"
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 0.9110915492957746,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 5550,
+      "OutputTokens": 116,
+      "StartedAt": "2026-11-10T14:09:58.437212087Z",
+      "FinishedAt": "2026-11-10T14:10:13.466018392Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 11801,
+      "InputSHA256": "bd3bca801bdd08749cbe8b767e21894a0bbb6b4002b14f941d18284c2fe85248",
+      "Output": {
+        "choices": [
+          {
+            "id": "choice_1",
+            "label": "Отправиться в кабинет смотрителя и попытаться найти журнал дежурств, пока он обходит верхние этажи."
+          },
+          {
+            "id": "choice_2",
+            "label": "Расспросить Тихона о знаке хранителей и о том, почему он признал Мирона своим учеником."
+          },
+          {
+            "id": "choice_3",
+            "label": "Внимательно изучить три поворота, срисованные Ладой на манжете, и сопоставить их с устройством архива."
+          },
+          {
+            "id": "choice_4",
+            "label": "Осмотреть дверь прохода и попытаться выяснить, что за тяжёлое существо ударило в неё с другой стороны."
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 0.974222797927461,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T14:09:58.437312926Z",
+      "FinishedAt": "2026-11-10T14:10:10.238358131Z"
+    }
+  }
+}

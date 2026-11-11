@@ -1,0 +1,55 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 29021,
+    "InputSHA256": "20747f7b0bb9dca18d5f01205598e1fdc242c31e420bb3577ebdaeca6d81b371",
+    "Output": {
+      "A": {
+        "continuity": 4,
+        "agency": 3,
+        "sceneProgress": 3,
+        "prose": 4,
+        "nonRepetition": 3
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "B",
+      "criticalErrorsA": [
+        {
+          "type": "agency",
+          "quote": "куст с яркими плодами остался позади"
+        }
+      ],
+      "criticalErrorsB": [],
+      "explanation": "Вариант B точно выполнил заявку игрока: Антон сам осматривает листья, нюхает их и задает Нине вопрос о других источниках еды, на что получает конкретный ориентир (низины и вода). В варианте A заявка искажена: Нина первой расспрашивает Антона и сама заводит речь о еде, Нина повторно констатирует незнание ягод, а в финале куст объявляется оставленным позади еще до решения игрока."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 6017,
+    "OutputTokens": 197,
+    "StartedAt": "2026-11-10T14:20:12.528596016Z",
+    "FinishedAt": "2026-11-10T14:20:41.550283907Z"
+  },
+  "pair": "writer_berries-r2",
+  "validVerdict": true
+}

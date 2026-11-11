@@ -1,0 +1,144 @@
+{
+  "Spec": {
+    "ID": "state_evaluator-r1",
+    "CaseID": "state_evaluator",
+    "FirstArm": "chatgpt",
+    "AArm": "chatgpt",
+    "Repeat": 1
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 63302,
+      "InputSHA256": "ae8fdcbd09e835bb11892dc5f35efc6234a5bfba672986cbf117081d274bbf73",
+      "Output": {
+        "changes": [
+          {
+            "category": "item",
+            "description": "Медный ключ, открывающий зал затонувших дел",
+            "evidenceQuote": "Тихон передал Ладе медный ключ от зала затонувших дел, и она убрала его во внутренний карман",
+            "name": "Медный ключ от зала затонувших дел",
+            "operation": "create",
+            "quantity": 1,
+            "status": "active",
+            "tags": [
+              "ключ"
+            ]
+          },
+          {
+            "category": "item",
+            "description": "Официальная архивная выписка с синей печатью",
+            "evidenceQuote": "получила лист с синей архивной печатью",
+            "name": "Выписка из журнала",
+            "operation": "create",
+            "quantity": 1,
+            "status": "active",
+            "tags": [
+              "документ"
+            ]
+          },
+          {
+            "category": "currency",
+            "description": "Наличные деньги Лады",
+            "entryId": "55555555-5555-4555-8555-555555555555",
+            "evidenceQuote": "Лада отсчитала две из трёх монет",
+            "name": "медных монет",
+            "operation": "update",
+            "quantity": 1,
+            "status": "active",
+            "tags": [
+              "деньги"
+            ]
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 14561,
+      "OutputTokens": 261,
+      "StartedAt": "2026-11-10T14:12:36.73703948Z",
+      "FinishedAt": "2026-11-10T14:13:40.039936456Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 12901,
+      "InputSHA256": "ae8fdcbd09e835bb11892dc5f35efc6234a5bfba672986cbf117081d274bbf73",
+      "Output": {
+        "changes": [
+          {
+            "operation": "create",
+            "category": "item",
+            "name": "Медный ключ от зала затонувших дел",
+            "description": "Медный ключ, открывающий зал затонувших дел.",
+            "quantity": 1,
+            "level": "в наличии",
+            "status": "active",
+            "evidenceQuote": "она убрала его во внутренний карман",
+            "tags": [
+              "ключ",
+              "архив"
+            ]
+          },
+          {
+            "operation": "create",
+            "category": "item",
+            "name": "Выписка из журнала",
+            "description": "Лист с выпиской из архива, отмеченный синей архивной печатью.",
+            "quantity": 1,
+            "level": "получена",
+            "status": "active",
+            "evidenceQuote": "получила лист с синей архивной печатью",
+            "tags": [
+              "документ",
+              "архив"
+            ]
+          },
+          {
+            "operation": "update",
+            "entryId": "55555555-5555-4555-8555-555555555555",
+            "category": "currency",
+            "name": "медных монет",
+            "description": "Наличные деньги Лады",
+            "quantity": 1,
+            "level": "в наличии",
+            "status": "active",
+            "evidenceQuote": "отсчитала две из трёх монет",
+            "tags": [
+              "деньги"
+            ]
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T14:12:36.73706278Z",
+      "FinishedAt": "2026-11-10T14:12:49.638183553Z"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "Spec": {
+    "ID": "writer_airlock-r3",
+    "CaseID": "writer_airlock",
+    "FirstArm": "antigravity",
+    "AArm": "antigravity",
+    "Repeat": 3
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 20929,
+      "InputSHA256": "38d7d60728e3871742860f2eb35b2823f06c26143daaf6da76f8c5ef12da16e9",
+      "Output": {
+        "text": "Ирина наклонилась к панели и лично сверила светящиеся цифры на контрольном табло. Индикатор подтверждал нулевое значение за створом, исключая ошибку единичного датчика. Срывать пломбу или дёргать рычаг вслепую значило мгновенно выпустить воздух из помещения, а компенсировать перепад было попросту нечем. Оторвавшись от щитка, она повернулась к механику:\n— Павел, напрямую туда идти нельзя. Есть ли возможность оценить обстановку внутри, вообще не трогая створки?\n\nПавел покачал головой, указав на глухую поверхность переборки:\n— Окошек здесь нет, а телеметрия соседней зоны на этот локальный пульт не заведена. Если действовать безопасно, у нас два реальных варианта. Первый — дойти до стационарного инженерного терминала узла и попробовать запросить диагностику смежного сектора оттуда. Второй — найти заправленный баллон в складских отсеках станции, чтобы выровнять давление и войти штатно. Без этого лезть к механическому приводу нельзя."
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 0,
+        "languageScore": 1,
+        "continuityScore": 1,
+        "notes": [
+          "paragraphs=2 expected=3..5",
+          "words=130 expected=220..650"
+        ]
+      },
+      "Prose": {
+        "words": 130,
+        "paragraphs": 2,
+        "repeatedSixGramRatio": 0,
+        "duplicateParagraphs": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 8927,
+      "OutputTokens": 259,
+      "StartedAt": "2026-11-10T14:08:54.691266958Z",
+      "FinishedAt": "2026-11-10T14:09:15.621169964Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "provider_or_transport_error",
+      "OK": false,
+      "ElapsedMS": 12102,
+      "InputSHA256": "38d7d60728e3871742860f2eb35b2823f06c26143daaf6da76f8c5ef12da16e9",
+      "Checks": {
+        "schemaScore": 0,
+        "instructionScore": 0,
+        "languageScore": 0,
+        "continuityScore": 0
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        502
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T14:08:54.69116973Z",
+      "FinishedAt": "2026-11-10T14:09:06.793328913Z"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 21307,
+    "InputSHA256": "85fbc098d28c7e31dec9a029a2986be1c5e559b2e61f52ec0839d3e0b4ac954c",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 4,
+        "sceneProgress": 4,
+        "prose": 4,
+        "nonRepetition": 5
+      },
+      "winner": "A",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Вариант A превосходит B благодаря живому диалогу: блеф Лады вызывает содержательную реакцию Тихона, раскрывающую мотивы персонажа и тайну схемы. В варианте B реакция Тихона сведена к безмолвному испугу и авторскому пересказу мыслей, а текст навязывает Ладе переживания («Осмыслить победу помешал...»). Обе версии соблюли условия mustPreserve, но A создаёт более напряженную и открытую для выбора ситуацию."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 6049,
+    "OutputTokens": 180,
+    "StartedAt": "2026-11-10T14:17:56.574888133Z",
+    "FinishedAt": "2026-11-10T14:18:17.882404088Z"
+  },
+  "pair": "writer_archive-r2",
+  "validVerdict": true
+}

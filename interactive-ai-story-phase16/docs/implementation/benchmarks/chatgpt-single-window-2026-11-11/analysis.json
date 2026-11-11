@@ -1,0 +1,44 @@
+{
+  "planned": 12,
+  "recorded": 12,
+  "validJSONObjects": 11,
+  "writerNonemptyText": 7,
+  "completedEmptyUI": 0,
+  "otherFailures": 1,
+  "medianSuccessfulSeconds": 13.701,
+  "maxAttemptSeconds": 17.102,
+  "workerIDs": [
+    "74b5babd-d2b6-4060-9bd0-2d4fa904f626"
+  ],
+  "peakSimultaneousDispatchedJobs": 1,
+  "jobStates": {
+    "complete": 11,
+    "failed": 1
+  },
+  "activeJobsAfter": 0,
+  "cases": {
+    "turn_planner_browser": {
+      "attempts": 4,
+      "validJSONObjects": 4
+    },
+    "writer_archive": {
+      "attempts": 4,
+      "validJSONObjects": 4
+    },
+    "writer_detective": {
+      "attempts": 4,
+      "validJSONObjects": 3
+    }
+  },
+  "errors": [
+    {
+      "id": "9d7e8b422479d6d39243e03448807d82126969a93c4f68bf",
+      "state": "failed",
+      "reason": "Extra data",
+      "position": 825,
+      "replyLength": 826,
+      "extraClosingBrace": true
+    }
+  ],
+  "scope": "Fixed frozen scenarios; single-window trial on a different day. Not a controlled causal test of window count or proof against rare empty responses."
+}

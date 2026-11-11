@@ -1,0 +1,42 @@
+{
+  "Arm": "chatgpt",
+  "Model": "gpt-6-instant",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 11501,
+  "InputSHA256": "3da13af3093d2a5ae0cc0355addaa6d1e646db882bbdc8080862f6942fd24517",
+  "Output": {
+    "changes": [
+      {
+        "operation": "update",
+        "entryId": "66666666-6666-4666-8666-666666666666",
+        "category": "item",
+        "name": "походный паёк",
+        "description": "Пищевой запас для похода.",
+        "quantity": 1,
+        "level": "Остался один паёк",
+        "status": "active",
+        "evidenceQuote": "В сумке остался один паёк.",
+        "tags": [
+          "еда",
+          "расходуемый предмет"
+        ]
+      }
+    ]
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 0,
+  "OutputTokens": 0,
+  "StartedAt": "2026-11-10T14:14:39.127724649Z",
+  "FinishedAt": "2026-11-10T14:14:50.629393883Z"
+}

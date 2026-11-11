@@ -1,0 +1,26 @@
+{
+  "Arm": "antigravity",
+  "Model": "antigravity-preview-05-2026",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 12679,
+  "InputSHA256": "40e8ead1d60b183d19ba58e749459ce420f1632381b71fdeee4d15d599378106",
+  "Output": {
+    "changes": []
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 5719,
+  "OutputTokens": 4,
+  "StartedAt": "2026-11-10T14:08:06.080465095Z",
+  "FinishedAt": "2026-11-10T14:08:18.760294929Z"
+}

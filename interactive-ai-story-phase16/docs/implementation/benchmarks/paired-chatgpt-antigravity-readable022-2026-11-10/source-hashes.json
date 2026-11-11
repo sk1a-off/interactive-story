@@ -1,0 +1,13 @@
+{
+  "backend/cmd/chatgptbridge/main.go": "1f4be2d8fd4e7debecae88e53e5b75728d8c98b956e0f4f57cc884ef3093902f",
+  "backend/cmd/chatgptbridge/chat.go": "5bc911e6038db1747095d5f6adf2391fa020629e7ec11a1904bb639105af6448",
+  "backend/cmd/chatgptbridge/web/worker.user.js": "37fd7b18de73969cff8cc221868969b5d85e225de1b44fc3133bf242d2ce0548",
+  "backend/cmd/llmbench/paired_compare.go": "d9c8e1304f0f74d3687a6478bc796c2f82caad09aae552a0c002e0237d3baafc",
+  "backend/cmd/llmbench/paired_corpus.go": "975d334f2d6908cf090499d683b9bff71965b3a9e7fb67061bbc7304caca38b9",
+  "backend/cmd/llmbench/paired_runner.go": "88c4707337d0d5dae054baecb4123a3d8097547555407e799b48ea8f1e2c4c5f",
+  "backend/cmd/llmbench/paired_judge.go": "e119fe351420fc5dd329cbd0cba80cd3d1a7d235d802dee71f9e8208ee70d48f",
+  "backend/cmd/llmbench/paired_compare_test.go": "df4cdcfc84a933538274ef14b6c60f868c8eaf75bad74471deda1ba1e262ed26",
+  "backend/cmd/llmbench/paired_bridge.go": "5a20335cf3d3041ae0f89f1bd7cd038b0e77af672b3cfaa6d5b2950eb4e9028b",
+  "backend/cmd/llmbench/paired_format.go": "505c1886e38fdb915ba056c7b696f44ba31ad5a181fd620c1075be2abc71c118",
+  "backend/cmd/llmbench/main.go": "bf5b81cc2c7a95f7a5a0525794b56485e2e035975b08f6d3ff2266ccdd9f9756"
+}

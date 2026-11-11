@@ -1,0 +1,71 @@
+{
+  "Arm": "chatgpt",
+  "Model": "gpt-6-instant",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 14101,
+  "InputSHA256": "ae8fdcbd09e835bb11892dc5f35efc6234a5bfba672986cbf117081d274bbf73",
+  "Output": {
+    "changes": [
+      {
+        "operation": "create",
+        "category": "item",
+        "name": "Медный ключ от зала затонувших дел",
+        "description": "Медный ключ, открывающий зал затонувших дел.",
+        "quantity": 1,
+        "level": "в наличии",
+        "status": "active",
+        "evidenceQuote": "Тихон передал Ладе медный ключ от зала затонувших дел, и она убрала его во внутренний карман.",
+        "tags": [
+          "ключ",
+          "архив",
+          "сюжетный предмет"
+        ]
+      },
+      {
+        "operation": "create",
+        "category": "item",
+        "name": "Выписка из журнала",
+        "description": "Архивная выписка с синей печатью, полученная у ночного дежурного.",
+        "quantity": 1,
+        "level": "в наличии",
+        "status": "active",
+        "evidenceQuote": "получила лист с синей архивной печатью.",
+        "tags": [
+          "документ",
+          "архив",
+          "сюжетный предмет"
+        ]
+      },
+      {
+        "operation": "update",
+        "entryId": "55555555-5555-4555-8555-555555555555",
+        "category": "currency",
+        "name": "медных монет",
+        "description": "Наличные деньги Лады",
+        "quantity": 1,
+        "level": "текущий баланс",
+        "status": "active",
+        "evidenceQuote": "Лада отсчитала две из трёх монет",
+        "tags": [
+          "деньги"
+        ]
+      }
+    ]
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 0,
+  "OutputTokens": 0,
+  "StartedAt": "2026-11-10T14:13:42.177738307Z",
+  "FinishedAt": "2026-11-10T14:13:56.279076054Z"
+}

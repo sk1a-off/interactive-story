@@ -1,0 +1,145 @@
+{
+  "arm": "antigravity",
+  "calls": [
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 0.141139,
+      "EndMS": 15508.554415,
+      "ElapsedMS": 15508.413276,
+      "InputTokens": 5913,
+      "OutputTokens": 71,
+      "InputBytes": 2238,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 15508.648094,
+      "EndMS": 38630.056798,
+      "ElapsedMS": 23121.408704,
+      "InputTokens": 6701,
+      "OutputTokens": 221,
+      "InputBytes": 2439,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "state_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 38630.421545,
+      "EndMS": 50972.837652,
+      "ElapsedMS": 12342.416107,
+      "InputTokens": 6410,
+      "OutputTokens": 4,
+      "InputBytes": 3716,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "world_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 38630.445435,
+      "EndMS": 61704.457943,
+      "ElapsedMS": 23074.012508,
+      "InputTokens": 6241,
+      "OutputTokens": 4,
+      "InputBytes": 3742,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 24751,
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "quest_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 38630.415875,
+      "EndMS": 108064.222596,
+      "ElapsedMS": 69433.806721,
+      "InputTokens": 37518,
+      "OutputTokens": 105,
+      "InputBytes": 3875,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "choices",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 108064.279665,
+      "EndMS": 121870.105087,
+      "ElapsedMS": 13805.825422,
+      "InputTokens": 5965,
+      "OutputTokens": 118,
+      "InputBytes": 3433,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 121870,
+  "failure": "",
+  "firstTextMs": 38630.287406,
+  "fixture": "danger",
+  "ok": true,
+  "readyMs": 121870.180206,
+  "text": "Илья жестом показал Мире замереть и сделал два неслышных шага назад, укрывшись за широкой каменной колонной у входа. Придержав край развернутой карты водовода, чтобы она не шуршала на сквозняке, он прижался плечом к влажной кладке и сосредоточился на звуках, доносившихся из-за закрытых створок. Синий дорожный плащ помог ему слиться с вечерней тенью у каменной стены.\n\nЗа толстым деревом запертой двери не слышалось ни шагов, ни голосов, ни признаков движения. Лишь глухой, монотонный плеск паводка отдавался легкой вибрацией в толще камня да изнутри изредка долетал мерный стук капель, сочащихся сквозь своды. По ту сторону прохода стояла настороженная тишина затопленного здания, не выдавая явной угрозы."
+}

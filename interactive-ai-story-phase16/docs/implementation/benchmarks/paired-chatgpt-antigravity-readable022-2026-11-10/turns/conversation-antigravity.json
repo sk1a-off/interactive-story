@@ -1,0 +1,145 @@
+{
+  "arm": "antigravity",
+  "calls": [
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 0.143038,
+      "EndMS": 15575.67878,
+      "ElapsedMS": 15575.535742,
+      "InputTokens": 5909,
+      "OutputTokens": 60,
+      "InputBytes": 2231,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 15575.770099,
+      "EndMS": 55865.774657,
+      "ElapsedMS": 40290.004558,
+      "InputTokens": 6690,
+      "OutputTokens": 348,
+      "InputBytes": 2395,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "state_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 55866.317382,
+      "EndMS": 69647.790624,
+      "ElapsedMS": 13781.473242,
+      "InputTokens": 6529,
+      "OutputTokens": 4,
+      "InputBytes": 4583,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "world_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 55866.290422,
+      "EndMS": 87893.08331,
+      "ElapsedMS": 32026.792888,
+      "InputTokens": 6360,
+      "OutputTokens": 4,
+      "InputBytes": 4609,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "quest_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 55866.287392,
+      "EndMS": 95355.302616,
+      "ElapsedMS": 39489.015224,
+      "InputTokens": 7054,
+      "OutputTokens": 254,
+      "InputBytes": 4705,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "choices",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 95355.494204,
+      "EndMS": 110430.176639,
+      "ElapsedMS": 15074.682435,
+      "InputTokens": 6506,
+      "OutputTokens": 97,
+      "InputBytes": 6150,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 110430,
+  "failure": "",
+  "firstTextMs": 55866.233543,
+  "fixture": "conversation",
+  "ok": true,
+  "readyMs": 110430.275708,
+  "text": "Илья чуть опустил край листа, не выпуская карту водовода из пальцев, и перевел взгляд на свою спутницу. Сырой вечерний воздух архивной пристани холодил лицо, а плеск подступающей к каменным плитам реки глухо отдавался в стенах, заставляя говорить негромко, но прямо.\n\n— Ты обещала показать дорогу в обход паводка, — произнес он спокойно, кивнув на запертую дверь перед ними. — Где именно начинается проход к башне?\n\nМира не спешила с ответом. Сдержанная и сосредоточенная, она провела ладонью по тяжелым доскам створки, словно прислушиваясь к тому, что происходило по ту сторону камня, и лишь затем повернулась к нему. В ее голосе звучала привычная осторожность хранительницы, для которой безопасность залов стояла наравне с собственной жизнью.\n\n— Он начинается прямо здесь, за этим порогом, — ответила архивистка, указав на массивную запертую дверь. — Внутренний коридор архива врезан в скалу выше уровня затопленной площади. Если вода не пробила нижние заглушки, мы пройдем подгорными галереями прямо к подножию северной башни, не касаясь паводка.\n\nОна выжидающе посмотрела на Илью, явно рассчитывая, что перед тем как браться за замок, путник сверит ее слова с отметками на своей карте."
+}

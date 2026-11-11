@@ -1,0 +1,35 @@
+{
+  "Arm": "antigravity",
+  "Model": "antigravity-preview-05-2026",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 18432,
+  "InputSHA256": "fd1063728a8457e484594f4e2bab2fb560f4c6408c89e7c1425bbf2e817841bb",
+  "Output": {
+    "changes": [
+      {
+        "type": "upsert_location",
+        "locationId": "00000000-0000-4000-8000-000000000302",
+        "name": "Архив",
+        "description": "Каменный архив со свежей глубокой трещиной на фасаде и уцелевшей дубовой дверью",
+        "visualAnchorEn": "Stone archive with a deep crack on the facade and an oak door",
+        "evidenceQuote": "На его каменном фасаде появилась свежая глубокая трещина, но дубовая дверь уцелела."
+      }
+    ]
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 5504,
+  "OutputTokens": 128,
+  "StartedAt": "2026-11-10T14:08:56.371962061Z",
+  "FinishedAt": "2026-11-10T14:09:14.804051996Z"
+}

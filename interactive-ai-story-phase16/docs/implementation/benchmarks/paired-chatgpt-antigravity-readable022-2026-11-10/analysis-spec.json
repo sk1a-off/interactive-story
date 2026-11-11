@@ -1,0 +1,17 @@
+{
+  "bootstrapIterations": 10000,
+  "bootstrapSeed": 20261110,
+  "bootstrapUnit": "frozen scenario family; retain its repeats together",
+  "failureSensitivity": "180 seconds penalty for no valid answer within the call budget; not actual elapsed time",
+  "latencyPrimary": "median paired log(ChatGPT/Antigravity), both valid outputs only",
+  "primaryQualityRequiresTwoValidJudges": true,
+  "qualityTieThreshold": 0.2,
+  "scope": "fixed synthetic corpus, not a random sample of real users",
+  "writerWeights": {
+    "agency": 0.25,
+    "continuity": 0.3,
+    "nonRepetition": 0.1,
+    "prose": 0.15,
+    "sceneProgress": 0.2
+  }
+}

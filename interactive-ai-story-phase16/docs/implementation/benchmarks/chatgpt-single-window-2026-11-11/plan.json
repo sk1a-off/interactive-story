@@ -1,0 +1,60 @@
+{
+  "worker": "74b5babd-d2b6-4060-9bd0-2d4fa904f626",
+  "workers": 1,
+  "parallelRequests": 1,
+  "seed": 20261111,
+  "promptRevision": 25,
+  "schedule": [
+    {
+      "case": "turn_planner_browser",
+      "repeat": 2
+    },
+    {
+      "case": "writer_archive",
+      "repeat": 3
+    },
+    {
+      "case": "turn_planner_browser",
+      "repeat": 4
+    },
+    {
+      "case": "turn_planner_browser",
+      "repeat": 1
+    },
+    {
+      "case": "writer_detective",
+      "repeat": 3
+    },
+    {
+      "case": "writer_detective",
+      "repeat": 2
+    },
+    {
+      "case": "writer_detective",
+      "repeat": 1
+    },
+    {
+      "case": "writer_detective",
+      "repeat": 4
+    },
+    {
+      "case": "turn_planner_browser",
+      "repeat": 3
+    },
+    {
+      "case": "writer_archive",
+      "repeat": 2
+    },
+    {
+      "case": "writer_archive",
+      "repeat": 1
+    },
+    {
+      "case": "writer_archive",
+      "repeat": 4
+    }
+  ],
+  "source": "docs/implementation/benchmarks/chatgpt-readable-json-worker022-2026-11-10/bridge-after.json",
+  "sourceSHA256": "00d4aec5d9ca347ef98e17ea21d6bf96dadf659092f89a5c50cc0057247594a6",
+  "scope": "Same three synthetic scenarios as the previous format study; readable-json-v3 only. Independent sequential series; no retries or silent worker replacement."
+}

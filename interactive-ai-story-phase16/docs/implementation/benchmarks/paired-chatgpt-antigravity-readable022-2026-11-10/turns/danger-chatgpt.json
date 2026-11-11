@@ -1,0 +1,139 @@
+{
+  "arm": "chatgpt",
+  "calls": [
+    {
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "gpt-6-instant",
+      "StartMS": 0.143189,
+      "EndMS": 10101.570584,
+      "ElapsedMS": 10101.427395,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2238,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "gpt-6-instant",
+      "StartMS": 10101.673693,
+      "EndMS": 23102.633998,
+      "ElapsedMS": 13000.960305,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2703,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "world_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 23103.507051,
+      "EndMS": 31904.596035,
+      "ElapsedMS": 8801.088984,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5529,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "state_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 31904.671924,
+      "EndMS": 39205.938593,
+      "ElapsedMS": 7301.266669,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5503,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "quest_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 39206.013983,
+      "EndMS": 47506.937113,
+      "ElapsedMS": 8300.92313,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5926,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "choices",
+      "model": "gpt-6-instant",
+      "StartMS": 47507.021723,
+      "EndMS": 58908.867232,
+      "ElapsedMS": 11401.845509,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5220,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 58908,
+  "failure": "",
+  "firstTextMs": 23103.472011,
+  "fixture": "danger",
+  "ok": true,
+  "readyMs": 58908.971201,
+  "text": "Илья медленно отступил от двери, стараясь не задеть каменные обломки под ногами. За широкой колонной он остановился и прислонился плечом к холодной поверхности. Отсюда запертая дверь оставалась вне прямой видимости, зато звуки из-за неё были слышны достаточно отчётливо. Мира тоже не стала приближаться, выдержав небольшую паузу.\n\nСначала доносился только глухой шум воды, похожий на течение в узком каменном канале. Затем сквозь него пробились три коротких звука: два негромких удара с небольшим промежутком и один протяжный скрежет. Илья затаил дыхание и прислушался внимательнее. Удары повторились, но на этот раз звучали тише, словно что-то соприкасалось с камнем по другую сторону двери. Определить точное расстояние до источника не получалось: вода искажала направление звука.\n\n— Слышишь? — едва слышно спросила Мира.\n\nИлья кивнул. Архивистка нахмурилась, но не стала выдвигать предположений.\n\n— За этой дверью раньше проходил водовод, — прошептала она. — Но я не знаю, в каком он сейчас состоянии. После паводка там могло многое измениться.\n\nНаступила короткая тишина. Затем раздался ещё один скрежет, более продолжительный, чем предыдущие. Он оборвался резко, после чего остался лишь привычный гул воды. Ни голосов, ни других звуков, которые позволили бы уверенно определить присутствие человека или животного, Илья не услышал.\n\nКолонна надёжно закрывала его от пространства перед дверью, но оставалась неясной сама природа происходящего за ней. Мира ждала, не пытаясь нарушить тишину. Теперь можно было продолжить наблюдение, осторожно проверить карту водовода в поисках возможного обходного маршрута или обсудить с Мирой, что она помнит о внутренней планировке архива."
+}

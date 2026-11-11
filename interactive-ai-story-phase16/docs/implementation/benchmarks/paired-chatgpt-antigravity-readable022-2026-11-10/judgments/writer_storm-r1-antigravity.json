@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 25746,
+    "InputSHA256": "f27e8f15c3193f681fc86d6e2df098440ecd6bca771e34579b52174ecd3697a1",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 4,
+        "nonRepetition": 4
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "B",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Оба варианта строго соблюдают условия (инвентарь, отказ от перехода вслепую, неопределённость). Вариант А удачно использует прямую речь, но страдает от канцелярита («прошло первичную проверку», «состояние узла... оставалось неизвестным») и избыточных повторов одной мысли в финале. Вариант B выигрывает за счёт более живой, тактильной прозы (щелчок карабина, натяжение верёвки, смазанный дождём узел) и динамичного темпа."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 6007,
+    "OutputTokens": 195,
+    "StartedAt": "2026-11-10T14:18:07.339950134Z",
+    "FinishedAt": "2026-11-10T14:18:33.085963103Z"
+  },
+  "pair": "writer_storm-r1",
+  "validVerdict": true
+}

@@ -1,0 +1,64 @@
+{
+  "Arm": "antigravity",
+  "Model": "antigravity-preview-05-2026",
+  "ErrorCode": "",
+  "OK": true,
+  "ElapsedMS": 90876,
+  "InputSHA256": "ae8fdcbd09e835bb11892dc5f35efc6234a5bfba672986cbf117081d274bbf73",
+  "Output": {
+    "changes": [
+      {
+        "category": "item",
+        "description": "Ключ от зала затонувших дел, полученный от Тихона",
+        "evidenceQuote": "Тихон передал Ладе медный ключ от зала затонувших дел, и она убрала его во внутренний карман",
+        "name": "Медный ключ от зала затонувших дел",
+        "operation": "create",
+        "quantity": 1,
+        "status": "active",
+        "tags": [
+          "ключ"
+        ]
+      },
+      {
+        "category": "currency",
+        "description": "Наличные деньги Лады",
+        "entryId": "55555555-5555-4555-8555-555555555555",
+        "evidenceQuote": "Лада отсчитала две из трёх монет",
+        "name": "медных монет",
+        "operation": "update",
+        "quantity": 1,
+        "status": "active",
+        "tags": [
+          "деньги"
+        ]
+      },
+      {
+        "category": "item",
+        "description": "Лист с синей архивной печатью, выданный дежурным",
+        "evidenceQuote": "получила лист с синей архивной печатью",
+        "name": "Выписка из журнала",
+        "operation": "create",
+        "quantity": 1,
+        "status": "active",
+        "tags": [
+          "документ"
+        ]
+      }
+    ]
+  },
+  "Checks": {
+    "schemaScore": 1,
+    "instructionScore": 1,
+    "languageScore": 1,
+    "continuityScore": 1
+  },
+  "HTTPPosts": 1,
+  "HTTPGets": 0,
+  "HTTPStatuses": [
+    200
+  ],
+  "InputTokens": 17345,
+  "OutputTokens": 269,
+  "StartedAt": "2026-11-10T14:13:42.177798696Z",
+  "FinishedAt": "2026-11-10T14:15:13.054024557Z"
+}

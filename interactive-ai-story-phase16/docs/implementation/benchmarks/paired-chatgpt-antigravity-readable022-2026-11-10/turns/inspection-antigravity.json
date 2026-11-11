@@ -1,0 +1,145 @@
+{
+  "arm": "antigravity",
+  "calls": [
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 0.207619,
+      "EndMS": 20588.959975,
+      "ElapsedMS": 20588.752356,
+      "InputTokens": 5913,
+      "OutputTokens": 75,
+      "InputBytes": 2233,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 20589.052664,
+      "EndMS": 46829.529652,
+      "ElapsedMS": 26240.476988,
+      "InputTokens": 6705,
+      "OutputTokens": 246,
+      "InputBytes": 2445,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "state_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 46829.82502,
+      "EndMS": 61034.494691,
+      "ElapsedMS": 14204.669671,
+      "InputTokens": 6435,
+      "OutputTokens": 4,
+      "InputBytes": 3954,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "world_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 46829.948289,
+      "EndMS": 67706.803522,
+      "ElapsedMS": 20876.855233,
+      "InputTokens": 6266,
+      "OutputTokens": 4,
+      "InputBytes": 3980,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "quest_evaluator",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 46829.79973,
+      "EndMS": 81823.429414,
+      "ElapsedMS": 34993.629684,
+      "InputTokens": 6971,
+      "OutputTokens": 222,
+      "InputBytes": 4124,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "cachedInputTokens": 0,
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "choices",
+      "model": "antigravity-preview-05-2026",
+      "StartMS": 81823.589663,
+      "EndMS": 100629.984784,
+      "ElapsedMS": 18806.395121,
+      "InputTokens": 6368,
+      "OutputTokens": 103,
+      "InputBytes": 5529,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 100630,
+  "failure": "",
+  "firstTextMs": 46829.75225,
+  "fixture": "inspection",
+  "ok": true,
+  "readyMs": 100630.072174,
+  "text": "Илья сложил карту и подошел ближе к тяжелой деревянной двери. При вечернем свете полотно казалось неповрежденным, хотя по низу каменного косяка уже темнели следы сырости от поднявшейся реки. Не прикасаясь к замку, путник внимательно осмотрел кованые петли, державшие массивную створку. Широкие полосы железа глубоко уходили в кладку: штыри сидели крепко, без зазоров или следов расшатанного раствора, а слой ржавчины на металле был лишь поверхностным.\n\nМира не вмешивалась, молча наблюдая за его действиями со своего места. Илья осторожно нажал ладонью на край полотна возле косяка, проверяя устойчивость конструкции. Дверь не подалась ни на миллиметр, глухо упираясь в каменную четверть с той стороны. Петли оказались недосягаемы для простого рычага, и стало ясно, что снять створку с петель без шума и специальных инструментов не получится."
+}

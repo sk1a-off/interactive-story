@@ -1,0 +1,160 @@
+{
+  "arm": "chatgpt",
+  "calls": [
+    {
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "gpt-6-instant",
+      "StartMS": 0.150179,
+      "EndMS": 10101.512705,
+      "ElapsedMS": 10101.362526,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2233,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "gpt-6-instant",
+      "StartMS": 10101.594525,
+      "EndMS": 21603.079469,
+      "ElapsedMS": 11501.484944,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2816,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "world_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 21603.821363,
+      "EndMS": 33804.945598,
+      "ElapsedMS": 12201.124235,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5100,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "state_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 33805.026708,
+      "EndMS": 41505.537433,
+      "ElapsedMS": 7700.510725,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5074,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "quest_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 41505.621513,
+      "EndMS": 55906.7711,
+      "ElapsedMS": 14401.149587,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5615,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "quest_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 55906.913198,
+      "EndMS": 67607.884318,
+      "ElapsedMS": 11700.97112,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5185,
+      "Repair": true,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 7,
+      "role": "choices",
+      "model": "gpt-6-instant",
+      "StartMS": 67607.951957,
+      "EndMS": 76608.465619,
+      "ElapsedMS": 9000.513662,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 4801,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 76608,
+  "failure": "",
+  "firstTextMs": 21603.776643,
+  "fixture": "inspection",
+  "ok": true,
+  "readyMs": 76608.550088,
+  "text": "Илья внимательно осмотрел дверь, начав с её общего состояния. Каменная рама выглядела массивной, а сама створка плотно сидела в проёме. Он проследил взглядом вдоль её края, стараясь заметить перекосы, щели или следы деформации. При слабом вечернем освещении мелкие детали различались не сразу, поэтому путник несколько раз менял угол обзора.\n\nЗатем его внимание переключилось на петли. Он осмотрел каждую доступную часть креплений, проверяя, нет ли заметных трещин, разошедшихся соединений или следов сильной коррозии. Петли оставались на своих местах; явных повреждений, которые можно было бы уверенно определить из такого осмотра, не обнаружилось. Вместе с тем по одному лишь внешнему виду нельзя было установить, насколько свободно они способны двигаться под весом створки.\n\nИлья не стал приближать руки к замку и не проверял дверь на прочность. Запирающий механизм оставался нетронутым, а створка — неподвижной. Осмотр позволил исключить некоторые очевидные внешние признаки неисправности, но не дал ответа на главный вопрос: можно ли пройти через эту дверь, не повредив её и не рискуя оказаться запертым с другой стороны.\n\nМира наблюдала за ним молча, ожидая результата.\n\n— Снаружи ничего явно сломанного, — негромко произнёс Илья. — Но пока неясно, что именно удерживает дверь и как она поведёт себя при открытии.\n\nАрхивистка чуть кивнула. За стенами по-прежнему шумела вода. Дверь оставалась закрытой, и путь через архив ещё предстояло выяснить."
+}

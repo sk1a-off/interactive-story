@@ -1,0 +1,124 @@
+{
+  "Spec": {
+    "ID": "quest_evaluator-r1",
+    "CaseID": "quest_evaluator",
+    "FirstArm": "antigravity",
+    "AArm": "antigravity",
+    "Repeat": 1
+  },
+  "Outcomes": {
+    "antigravity": {
+      "Arm": "antigravity",
+      "Model": "antigravity-preview-05-2026",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 32690,
+      "InputSHA256": "afa72330bedac30c57e2ae6b93e51e0c6a61afaea037199ce340125787923474",
+      "Output": {
+        "changes": [
+          {
+            "operation": "progress",
+            "objectiveId": "11111111-1111-4111-8111-111111111111",
+            "status": "active",
+            "progress": 35,
+            "evidenceQuote": "Тихон передал ей медный ключ от зала затонувших дел"
+          },
+          {
+            "operation": "progress",
+            "objectiveId": "22222222-2222-4222-8222-222222222222",
+            "status": "active",
+            "progress": 75,
+            "evidenceQuote": "Лада успела срисовать три поворота маршрута на манжету; последний участок карты оставался скрыт печатью архива."
+          },
+          {
+            "operation": "create",
+            "parentObjectiveId": "11111111-1111-4111-8111-111111111111",
+            "scope": "minor",
+            "kind": "task",
+            "title": "Добыть журнал дежурного хранителя",
+            "description": "Отыскать журнал дежурного хранителя в кабинете смотрителя, чтобы снять печать архива с карты.",
+            "successCriteria": "Журнал дежурного хранителя найден в кабинете смотрителя",
+            "status": "active",
+            "progress": 0,
+            "evidenceQuote": "Такой журнал находится в кабинете смотрителя, который сейчас обходит верхние этажи."
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 6459,
+      "OutputTokens": 304,
+      "StartedAt": "2026-11-10T14:12:04.046348336Z",
+      "FinishedAt": "2026-11-10T14:12:36.736593846Z"
+    },
+    "chatgpt": {
+      "Arm": "chatgpt",
+      "Model": "gpt-6-instant",
+      "ErrorCode": "",
+      "OK": true,
+      "ElapsedMS": 13900,
+      "InputSHA256": "afa72330bedac30c57e2ae6b93e51e0c6a61afaea037199ce340125787923474",
+      "Output": {
+        "changes": [
+          {
+            "operation": "progress",
+            "objectiveId": "11111111-1111-4111-8111-111111111111",
+            "scope": "global",
+            "kind": "quest",
+            "title": "Найти Мирона",
+            "status": "active",
+            "progress": 28,
+            "evidenceQuote": "она показывала не северную лестницу, а сухой обход через зал затонувших дел."
+          },
+          {
+            "operation": "progress",
+            "objectiveId": "22222222-2222-4222-8222-222222222222",
+            "scope": "minor",
+            "kind": "task",
+            "title": "Расшифровать карту на листе",
+            "status": "active",
+            "progress": 72,
+            "evidenceQuote": "Лада успела срисовать три поворота маршрута на манжету; последний участок карты оставался скрыт печатью архива."
+          },
+          {
+            "operation": "create",
+            "reference": "archive_keeper_log",
+            "parentObjectiveId": "11111111-1111-4111-8111-111111111111",
+            "scope": "minor",
+            "kind": "task",
+            "title": "Получить запись дежурного хранителя",
+            "description": "Найти журнал дежурного хранителя в кабинете смотрителя и получить запись, необходимую для снятия печати с последнего участка карты.",
+            "successCriteria": "Получена запись дежурного хранителя, позволяющая открыть печать архива на последнем участке карты.",
+            "status": "active",
+            "progress": 0,
+            "evidenceQuote": "печать откроется только записью дежурного хранителя."
+          }
+        ]
+      },
+      "Checks": {
+        "schemaScore": 1,
+        "instructionScore": 1,
+        "languageScore": 1,
+        "continuityScore": 1
+      },
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "StartedAt": "2026-11-10T14:12:04.046325556Z",
+      "FinishedAt": "2026-11-10T14:12:17.947119342Z"
+    }
+  }
+}

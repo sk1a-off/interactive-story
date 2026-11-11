@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 21033,
+    "InputSHA256": "0e7f635e7aac606a695e5293bfe7d628707275804f88298cd0b038da179cbda7",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 3,
+        "sceneProgress": 2,
+        "prose": 3,
+        "nonRepetition": 3
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "B",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Вариант А топчется на месте: Марина просит сначала рассказать о работе, но торговец лишь пересказывает условия сделки («тебе стоит узнать подробности... Что скажешь?»), так и не назвав само дело. Вариант B отлично двигает сцену вперед: торговец дает конкретную задачу (разгрузка плоскодонки с холстом и солью до дождя) и оставляет Марине осмысленный выбор."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 6210,
+    "OutputTokens": 163,
+    "StartedAt": "2026-11-10T14:20:41.32038454Z",
+    "FinishedAt": "2026-11-10T14:21:02.353510027Z"
+  },
+  "pair": "writer_market-r1",
+  "validVerdict": true
+}

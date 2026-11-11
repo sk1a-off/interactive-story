@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 23382,
+    "InputSHA256": "c8ca2a26b05247d47cf8730b3a739d67ec25e2aebae00bcfb78556f960bce6e9",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 4,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "A",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Оба варианта безупречно соблюдают условия (проверка собственного крепления, отказ от перехода, неопределённость узла Виктора). Вариант A выигрывает по агентности: он оставляет открытый тактический момент через реплику Виктора, в то время как вариант B заранее расписывает отказ Аси жестами и её решение пассивно выжидать у моря погоды."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 6286,
+    "OutputTokens": 158,
+    "StartedAt": "2026-11-10T14:19:32.134761451Z",
+    "FinishedAt": "2026-11-10T14:19:55.517399874Z"
+  },
+  "pair": "writer_storm-r3",
+  "validVerdict": true
+}

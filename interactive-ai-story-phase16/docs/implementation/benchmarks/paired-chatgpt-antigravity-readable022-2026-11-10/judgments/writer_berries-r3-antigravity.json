@@ -1,0 +1,50 @@
+{
+  "aArm": "antigravity",
+  "bArm": "chatgpt",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 19758,
+    "InputSHA256": "3fcd5143b979b9c4f4ad659135e815365fa6327af67be227cbd70b199aafa62d",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 4,
+        "sceneProgress": 3,
+        "prose": 4,
+        "nonRepetition": 5
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "B",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Оба варианта строго соблюдают условия и ограничения заявки: осмотр выполнен без пробы, ягоды остаются неопознанными, еда не создана из воздуха. Однако вариант B значительно превосходит A в подаче и развитии сцены: вместо сухого косвенного пересказа диалога он дает живую прямую речь Нины, предлагает конкретную зацепку (ручей неподалеку) и оставляет игроку четкий стратегический выбор для следующего хода."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 5906,
+    "OutputTokens": 172,
+    "StartedAt": "2026-11-10T14:21:33.813911702Z",
+    "FinishedAt": "2026-11-10T14:21:53.572739806Z"
+  },
+  "pair": "writer_berries-r3",
+  "validVerdict": true
+}

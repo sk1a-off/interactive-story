@@ -1,0 +1,50 @@
+{
+  "aArm": "chatgpt",
+  "bArm": "antigravity",
+  "judge": "antigravity",
+  "outcome": {
+    "Arm": "antigravity",
+    "Model": "antigravity-preview-05-2026",
+    "ErrorCode": "",
+    "OK": true,
+    "ElapsedMS": 30929,
+    "InputSHA256": "20b50a607f7f4533b4c0e4f1427a61fd0cc16c86e7ba8b7bb5b35548419780d3",
+    "Output": {
+      "A": {
+        "continuity": 5,
+        "agency": 4,
+        "sceneProgress": 3,
+        "prose": 3,
+        "nonRepetition": 5
+      },
+      "B": {
+        "continuity": 5,
+        "agency": 5,
+        "sceneProgress": 5,
+        "prose": 5,
+        "nonRepetition": 5
+      },
+      "winner": "B",
+      "criticalErrorsA": [],
+      "criticalErrorsB": [],
+      "explanation": "Вариант B отлично реализует цель сцены, предоставляя осязаемую деталь (накладную со временем) и живую реакцию, ставящую игрока перед новым выбором. Вариант A размывает фактуру условными формулировками («назвала день недели и примерное время») и завершается неуместным мета-комментарием о доступных ходах."
+    },
+    "Checks": {
+      "schemaScore": 0,
+      "instructionScore": 0,
+      "languageScore": 0,
+      "continuityScore": 0
+    },
+    "HTTPPosts": 1,
+    "HTTPGets": 0,
+    "HTTPStatuses": [
+      200
+    ],
+    "InputTokens": 5905,
+    "OutputTokens": 159,
+    "StartedAt": "2026-11-10T14:17:32.540801224Z",
+    "FinishedAt": "2026-11-10T14:18:03.470767755Z"
+  },
+  "pair": "writer_detective-r2",
+  "validVerdict": true
+}

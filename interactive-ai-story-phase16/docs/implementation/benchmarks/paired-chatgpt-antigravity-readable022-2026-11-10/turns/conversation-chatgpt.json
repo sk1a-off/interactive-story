@@ -1,0 +1,139 @@
+{
+  "arm": "chatgpt",
+  "calls": [
+    {
+      "responseFormat": "json_object",
+      "sequence": 1,
+      "role": "turn_planner",
+      "model": "gpt-6-instant",
+      "StartMS": 0.156829,
+      "EndMS": 12500.629979,
+      "ElapsedMS": 12500.47315,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2231,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 2,
+      "role": "writer",
+      "model": "gpt-6-instant",
+      "StartMS": 12500.759488,
+      "EndMS": 25001.490841,
+      "ElapsedMS": 12500.731353,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 2627,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 3,
+      "role": "world_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 25002.339894,
+      "EndMS": 36803.505895,
+      "ElapsedMS": 11801.166001,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 4972,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 4,
+      "role": "state_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 36803.641323,
+      "EndMS": 44704.946302,
+      "ElapsedMS": 7901.304979,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 4946,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 5,
+      "role": "quest_evaluator",
+      "model": "gpt-6-instant",
+      "StartMS": 44705.014561,
+      "EndMS": 57705.672816,
+      "ElapsedMS": 13000.658255,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 5300,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    },
+    {
+      "responseFormat": "json_object",
+      "sequence": 6,
+      "role": "choices",
+      "model": "gpt-6-instant",
+      "StartMS": 57705.935284,
+      "EndMS": 75407.615572,
+      "ElapsedMS": 17701.680288,
+      "InputTokens": 0,
+      "OutputTokens": 0,
+      "InputBytes": 6417,
+      "Repair": false,
+      "Failed": false,
+      "HTTPPosts": 1,
+      "HTTPGets": 0,
+      "TransportFailures": 0,
+      "HTTPStatuses": [
+        200
+      ],
+      "memoryDocuments": 0
+    }
+  ],
+  "choices": 4,
+  "elapsedMs": 75407,
+  "failure": "",
+  "firstTextMs": 25002.297024,
+  "fixture": "conversation",
+  "ok": true,
+  "readyMs": 75407.726811,
+  "text": "Илья опустил взгляд на карту, затем спокойно посмотрел на Миру. Он не торопил её, ожидая, пока архивистка сама укажет нужное направление.\n\n— Вы говорили, что через архив есть проход к северной башне. Где он начинается?\n\nМира перевела взгляд с запертой двери на карту в руках путника. Несколько секунд она молчала, словно решая, насколько подробно стоит объяснять. Наконец женщина указала на противоположную сторону помещения.\n\n— Не за этой дверью. Проход начинается ниже, от старого водовода. Раньше по нему доставляли воду к башне, а потом его приспособили для перемещения между зданиями. Часть пути проходит непосредственно под архивом.\n\nОна помедлила и продолжила уже тише:\n\n— Вход находится со стороны затопленной площади. Нужно попасть к нижнему уровню пристани. Там есть спуск к водоводу. Но после паводка я сама не проверяла, насколько высоко поднялась вода внутри. Последний раз проход был доступен.\n\nМира посмотрела на карту Ильи, стараясь соотнести её обозначения со своим объяснением.\n\n— Если на вашей карте отмечены старые водяные каналы, ищите ответвление под архивом. Оно должно вывести к северному направлению. Я могу показать, где именно искать вход, но сначала нужно добраться до нижнего уровня.\n\nОна замолчала, оставляя Илье время осмыслить услышанное. Теперь у него было конкретное направление, однако состояние подземного пути после паводка оставалось неизвестным."
+}
