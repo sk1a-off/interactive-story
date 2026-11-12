@@ -3,6 +3,7 @@ package projection
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
@@ -11,6 +12,25 @@ import (
 )
 
 var ErrUnsupportedSemanticEvent = errors.New("unsupported semantic event")
+var ErrUnsupportedEventVersion = errors.New("unsupported event schema version")
+
+// MaxEventSchemaVersion is the newest payload contract the reducers know how
+// to apply. Events written with a newer version must not be reinterpreted
+// through older reducer code, so replay stops with a precise error instead.
+const MaxEventSchemaVersion = event.CurrentSchemaVersion
+
+func applySemantic(state *TimelineState, e event.StoredEvent) error {
+	if e.SchemaVersion < 1 || e.SchemaVersion > MaxEventSchemaVersion {
+		return fmt.Errorf("%w: type=%s version=%d seq=%d (reducers support up to %d)", ErrUnsupportedEventVersion, e.Type, e.SchemaVersion, e.Seq, MaxEventSchemaVersion)
+	}
+	if err := applySemanticV1(state, e); err != nil {
+		if errors.Is(err, ErrUnsupportedSemanticEvent) {
+			return fmt.Errorf("%w: type=%s version=%d seq=%d", ErrUnsupportedSemanticEvent, e.Type, e.SchemaVersion, e.Seq)
+		}
+		return err
+	}
+	return nil
+}
 
 type chapterCreated struct {
 	ID     id.ID  `json:"chapterId"`
@@ -140,7 +160,10 @@ type worldResourceEvent struct {
 	Version    int64    `json:"version"`
 }
 
-func applySemantic(state *TimelineState, e event.StoredEvent) error {
+// applySemanticV1 applies the version 1 payload contracts. A future version
+// bump adds its own cases keyed on the stored schema version rather than
+// editing these shapes in place.
+func applySemanticV1(state *TimelineState, e event.StoredEvent) error {
 	switch e.Type {
 	case "player_action_attempted", "choices_ready":
 		return nil

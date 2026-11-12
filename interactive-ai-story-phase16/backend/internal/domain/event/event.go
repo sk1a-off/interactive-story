@@ -14,6 +14,11 @@ type GenerationID id.ID
 
 var ErrInvalidEvent = errors.New("invalid story event")
 
+// CurrentSchemaVersion is the payload contract version new events are written
+// with. Bump it together with a reducer case for the new shape; replay keeps
+// understanding every older version.
+const CurrentSchemaVersion = 1
+
 type StoredEvent struct {
 	ID            ID
 	TimelineID    timeline.ID

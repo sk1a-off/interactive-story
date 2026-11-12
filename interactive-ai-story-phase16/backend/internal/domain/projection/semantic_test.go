@@ -2,6 +2,7 @@ package projection
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
 	"github.com/local/interactive-ai-story/backend/internal/domain/narrative"
@@ -255,7 +256,7 @@ func TestDirectorCanCorrectHeroJournalAndReactivateInstruction(t *testing.T) {
 func TestUnknownSemanticEventFailsReplay(t *testing.T) {
 	tid := timeline.ID(sid("000000000301"))
 	_, e := Replay(tid, []event.StoredEvent{se(tid, 1, "mystery_event", map[string]any{})})
-	if e != ErrUnsupportedSemanticEvent {
+	if !errors.Is(e, ErrUnsupportedSemanticEvent) {
 		t.Fatalf("unknown event silently accepted: %v", e)
 	}
 }

@@ -1,6 +1,33 @@
 package projection
 
-import "testing"
+import (
+	"errors"
+	"strings"
+	"testing"
+
+	"github.com/local/interactive-ai-story/backend/internal/domain/event"
+	"github.com/local/interactive-ai-story/backend/internal/domain/id"
+	"github.com/local/interactive-ai-story/backend/internal/domain/timeline"
+)
+
+func TestReplayRejectsNewerEventSchemaVersionsWithContext(t *testing.T) {
+	tid := timeline.ID(id.MustParse("66666666-6666-4666-8666-666666666666"))
+	newer := event.StoredEvent{ID: event.ID(id.MustParse("77777777-7777-4777-8777-777777777777")), TimelineID: tid, Seq: 1, Type: "player_action_attempted", SchemaVersion: MaxEventSchemaVersion + 1, Payload: []byte(`{}`)}
+	_, err := Replay(tid, []event.StoredEvent{newer})
+	if !errors.Is(err, ErrUnsupportedEventVersion) || !strings.Contains(err.Error(), "player_action_attempted") || !strings.Contains(err.Error(), "seq=1") {
+		t.Fatalf("newer schema version must fail replay with context, got %v", err)
+	}
+	unknown := newer
+	unknown.SchemaVersion = 1
+	unknown.Type = "mystery_event"
+	_, err = Replay(tid, []event.StoredEvent{unknown})
+	if !errors.Is(err, ErrUnsupportedSemanticEvent) || !strings.Contains(err.Error(), "mystery_event") {
+		t.Fatalf("unknown type must fail replay with context, got %v", err)
+	}
+	if event.CurrentSchemaVersion != MaxEventSchemaVersion {
+		t.Fatal("writers and reducers must agree on the current schema version")
+	}
+}
 
 func TestCanonicalizeJSONSortsKeysAndElidesZeroMembers(t *testing.T) {
 	raw := []byte(`{"z":1,"a":{"empty":"","n":0,"f":false,"list":[],"obj":{},"nested":{"keep":"x","drop":null}},"arr":[0,"",null,{"k":0}],"num":1.50,"exp":1e-07}`)

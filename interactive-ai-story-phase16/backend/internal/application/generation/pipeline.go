@@ -670,7 +670,7 @@ func (p Pipeline) Run(ctx context.Context, generationID id.ID, a PlayerAction) (
 		if e.Type == "" || !json.Valid(e.Payload) {
 			return fail(ErrRejectedProposal)
 		}
-		pending = append(pending, event.PendingEvent{Type: e.Type, SchemaVersion: 1, Payload: e.Payload, GenerationID: &gid})
+		pending = append(pending, event.PendingEvent{Type: e.Type, SchemaVersion: event.CurrentSchemaVersion, Payload: e.Payload, GenerationID: &gid})
 	}
 	metrics.ValidationMS = time.Since(validationStarted).Milliseconds()
 	pub(PhaseCommitting, "", "")
