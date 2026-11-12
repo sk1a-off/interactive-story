@@ -219,10 +219,11 @@ func (r snapshotRepository) get(ctx context.Context, clause string, arg any) (sn
 	if err := json.Unmarshal(raw, &value.State); err != nil {
 		return snapshot.Snapshot{}, fmt.Errorf("decode snapshot: %w", err)
 	}
-	if err := value.Verify(); err != nil {
-		return snapshot.Snapshot{}, err
+	restored, err := snapshot.Restore(value, raw)
+	if err != nil {
+		return snapshot.Snapshot{}, fmt.Errorf("snapshot %s (schema=%d serializer=%d): %w", value.ID, value.SchemaVersion, value.SerializerVersion, err)
 	}
-	return value, nil
+	return restored, nil
 }
 
 func (r timelineRepository) ListByStory(ctx context.Context, storyID story.ID) ([]timeline.Timeline, error) {

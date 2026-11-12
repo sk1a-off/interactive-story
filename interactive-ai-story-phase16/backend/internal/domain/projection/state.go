@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/local/interactive-ai-story/backend/internal/domain/event"
 	"github.com/local/interactive-ai-story/backend/internal/domain/id"
@@ -15,6 +16,21 @@ import (
 const SchemaVersion = 3
 
 var ErrNonContiguousEvent = errors.New("event sequence is not contiguous")
+var ErrUnsupportedSchemaVersion = errors.New("unsupported projection schema version")
+
+// Upgrade brings a state persisted by an older schema version up to the
+// current one. Versions 1..3 share the same persisted shape (newer fields are
+// simply absent and decode to zero values), so the upgrade only normalizes
+// nil containers and restamps the version. New schema versions must add their
+// migration step here before bumping SchemaVersion.
+func Upgrade(state TimelineState) (TimelineState, error) {
+	if state.SchemaVersion < 1 || state.SchemaVersion > SchemaVersion {
+		return TimelineState{}, fmt.Errorf("%w: %d", ErrUnsupportedSchemaVersion, state.SchemaVersion)
+	}
+	state.Narrative.EnsureWorldMaps()
+	state.SchemaVersion = SchemaVersion
+	return state, nil
+}
 
 type TimelineState struct {
 	SchemaVersion     int             `json:"schema_version"`

@@ -1,0 +1,59 @@
+{
+  "event_seq": 7,
+  "schema_version": 3,
+  "serializer_version": 1,
+  "state": {
+    "schema_version": 3,
+    "timeline_id": "11111111-1111-4111-8111-111111111111",
+    "last_event_seq": 7,
+    "applied_event_count": 7,
+    "narrative": {
+      "TimelineID": "11111111-1111-4111-8111-111111111111",
+      "Chapters": {
+        "22222222-2222-4222-8222-222222222222": {
+          "ID": "22222222-2222-4222-8222-222222222222",
+          "TimelineID": "11111111-1111-4111-8111-111111111111",
+          "Number": 1,
+          "Title": "Глава 1",
+          "Goal": "",
+          "Tone": "",
+          "Status": "active",
+          "Summary": null
+        }
+      },
+      "Scenes": {},
+      "Beats": {},
+      "Characters": {},
+      "Locations": {},
+      "Relationships": {},
+      "Stats": {},
+      "Facts": {},
+      "Knowledge": {},
+      "Beliefs": {},
+      "WorldSystems": {},
+      "WorldRules": {},
+      "WorldResources": {
+        "gold|character|hero": {
+          "TimelineID": "11111111-1111-4111-8111-111111111111",
+          "ResourceID": "gold",
+          "SystemID": "",
+          "OwnerType": "character",
+          "OwnerID": "",
+          "OwnerKey": "hero",
+          "Name": "Gold",
+          "Unit": "",
+          "Current": 12.5,
+          "Minimum": null,
+          "Maximum": null,
+          "Visibility": "",
+          "Version": 2
+        }
+      },
+      "Items": {},
+      "Threads": {},
+      "DirectorInstructions": {}
+    }
+  },
+  "state_hash": "2d1e5696c8996b90f165e3267dff53b4c1598ab8dc9ae18d34586467469c2053",
+  "timeline_id": "11111111-1111-4111-8111-111111111111"
+}
