@@ -51,7 +51,8 @@ reuse an already building revision, otherwise allocate a fresh index revision.
 The previous serving revision continues receiving new work while the new one
 builds. No unfinished profile is selected for prompts. Only after all live-story
 jobs complete does one transaction retire the old profile and promote the new
-one. Any failed source fails the build without removing the old serving profile.
+one. A failed source is retried automatically (see "Failure recovery" below);
+only an exhausted source fails the build, and never removes the old serving profile.
 Publication lag still hides stale structured state. Missing/corrupt source
 history fails closed rather than inventing a successful index.
 
@@ -71,7 +72,8 @@ incremental indexing and failed serving jobs have distinct updating/degraded
 states rather than falsely displaying ready.
 
 - `GET /api/v1/settings/memory`: enabled/state, build and serving revisions,
-  queued/running/completed/failed job counts for the local owner.
+  queued/running/completed/failed job counts for the local owner, plus
+  `exhausted` (failed jobs that used every automatic recovery).
 - `POST /api/v1/settings/memory/reindex`, JSON `{}`: 202 when requested; 422 if
   disabled; generic 503 for unavailable runtime/storage. Malformed JSON and
   non-JSON bodies are rejected before performing work.
@@ -118,3 +120,17 @@ model and 384 dimensions. Apply migrations with `make migrate-up`, restart the
 backend/frontend, and enable memory through AI Settings when ready to exercise
 the real service. Next: frozen-corpus recall/search-latency benchmarking before
 claiming memory quality or response-speed improvements.
+
+## Failure recovery (2026-11-12)
+
+A job that exhausts its five attempts no longer blocks its timeline forever.
+Each runtime tick requeues failed jobs whose cooldown has elapsed; the cooldown
+escalates with the job's `recoveries` counter (1, 2, 4, … minutes, capped at one
+hour) and recovery stops after `MaxMemoryIndexRecoveries` (8). No source event
+is skipped: the same job is processed again in outbox order, and later jobs of
+that timeline wait behind it as before. The status reports such jobs as
+`failed` (state `degraded`) while they wait, and counts jobs that gave up as
+`exhausted`; those need a manual reindex. A building profile stays `building`
+while its failed jobs are still recoverable and turns `failed` only when one is
+exhausted. Recoveries are logged as warnings with the affected revision and
+job count. Migration `00042_memory_index_recovery.sql` adds the counter.

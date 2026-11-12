@@ -125,6 +125,15 @@ func (c *Controller) Tick(ctx context.Context) error {
 	}
 	for _, p := range profiles {
 		worker := c.Worker(e, indexrepo.Profile{Provider: p.Provider, Model: p.Model, Revision: p.Revision})
+		if recoverer, ok := worker.Queue.(indexrepo.Recoverer); ok {
+			recovered, recoverErr := recoverer.RecoverFailed(ctx, worker.Clock(), 0)
+			if recoverErr != nil {
+				return recoverErr
+			}
+			if recovered > 0 && c.Logger != nil {
+				c.Logger.WarnContext(ctx, "memory indexing jobs recovered after failure", "index_revision", p.Revision, "jobs", recovered)
+			}
+		}
 		if err = worker.RunOnce(ctx); err != nil && !errors.Is(err, indexrepo.ErrNoJob) && ctx.Err() == nil && c.Logger != nil {
 			c.Logger.WarnContext(ctx, "memory indexing attempt deferred", "index_revision", p.Revision)
 		}

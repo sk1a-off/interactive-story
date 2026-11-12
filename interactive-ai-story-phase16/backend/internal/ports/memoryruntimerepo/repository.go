@@ -19,6 +19,9 @@ type Status struct {
 	Running         int64  `json:"running"`
 	Completed       int64  `json:"completed"`
 	Failed          int64  `json:"failed"`
+	// Exhausted counts failed jobs that used all automatic recoveries and
+	// need a manual reindex.
+	Exhausted int64 `json:"exhausted"`
 }
 type Repository interface {
 	Ensure(context.Context, id.ID, string, string, string, bool) (Profile, error)

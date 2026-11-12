@@ -23,6 +23,9 @@ type Worker struct {
 	Now              func() time.Time
 }
 
+// Clock returns the worker's notion of now (UTC).
+func (w Worker) Clock() time.Time { return w.now() }
+
 func (w Worker) now() time.Time {
 	if w.Now != nil {
 		return w.Now().UTC()

@@ -118,8 +118,8 @@ func (r *MemoryRuntimeRepository) Finalize(ctx context.Context, revision int64) 
 		return tx.Commit(ctx)
 	}
 	var pending, failed bool
-	if err = tx.QueryRow(ctx, `SELECT COALESCE(bool_or(j.status IN ('queued','running')),false),COALESCE(bool_or(j.status='failed'),false)
- FROM memory_index_jobs j JOIN timelines t ON t.id=j.timeline_id JOIN stories s ON s.id=j.story_id WHERE j.index_revision=$1 AND t.status<>'deleted' AND s.status<>'deleted'`, revision).Scan(&pending, &failed); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT COALESCE(bool_or(j.status IN ('queued','running') OR (j.status='failed' AND j.recoveries<$2)),false),COALESCE(bool_or(j.status='failed' AND j.recoveries>=$2),false)
+ FROM memory_index_jobs j JOIN timelines t ON t.id=j.timeline_id JOIN stories s ON s.id=j.story_id WHERE j.index_revision=$1 AND t.status<>'deleted' AND s.status<>'deleted'`, revision, MaxMemoryIndexRecoveries).Scan(&pending, &failed); err != nil {
 		return err
 	}
 	if failed {
@@ -154,8 +154,8 @@ func (r *MemoryRuntimeRepository) Status(ctx context.Context, sig string) (repo.
 	if err = r.db.QueryRow(ctx, `SELECT COALESCE(max(revision),0) FROM memory_index_profiles WHERE signature=$1 AND owner_id=$2 AND status='serving'`, sig, r.OwnerID).Scan(&s.ServingRevision); err != nil {
 		return s, err
 	}
-	err = r.db.QueryRow(ctx, `SELECT count(*) FILTER(WHERE j.status='queued'),count(*) FILTER(WHERE j.status='running'),count(*) FILTER(WHERE j.status='completed'),count(*) FILTER(WHERE j.status='failed')
- FROM memory_index_jobs j JOIN timelines t ON t.id=j.timeline_id JOIN stories s ON s.id=j.story_id WHERE j.index_revision=$1 AND t.status<>'deleted' AND s.status<>'deleted'`, s.Revision).Scan(&s.Queued, &s.Running, &s.Completed, &s.Failed)
+	err = r.db.QueryRow(ctx, `SELECT count(*) FILTER(WHERE j.status='queued'),count(*) FILTER(WHERE j.status='running'),count(*) FILTER(WHERE j.status='completed'),count(*) FILTER(WHERE j.status='failed'),count(*) FILTER(WHERE j.status='failed' AND j.recoveries>=$2)
+ FROM memory_index_jobs j JOIN timelines t ON t.id=j.timeline_id JOIN stories s ON s.id=j.story_id WHERE j.index_revision=$1 AND t.status<>'deleted' AND s.status<>'deleted'`, s.Revision, MaxMemoryIndexRecoveries).Scan(&s.Queued, &s.Running, &s.Completed, &s.Failed, &s.Exhausted)
 	if s.State == "serving" {
 		if s.Failed > 0 {
 			s.State = "degraded"

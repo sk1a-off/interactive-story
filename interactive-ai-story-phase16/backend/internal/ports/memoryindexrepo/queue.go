@@ -50,3 +50,9 @@ type Store interface {
 	// and complete the job after checking its current unexpired lease token.
 	Publish(context.Context, Job, Profile, []domain.Document, map[string][]float32, time.Time) error
 }
+
+// Recoverer is implemented by queues that can requeue jobs which exhausted
+// their attempts, after a cooldown and up to a bounded number of recoveries.
+type Recoverer interface {
+	RecoverFailed(ctx context.Context, now time.Time, maxRecoveries int) (int64, error)
+}

@@ -141,11 +141,24 @@ func TestMemoryRuntimeBuildsIndependentProfilesAndPublishesOnlyWhenComplete(t *t
 	if _, err = tx.Exec(ctx, `UPDATE memory_index_jobs SET status='failed',lease_owner=NULL,lease_token=NULL,lease_until=NULL WHERE id=$1`, job.ID); err != nil {
 		t.Fatal(err)
 	}
+	// A failed job that can still be recovered keeps the rebuild alive and
+	// never touches the serving revision.
 	if err = state.Finalize(ctx, p3.Revision); err != nil {
 		t.Fatal(err)
 	}
 	status, err := state.Status(ctx, "signature")
-	if err != nil || status.State != "failed" || status.ServingRevision != p2.Revision {
+	if err != nil || status.State != "building" || status.ServingRevision != p2.Revision || status.Failed != 1 || status.Exhausted != 0 {
+		t.Fatalf("recoverable failure should keep the rebuild building: %+v %v", status, err)
+	}
+	// Once automatic recovery is exhausted the rebuild is reported as failed.
+	if _, err = tx.Exec(ctx, `UPDATE memory_index_jobs SET recoveries=$2 WHERE id=$1`, job.ID, pg.MaxMemoryIndexRecoveries); err != nil {
+		t.Fatal(err)
+	}
+	if err = state.Finalize(ctx, p3.Revision); err != nil {
+		t.Fatal(err)
+	}
+	status, err = state.Status(ctx, "signature")
+	if err != nil || status.State != "failed" || status.ServingRevision != p2.Revision || status.Exhausted != 1 {
 		t.Fatalf("failed rebuild damaged serving: %+v %v", status, err)
 	}
 	foreign := pg.NewMemoryRuntimeRepository(tx)

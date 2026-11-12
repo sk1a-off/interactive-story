@@ -228,4 +228,5 @@ migration after this inventory must be `00041_*`.
 00039_memory_russian_search.sql
 00040_memory_runtime_profiles.sql
 00041_story_events_append_only.sql
+00042_memory_index_recovery.sql
 ```

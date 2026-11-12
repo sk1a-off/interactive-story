@@ -122,3 +122,34 @@ func (q *MemoryIndexQueue) Retry(ctx context.Context, job repo.Job, now time.Tim
 }
 
 var _ repo.Queue = (*MemoryIndexQueue)(nil)
+
+// MaxMemoryIndexRecoveries bounds how many times a job that exhausted its
+// attempts is requeued. With the escalating cooldown below this tolerates
+// roughly three hours of embedding-provider downtime before a job is
+// reported as exhausted and manual reindexing is required.
+const MaxMemoryIndexRecoveries = 8
+
+// memoryIndexRecoveryCooldown is the SQL interval a failed job waits before
+// recovery number `recoveries+1`: 1, 2, 4, … minutes, capped at one hour.
+const memoryIndexRecoveryCooldown = `LEAST(interval '1 minute' * power(2, j.recoveries), interval '1 hour')`
+
+// RecoverFailed requeues failed jobs whose cooldown has elapsed, resetting
+// their attempts and counting the recovery. Nothing is skipped: the same
+// source event is processed again, in order, so ordering guarantees of the
+// outbox are preserved. Jobs at maxRecoveries stay failed (exhausted).
+func (q *MemoryIndexQueue) RecoverFailed(ctx context.Context, now time.Time, maxRecoveries int) (int64, error) {
+	if maxRecoveries < 1 {
+		maxRecoveries = MaxMemoryIndexRecoveries
+	}
+	tag, err := q.db.Exec(ctx, `UPDATE memory_index_jobs j SET
+ status='queued',attempts=0,recoveries=j.recoveries+1,available_at=$1,completed_at=NULL,
+ last_error=left('recovered after: '||last_error,2000)
+ WHERE j.status='failed' AND j.recoveries<$2
+   AND j.completed_at IS NOT NULL AND j.completed_at+`+memoryIndexRecoveryCooldown+`<=$1
+   AND COALESCE(j.index_revision,0)=$4 AND (NULLIF($3,'')::uuid IS NULL OR j.story_id=NULLIF($3,'')::uuid)`,
+		now, maxRecoveries, q.StoryID.String(), q.IndexRevision)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
+}
