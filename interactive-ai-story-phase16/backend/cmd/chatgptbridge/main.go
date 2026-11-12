@@ -44,6 +44,8 @@ type workerDiagnostic struct {
 	ActualLength   *int                 `json:"actualLength,omitempty"`
 }
 type job struct {
+	TextOnly           bool              `json:"textOnly,omitempty"`
+	TextOnlyVerified   bool              `json:"textOnlyVerified,omitempty"`
 	Attachment         *promptAttachment `json:"attachment,omitempty"`
 	AttachmentVerified bool              `json:"attachmentVerified,omitempty"`
 	Background         bool              `json:"background,omitempty"`
@@ -84,6 +86,7 @@ type bridge struct {
 	leaseWarmup        time.Duration
 	leaseReady         map[string]time.Time
 	projectInputFormat string
+	maxTextCharacters  int
 	maxPromptBytes     int
 	maxActive          int
 	now                func() time.Time
@@ -97,7 +100,7 @@ func secret() string {
 	return hex.EncodeToString(b[:])
 }
 func newBridge(host string) *bridge {
-	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: storyllm.DefaultBrowserParallelism, maxPromptBytes: defaultProjectPromptBytes, now: time.Now}
+	return &bridge{token: secret(), host: host, workers: map[string]workerState{}, leaseReady: map[string]time.Time{}, maxActive: storyllm.DefaultBrowserParallelism, maxTextCharacters: defaultTextCharacters, maxPromptBytes: defaultProjectPromptBytes, now: time.Now}
 }
 func active(s string) bool { return s == "queued" || s == "leased" || s == "dispatched" }
 func (b *bridge) expire() {
@@ -220,7 +223,7 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			v.Lease = ""
 			out = append(out, v)
 		}
-		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive, "max_prompt_bytes": b.maxPromptBytes, "project_input_format": b.projectInputFormat, "lease_warmup_ms": b.leaseWarmup.Milliseconds()})
+		writeJSON(w, map[string]any{"jobs": out, "workers": b.workers, "max_active": b.maxActive, "max_prompt_bytes": b.maxPromptBytes, "max_text_characters": b.maxTextCharacters, "project_input_format": b.projectInputFormat, "lease_warmup_ms": b.leaseWarmup.Milliseconds()})
 		return
 	}
 	if r.Method != "POST" {
@@ -256,16 +259,17 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var in struct {
-		Version    string `json:"version,omitempty"`
-		Worker     string `json:"worker"`
-		ID         string `json:"id"`
-		Lease      string `json:"lease"`
-		Reply      string `json:"reply"`
-		Error      string `json:"error"`
-		Status     string `json:"status"`
-		FileName   string `json:"fileName"`
-		FileSHA256 string `json:"fileSha256"`
-		FileBytes  int    `json:"fileBytes"`
+		Version          string `json:"version,omitempty"`
+		Worker           string `json:"worker"`
+		ID               string `json:"id"`
+		Lease            string `json:"lease"`
+		Reply            string `json:"reply"`
+		Error            string `json:"error"`
+		Status           string `json:"status"`
+		FileName         string `json:"fileName"`
+		FileSHA256       string `json:"fileSha256"`
+		FileBytes        int    `json:"fileBytes"`
+		TextOnlyVerified bool   `json:"textOnlyVerified"`
 	}
 	if !b.decode(w, r, &in) {
 		return
@@ -341,6 +345,9 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		for _, j := range ordered {
 			if j.State == "queued" {
+				if j.TextOnly && !supportsTextOnly(version) {
+					continue
+				}
 				if j.Attachment != nil && !supportsAttachment(version) {
 					continue
 				}
@@ -384,11 +391,12 @@ func (b *bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		j.AttachmentVerified = true
 		writeJSON(w, map[string]bool{"verified": true})
 	case "/send":
-		if j.State != "leased" || (j.Attachment != nil && !j.AttachmentVerified) {
+		if j.State != "leased" || (j.TextOnly && (!in.TextOnlyVerified || !supportsTextOnly(version))) || (j.Attachment != nil && !j.AttachmentVerified) {
 			http.Error(w, "send already authorized or expired", 409)
 			return
 		}
 		now := b.now()
+		j.TextOnlyVerified = j.TextOnly && in.TextOnlyVerified
 		j.State = "dispatched"
 		j.Sent = &now
 		writeJSON(w, map[string]bool{"authorized": true})
@@ -469,12 +477,16 @@ func main() {
 	}
 	b.projectInputFormat = os.Getenv("CHATGPT_BRIDGE_INPUT_FORMAT")
 	if b.projectInputFormat == "" {
-		b.projectInputFormat = "txt"
+		b.projectInputFormat = "text"
 	}
 	if b.projectInputFormat != "txt" && b.projectInputFormat != "text" {
 		log.Fatal("CHATGPT_BRIDGE_INPUT_FORMAT must be txt or text")
 	}
 	var limitErr error
+	b.maxTextCharacters, limitErr = textCharacterLimit(os.Getenv("CHATGPT_BRIDGE_MAX_TEXT_CHARS"))
+	if limitErr != nil {
+		log.Fatal(limitErr)
+	}
 	b.maxPromptBytes, limitErr = projectPromptLimit(os.Getenv("CHATGPT_BRIDGE_MAX_PROMPT_KIB"))
 	if limitErr != nil {
 		log.Fatal(limitErr)

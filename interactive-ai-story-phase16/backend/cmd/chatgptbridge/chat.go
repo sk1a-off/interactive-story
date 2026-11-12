@@ -212,12 +212,19 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 		rejectSize(w, int64(size), limit, "prompt")
 		return
 	}
+	textOnly := project && attachment == nil && b.projectInputFormat == "text"
+	if textOnly {
+		if n := utf16Characters(prompt); n > b.maxTextCharacters {
+			rejectTextSize(w, n, b.maxTextCharacters)
+			return
+		}
+	}
 	b.mu.Lock()
 	b.expire()
 	if project || in.ReasoningEffort != "none" {
 		compatible := false
 		for _, worker := range b.workers {
-			if supportsProject(worker.Version) && (attachment == nil || supportsAttachment(worker.Version)) && (worker.Status == "ready" || worker.Status == "busy") && b.now().Sub(worker.Seen) < 15*time.Second {
+			if supportsProject(worker.Version) && (!textOnly || supportsTextOnly(worker.Version)) && (attachment == nil || supportsAttachment(worker.Version)) && (worker.Status == "ready" || worker.Status == "busy") && b.now().Sub(worker.Seen) < 15*time.Second {
 				compatible = true
 			}
 		}
@@ -227,6 +234,9 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			required := "0.3.0"
 			if attachment != nil {
 				required = "0.4.0"
+			}
+			if textOnly {
+				required = "0.4.1"
 			}
 			w.Header().Set("X-Story-Bridge-Worker-Version", required)
 			http.Error(w, "Start ChatGPT worker "+required+" before using the browser provider", 503)
@@ -261,7 +271,7 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	if project {
 		queuedBudget = storyllm.BrowserQueueWait
 	}
-	j := &job{Attachment: attachment, Background: project && r.Header.Get("X-Story-Priority") == "background", Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(queuedBudget)}
+	j := &job{TextOnly: textOnly, Attachment: attachment, Background: project && r.Header.Get("X-Story-Priority") == "background", Project: project, ReasoningEffort: in.ReasoningEffort, ResponseTimeoutMS: int(storyllm.BrowserTimeout(in.ReasoningEffort).Milliseconds()) - 30000, InputEncoding: inputEncoding, MessageFormat: messageFormat, MessageMarker: marker, MessageContent: content, RecoverSafeFailure: project || r.Header.Get("X-Story-Benchmark") == "paired-v1", ID: id, Prompt: prompt, Kind: "chat", State: "queued", Created: b.now(), Deadline: b.now().Add(queuedBudget)}
 	b.jobs = append(b.jobs, j)
 	b.mu.Unlock()
 	ticker := time.NewTicker(100 * time.Millisecond)

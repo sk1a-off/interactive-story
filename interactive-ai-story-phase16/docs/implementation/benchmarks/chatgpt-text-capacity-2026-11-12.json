@@ -1,0 +1,380 @@
+{
+  "synthetic": true,
+  "provider": "chatgpt_browser",
+  "model": "gpt-6",
+  "reasoning": "none",
+  "worker": "0.4.1",
+  "started": "2026-11-12T08:54:12.158532+00:00",
+  "rows": [
+    {
+      "targetCharacters": 8000,
+      "trial": 1,
+      "nonce": "9fbb081c9d17a60ea3954eb2",
+      "inputCharacters": 7869,
+      "inputBytes": 11965,
+      "inputSHA256": "9ac6dea80882e7f3f1ffda1922851c0977074938212bee919a22d231e11b340a",
+      "expectedValues": [
+        "f56d9922d7d2c0a5441c7ec0",
+        "b884b345ab555bad4de3e364",
+        "00af871334f21d75421ff1d0",
+        "0f4d0eebf8797b8232d3ee83",
+        "9cd2c71f9928fdc476eb23e5"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "7a8102d52b76399d24f2f13d861f5bf949156dc9c21edc30",
+      "actualValues": [
+        "f56d9922d7d2c0a5441c7ec0",
+        "b884b345ab555bad4de3e364",
+        "00af871334f21d75421ff1d0",
+        "0f4d0eebf8797b8232d3ee83",
+        "9cd2c71f9928fdc476eb23e5"
+      ],
+      "job": {
+        "id": "7a8102d52b76399d24f2f13d861f5bf949156dc9c21edc30",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:13.649021948+03:00",
+        "finished": "2026-11-12T11:54:20.747936411+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 8506,
+      "promptUTF16Units": 8506,
+      "promptBytes": 12602,
+      "attachmentPresent": false,
+      "elapsedSeconds": 8.602
+    },
+    {
+      "targetCharacters": 8000,
+      "trial": 2,
+      "nonce": "a18c37fa16d2b4e319ee16c0",
+      "inputCharacters": 7869,
+      "inputBytes": 11965,
+      "inputSHA256": "ea8e093aed90c83fed30e92181341edccebc89db9007525eb34750d437fd8f9c",
+      "expectedValues": [
+        "efdd92616346c992dd977151",
+        "cb9f74c7de0e4a9e09a426bf",
+        "792da96aa0a3ec53932c792f",
+        "e50ac7cd45aa7995888ad651",
+        "436b46ace2bad882566af839"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "85a25d7bb1cf363f416b48a124f6612b5a7178839d3c172e",
+      "actualValues": [
+        "efdd92616346c992dd977151",
+        "cb9f74c7de0e4a9e09a426bf",
+        "792da96aa0a3ec53932c792f",
+        "e50ac7cd45aa7995888ad651",
+        "436b46ace2bad882566af839"
+      ],
+      "job": {
+        "id": "85a25d7bb1cf363f416b48a124f6612b5a7178839d3c172e",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:22.279583778+03:00",
+        "finished": "2026-11-12T11:54:30.436210104+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 8506,
+      "promptUTF16Units": 8506,
+      "promptBytes": 12602,
+      "attachmentPresent": false,
+      "elapsedSeconds": 9.702
+    },
+    {
+      "targetCharacters": 16000,
+      "trial": 1,
+      "nonce": "aed0135ac045a9dc695068c6",
+      "inputCharacters": 15869,
+      "inputBytes": 24317,
+      "inputSHA256": "dc9aa801e3bf859f4edc1f3b0f7562e62614ddb2b533645b310fbc816738766b",
+      "expectedValues": [
+        "4fe3d15806c1aa8a4578d918",
+        "a23dc0263f75013dac4e0435",
+        "a7d69e9b8d811204d12de7a2",
+        "05f4a94b4f6c9060c5fca5af",
+        "98b91da36fabe40d1e8da21c"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "1ee645513ad578606105964f7210d369ca16871d8fbeba9f",
+      "actualValues": [
+        "4fe3d15806c1aa8a4578d918",
+        "a23dc0263f75013dac4e0435",
+        "a7d69e9b8d811204d12de7a2",
+        "05f4a94b4f6c9060c5fca5af",
+        "98b91da36fabe40d1e8da21c"
+      ],
+      "job": {
+        "id": "1ee645513ad578606105964f7210d369ca16871d8fbeba9f",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:32.494083643+03:00",
+        "finished": "2026-11-12T11:54:39.045583757+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 16506,
+      "promptUTF16Units": 16506,
+      "promptBytes": 24954,
+      "attachmentPresent": false,
+      "elapsedSeconds": 8.603
+    },
+    {
+      "targetCharacters": 16000,
+      "trial": 2,
+      "nonce": "aeb581ccc9fe75099c511bc1",
+      "inputCharacters": 15869,
+      "inputBytes": 24317,
+      "inputSHA256": "171b754587cfaae3e439705c8a3f45d00fe02242d219b4fd6698a5b3fb041cf4",
+      "expectedValues": [
+        "d141bb8cccd012ff5229dea1",
+        "10681852ca09825d35ca799e",
+        "952b75c877ce21d510d72c9d",
+        "6549cdec639edf7530c81372",
+        "49bd9933b9022ce6c05e0a6d"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "7956482c7e2531c32d0fd3459cc90e9fbc41e920e7cf9e6f",
+      "actualValues": [
+        "d141bb8cccd012ff5229dea1",
+        "10681852ca09825d35ca799e",
+        "952b75c877ce21d510d72c9d",
+        "6549cdec639edf7530c81372",
+        "49bd9933b9022ce6c05e0a6d"
+      ],
+      "job": {
+        "id": "7956482c7e2531c32d0fd3459cc90e9fbc41e920e7cf9e6f",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:40.498180365+03:00",
+        "finished": "2026-11-12T11:54:47.230552545+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 16506,
+      "promptUTF16Units": 16506,
+      "promptBytes": 24954,
+      "attachmentPresent": false,
+      "elapsedSeconds": 8.202
+    },
+    {
+      "targetCharacters": 32000,
+      "trial": 1,
+      "nonce": "f96d0216b6cb11914d0538dd",
+      "inputCharacters": 31869,
+      "inputBytes": 48985,
+      "inputSHA256": "cb79d900952d50d1841455cdff0e297198d56ec74f0e738a65e0be79d035f27e",
+      "expectedValues": [
+        "6b480411b8d42dd299e22ef4",
+        "2b771ad1b224eec186d2392a",
+        "44b66bdc9951a9ad0e2f5107",
+        "1ffe3829df1d508a5a347909",
+        "d3f198c98c5e99504123f712"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "4298ce7e19bc48a8d18693cf0ffe230c8d299d1d08db89d4",
+      "actualValues": [
+        "6b480411b8d42dd299e22ef4",
+        "2b771ad1b224eec186d2392a",
+        "44b66bdc9951a9ad0e2f5107",
+        "1ffe3829df1d508a5a347909",
+        "d3f198c98c5e99504123f712"
+      ],
+      "job": {
+        "id": "4298ce7e19bc48a8d18693cf0ffe230c8d299d1d08db89d4",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:49.150430235+03:00",
+        "finished": "2026-11-12T11:54:56.791404139+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 32506,
+      "promptUTF16Units": 32506,
+      "promptBytes": 49622,
+      "attachmentPresent": false,
+      "elapsedSeconds": 9.603
+    },
+    {
+      "targetCharacters": 32000,
+      "trial": 2,
+      "nonce": "88cf81ca105c12f6225f03d4",
+      "inputCharacters": 31869,
+      "inputBytes": 48985,
+      "inputSHA256": "c22d8b94031b58db4d92de03fd23bb28ac4b5f456e6f4383d12b02757573f2c1",
+      "expectedValues": [
+        "403aec693b4b05008961f7db",
+        "2451047f156a4f89b34b3dbb",
+        "deefaec3f5aa17857b9746fa",
+        "0c15023d64029cb5159b2d82",
+        "2a6c4291d107af1d2555dd71"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "a9a89569765fa985505495f6885a4add4b1c4881ce8f9efb",
+      "actualValues": [
+        "403aec693b4b05008961f7db",
+        "2451047f156a4f89b34b3dbb",
+        "deefaec3f5aa17857b9746fa",
+        "0c15023d64029cb5159b2d82",
+        "2a6c4291d107af1d2555dd71"
+      ],
+      "job": {
+        "id": "a9a89569765fa985505495f6885a4add4b1c4881ce8f9efb",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:54:58.771562274+03:00",
+        "finished": "2026-11-12T11:55:06.408759468+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 32506,
+      "promptUTF16Units": 32506,
+      "promptBytes": 49622,
+      "attachmentPresent": false,
+      "elapsedSeconds": 9.604
+    },
+    {
+      "targetCharacters": 64000,
+      "trial": 1,
+      "nonce": "c87183a40a14148747891ba9",
+      "inputCharacters": 63869,
+      "inputBytes": 98317,
+      "inputSHA256": "7ae42d7b9d105baaa98a634e1dc89b0c532286aedd52b7b5b0dc1905131d7d65",
+      "expectedValues": [
+        "74024326d2015ddf21380094",
+        "f7f56ac6f43e34d1ea890f8b",
+        "2385bb1b31a0e7c0906a6307",
+        "3e8b72592e0038519065a2ba",
+        "01339dc199b620059c11843a"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "7291fc37eb404048f4116292c50e704e42cab0247f8f8aa9",
+      "actualValues": [
+        "74024326d2015ddf21380094",
+        "f7f56ac6f43e34d1ea890f8b",
+        "2385bb1b31a0e7c0906a6307",
+        "3e8b72592e0038519065a2ba",
+        "01339dc199b620059c11843a"
+      ],
+      "job": {
+        "id": "7291fc37eb404048f4116292c50e704e42cab0247f8f8aa9",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:55:08.334206881+03:00",
+        "finished": "2026-11-12T11:55:15.983338969+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 64506,
+      "promptUTF16Units": 64506,
+      "promptBytes": 98954,
+      "attachmentPresent": false,
+      "elapsedSeconds": 9.506
+    },
+    {
+      "targetCharacters": 64000,
+      "trial": 2,
+      "nonce": "e3987a5a67c4df6218b003dd",
+      "inputCharacters": 63869,
+      "inputBytes": 98317,
+      "inputSHA256": "2ddd76a991857f2b4898cc60900eb14273576f722da19e5bba2ab4af00e6fa51",
+      "expectedValues": [
+        "7c6e85befa5ebfff4deb8873",
+        "434547242ce026eb5f26e684",
+        "ffe09733f811b7793995e7ca",
+        "cf3019403496352b2f37105a",
+        "1c82efd9ee4e8830f1c4c014"
+      ],
+      "ok": true,
+      "classification": "anchors_match",
+      "jobId": "323c1aadfce36dbce4036d6a15192131a33cdb85420d8e0d",
+      "actualValues": [
+        "7c6e85befa5ebfff4deb8873",
+        "434547242ce026eb5f26e684",
+        "ffe09733f811b7793995e7ca",
+        "cf3019403496352b2f37105a",
+        "1c82efd9ee4e8830f1c4c014"
+      ],
+      "job": {
+        "id": "323c1aadfce36dbce4036d6a15192131a33cdb85420d8e0d",
+        "state": "complete",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:55:17.947248487+03:00",
+        "finished": "2026-11-12T11:55:24.620829167+03:00",
+        "error": null,
+        "diagnostic": null
+      },
+      "promptCharacters": 64506,
+      "promptUTF16Units": 64506,
+      "promptBytes": 98954,
+      "attachmentPresent": false,
+      "elapsedSeconds": 8.707
+    },
+    {
+      "targetCharacters": 128000,
+      "trial": 1,
+      "nonce": "f6cd56d15643c68483762ed4",
+      "inputCharacters": 127869,
+      "inputBytes": 197041,
+      "inputSHA256": "cb4da8dec82db0f6f5cdf268afd9b39a78cdcc87158269a47dedca06e5283d81",
+      "expectedValues": [
+        "8108e331a7b22e071a8cb3fa",
+        "2f625e13c37869057882f6e5",
+        "e9a74bfd284e84906d885308",
+        "033fd216ba8f42e15cd17897",
+        "73db751fc02ff2a6cfaa5da1"
+      ],
+      "ok": false,
+      "classification": "bridge_or_ui_error",
+      "httpStatus": 502,
+      "error": "browser job uncertain; inspect local dashboard\n",
+      "job": {
+        "id": "f99183df43fd8bb8363ab47fee8c97b3bc3abeffd3cd9782",
+        "state": "uncertain",
+        "workerVersion": "0.4.1",
+        "textOnly": true,
+        "textOnlyVerified": true,
+        "sent": "2026-11-12T11:55:26.293698754+03:00",
+        "finished": "2026-11-12T11:57:22.388397305+03:00",
+        "error": "worker stopped; inspect worker tab",
+        "diagnostic": null
+      },
+      "promptCharacters": 128506,
+      "promptUTF16Units": 128506,
+      "promptBytes": 197678,
+      "attachmentPresent": false,
+      "elapsedSeconds": 117.711
+    }
+  ],
+  "interpretation": "Input UTF-8 bytes and Unicode/UTF-16 lengths are measured, not model tokens. Success checks five anchors, not understanding of every record. Largest success is a lower bound; UI failures do not establish model context limits.",
+  "userObservation": {
+    "source": "user screenshot",
+    "file": "codex-clipboard-1662589d-9608-415e-9c6f-43a0d363900c.png",
+    "sha256": "8b5fc3ff1d4fef7119f3f8c7f5c47a83f259a94380bb646dce597b40ccbb8562",
+    "observation": "Last request visible; no readable assistant answer reported by user; no retry replaces this failure"
+  }
+}

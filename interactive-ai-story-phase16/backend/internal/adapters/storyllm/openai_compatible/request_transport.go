@@ -154,6 +154,11 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 			return resp, nil
 		}
 		if c.cfg.Provider == "chatgpt_browser" && status == http.StatusRequestEntityTooLarge {
+			if resp.Header.Get("X-Story-Bridge-Limit-Scope") == "text_characters" {
+				actual, _ := strconv.Atoi(resp.Header.Get("X-Story-Bridge-Request-Characters"))
+				limit, _ := strconv.Atoi(resp.Header.Get("X-Story-Bridge-Limit-Characters"))
+				return nil, fmt.Errorf("%w: текст запроса %d символов превышает локальный порог %d; сократите контекст. Автоматическая загрузка TXT отключена", ai.ErrUnavailable, actual, limit)
+			}
 			actual, actualErr := strconv.ParseInt(resp.Header.Get("X-Story-Bridge-Request-Bytes"), 10, 64)
 			limit, limitErr := strconv.ParseInt(resp.Header.Get("X-Story-Bridge-Limit-Bytes"), 10, 64)
 			if actualErr == nil && limitErr == nil && actual >= 0 && limit > 0 {
@@ -163,7 +168,7 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		}
 		if c.cfg.Provider == "chatgpt_browser" && resp.Header.Get("X-Story-Bridge-State") == "unavailable" {
 			version := resp.Header.Get("X-Story-Bridge-Worker-Version")
-			if version != "0.4.0" {
+			if version != "0.4.0" && version != "0.4.1" {
 				version = "0.3.0"
 			}
 			return nil, fmt.Errorf("%w: запустите рабочее окно ChatGPT с userscript %s", ai.ErrUnavailable, version)

@@ -16,7 +16,7 @@ function fixture(options={}){
  w.Element.prototype.getClientRects=()=>[{}];
  w.PointerEvent=w.MouseEvent;
  Object.defineProperty(w.HTMLElement.prototype,'innerText',{get(){return this.textContent;},set(value){this.textContent=value;}});
- const j={reasoningEffort:options.reasoningEffort||'none',recoverSafeFailure:!!options.recoverSafeFailure,id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
+ const j={textOnly:!!options.textOnly,reasoningEffort:options.reasoningEffort||'none',recoverSafeFailure:!!options.recoverSafeFailure,id:'job-id',worker:'test-worker',lease:'lease-secret',prompt:options.truncatedMessage?'long synthetic prompt '.repeat(650).trim():'synthetic prompt'};
  if(options.readable){
   j.messageFormat='readable-json-v3';j.messageMarker='Story request job-id';
   j.messageContent='SYSTEM INSTRUCTIONS\nUse `goal` and **bold**.\n\nUSER INPUT\n{"action":"Осмотреть дверь", "text":"Первая строка\\nВторая строка"}';
@@ -88,11 +88,13 @@ function fixture(options={}){
  w.document.addEventListener('pointerdown',e=>{if(e.target===box&&!options.ignoreOutside)closeMenu();});
  updatePicker(modeLabel());
  if(options.menuInitiallyOpen)picker.click();
- w.document.execCommand=(_cmd,_ui,text)=>{box.textContent=text;return true;};
+ function unexpectedFile(){const card=w.document.createElement('div');card.dataset.testid='file-upload-thumbnail';const remove=w.document.createElement('button');remove.setAttribute('aria-label','Remove file');card.append(remove);w.document.querySelector('main').append(card);}
+ w.document.execCommand=(_cmd,_ui,text)=>{box.textContent=text;if(options.autoAttachment)unexpectedFile();if(options.asyncAutoAttachment)setTimeout(unexpectedFile,0);return true;};
  w.GM_getValue=()=> 'a'.repeat(48);w.GM_setValue=()=>{};w.GM_registerMenuCommand=()=>{};
  w.GM_xmlhttpRequest=r=>{
   const path=new URL(r.url).pathname,body=JSON.parse(r.data);requests.push({path,body});
   if(path==='/send'&&options.lostAuthorization){queueMicrotask(()=>r.ontimeout());return;}
+  if(path==='/send'&&options.fileDuringAuthorization)unexpectedFile();
   if(path==='/send'&&options.removeFileDuringAuthorization)w.document.querySelector('#upload-card')?.remove();
   if(path==='/send'&&options.stopDuringAuthorization)w.document.querySelector('#story-chatgpt-bridge button').click();
   let value={};if(path==='/claim')value=j;
@@ -218,7 +220,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.4.0');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.4.1');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -326,4 +328,11 @@ test('TXT: removed attachment after authorization never clicks send',async()=>{
 });
 test('TXT: missing filename in sent turn cannot accept another answer',async()=>{
  const f=fixture({attachment:true,sentFileMissing:true});try{await until(()=>f.requests.some(r=>r.path==='/fail'));assert.equal(f.clicks,1);assert.equal(f.requests.filter(r=>r.path==='/result').length,0);}finally{f.close();}
+});
+
+for(const mode of ['autoAttachment','asyncAutoAttachment','fileDuringAuthorization'])test('Text: refuses an unexpected file '+mode,async()=>{
+ const f=fixture({textOnly:true,[mode]:true});try{await until(()=>f.requests.some(r=>r.path==='/fail'));assert.equal(f.clicks,0);assert.equal(f.requests.filter(r=>r.path==='/result'||r.path==='/attachment').length,0);if(mode!=='fileDuringAuthorization')assert.equal(f.requests.filter(r=>r.path==='/send').length,0);}finally{f.close();}
+});
+test('Text: explicitly verifies no files without calling the attachment endpoint',async()=>{
+ const f=fixture({textOnly:true,readable:true,rawEnvelope:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.requests.find(r=>r.path==='/send').body.textOnlyVerified,true);assert.equal(f.requests.filter(r=>r.path==='/attachment').length,0);}finally{f.close();}
 });

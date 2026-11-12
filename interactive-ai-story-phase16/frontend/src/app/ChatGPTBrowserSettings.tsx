@@ -4,7 +4,7 @@ type Props = { reasoning: BrowserReasoning; retries: number; onReasoning: (value
 export function ChatGPTBrowserSettings({ reasoning, retries, onReasoning, onRetries }: Props) {
  return <fieldset className="image-output-settings">
   <legend>ChatGPT в браузере</legend>
-  <p className="muted">Для каждого запроса открывается новый временный чат с GPT-6 и прикрепляется полный запрос в UTF-8 TXT. Рабочие окна Chromium должны быть запущены с userscript версии 0.4.0.</p>
+  <p className="muted">Для каждого запроса открывается новый временный чат с GPT-6 и передаётся полный запрос текстом по умолчанию. Worker 0.4.1 проверяет отсутствие вложений перед отправкой. Если интерфейс преобразует текст в файл, запрос останавливается. Локальный порог по умолчанию — 65536 символов вместе с инструкциями; превышение отклоняется без обрезки контекста.</p>
   <label>Сила рассуждения<select value={reasoning} onChange={event => onReasoning(event.target.value as BrowserReasoning)}>
    <option value="none">Instant — быстрый ответ</option><option value="medium">Medium — средняя</option><option value="high">High — высокая</option>
   </select></label>

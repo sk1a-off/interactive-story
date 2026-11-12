@@ -47,5 +47,7 @@ func textAttachment(in completionRequest, id string) (string, *promptAttachment)
 	prompt := fmt.Sprintf("Story request %s. Read the attached UTF-8 file %s in full. Execute its SYSTEM INSTRUCTIONS using its USER INPUT and RESPONSE FORMAT. Return exactly one JSON object, without Markdown or explanations. Do not browse the web. If the file is unavailable, do not invent a result.", id, file.Name)
 	return prompt, file
 }
-func supportsAttachment(version string) bool { return version == "0.4.0" }
+func supportsAttachment(version string) bool { return version == "0.4.0" || supportsTextOnly(version) }
 func supportsProject(version string) bool    { return version == "0.3.0" || supportsAttachment(version) }
+
+func supportsTextOnly(version string) bool { return version == "0.4.1" }
