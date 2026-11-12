@@ -72,6 +72,13 @@ GROUP BY cancelled.id`, now); e != nil {
 		return jobqueue.ClaimedJob{}, e
 	}
 
+	// A turn whose events already reached Canon is finished no matter what
+	// happened to the worker afterwards. Finalize it before the stale-head rule
+	// below could report a successful turn as failed.
+	if _, e = tx.Exec(ctx, completeCommittedJobsSQL(`j.status='queued'`), now); e != nil {
+		return jobqueue.ClaimedJob{}, e
+	}
+
 	// Drop queued actions whose optimistic-concurrency head is already stale.
 	// This prevents old button clicks from consuming LLM time after another action
 	// has already advanced the timeline.
@@ -116,6 +123,11 @@ GROUP BY cancelled.id`, now); e != nil {
 			&out.Job.Provider.Kind, &out.Job.Provider.Provider, &out.Job.Provider.Model, &out.Job.Provider.Profile, &out.Job.RequestID, &out.Job.CreatedAt,
 			&out.Reliability.AttemptCount, &out.Reliability.MaxAttempts, &out.Reliability.AvailableAt, &leaseExpires, &cancelAt, &lastError, &out.Job.RequestPayload, &out.Job.ActionHash)
 	if errors.Is(e, pgx.ErrNoRows) {
+		// Keep the housekeeping above (duplicate/stale cancellations and
+		// committed-turn finalization) even when nothing is claimable.
+		if e = tx.Commit(ctx); e != nil {
+			return jobqueue.ClaimedJob{}, e
+		}
 		return jobqueue.ClaimedJob{}, jobqueue.ErrNoJob
 	}
 	if e != nil {
@@ -187,6 +199,31 @@ WHERE f.status IN ('failed','cancelled')
  AND (last_update.phase IS NULL OR last_update.phase NOT IN ('failed','completed'))
 ON CONFLICT DO NOTHING`
 
+// completeCommittedJobsSQL finalizes jobs matching the given predicate whose
+// generation already appended events to story_events (the pipeline stamps
+// generation_id on every event of the turn). It writes a durable 'completed'
+// update when the pipeline did not get to publish one, so SSE replay ends
+// with the truth. $1 is the current timestamp.
+func completeCommittedJobsSQL(predicate string) string {
+	return `WITH finalized AS (
+ UPDATE generation_jobs j
+ SET status='completed',completed_at=$1::timestamptz,lease_owner=NULL,lease_expires_at=NULL,heartbeat_at=$1::timestamptz,error_code=NULL,last_error=NULL
+ WHERE ` + predicate + `
+   AND EXISTS (SELECT 1 FROM story_events se WHERE se.generation_id=j.id)
+ RETURNING j.id
+)
+INSERT INTO generation_updates(generation_job_id,sequence,phase,text_delta,error_text)
+SELECT f.id,
+ (SELECT COALESCE(MAX(gu.sequence),0)+1 FROM generation_updates gu WHERE gu.generation_job_id=f.id),
+ 'completed','',''
+FROM finalized f
+LEFT JOIN LATERAL (
+ SELECT gu.phase FROM generation_updates gu WHERE gu.generation_job_id=f.id ORDER BY gu.sequence DESC LIMIT 1
+) last_update ON true
+WHERE last_update.phase IS NULL OR last_update.phase NOT IN ('failed','completed')
+ON CONFLICT DO NOTHING`
+}
+
 func (q *JobQueue) FailOrRetry(ctx context.Context, jid id.ID, owner string, now time.Time, backoff time.Duration, msg string) error {
 	var affected int64
 	e := q.pool.QueryRow(ctx, `WITH finalized AS (
@@ -221,6 +258,12 @@ func (q *JobQueue) IsCancelRequested(ctx context.Context, jid id.ID) (bool, erro
 	return yes, e
 }
 func (q *JobQueue) RequeueExpired(ctx context.Context, now time.Time) (int64, error) {
+	// A worker that died between the Canon commit and Complete leaves a
+	// running job with committed events; it must finish as completed, not be
+	// rerun or reported failed.
+	if _, e := q.pool.Exec(ctx, completeCommittedJobsSQL(`j.status='running' AND j.lease_expires_at <= $1`), now); e != nil {
+		return 0, e
+	}
 	var affected int64
 	e := q.pool.QueryRow(ctx, `WITH finalized AS (
  UPDATE generation_jobs SET status=CASE WHEN cancel_requested_at IS NOT NULL THEN 'cancelled' WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'queued' END,
