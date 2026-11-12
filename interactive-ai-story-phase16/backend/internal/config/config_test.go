@@ -81,3 +81,40 @@ func TestBrowserParallelism(t *testing.T) {
 		}
 	}
 }
+
+func TestRemoteListenerRequiresTokensOrTrustedNetwork(t *testing.T) {
+	t.Setenv("API_ACCESS_TOKEN", "")
+	t.Setenv("IMAGE_WORKER_TOKEN", "")
+	t.Setenv("HTTP_TRUSTED_NETWORK", "")
+	for _, addr := range []string{"127.0.0.1:8787", "localhost:8787", "[::1]:8787"} {
+		t.Setenv("HTTP_ADDR", addr)
+		if _, err := Load(); err != nil {
+			t.Fatalf("loopback %s must load without tokens: %v", addr, err)
+		}
+	}
+	for _, addr := range []string{":8080", "0.0.0.0:8787", "10.10.10.1:8787", "[::]:8787"} {
+		t.Setenv("HTTP_ADDR", addr)
+		if _, err := Load(); err == nil {
+			t.Fatalf("remote %s without tokens must be refused", addr)
+		}
+		t.Setenv("API_ACCESS_TOKEN", "api")
+		if _, err := Load(); err == nil {
+			t.Fatalf("remote %s with only the api token must be refused", addr)
+		}
+		t.Setenv("IMAGE_WORKER_TOKEN", "worker")
+		cfg, err := Load()
+		if err != nil {
+			t.Fatalf("remote %s with both tokens must load: %v", addr, err)
+		}
+		if cfg.ListensOnLoopback() {
+			t.Fatalf("%s reported as loopback", addr)
+		}
+		t.Setenv("API_ACCESS_TOKEN", "")
+		t.Setenv("IMAGE_WORKER_TOKEN", "")
+		t.Setenv("HTTP_TRUSTED_NETWORK", "true")
+		if _, err := Load(); err != nil {
+			t.Fatalf("remote %s with HTTP_TRUSTED_NETWORK must load: %v", addr, err)
+		}
+		t.Setenv("HTTP_TRUSTED_NETWORK", "")
+	}
+}

@@ -105,11 +105,9 @@ MEDIA_BASE_URL='/media' \
 go run ./cmd/server
 ```
 
-To open the application from a phone connected through WireGuard, bind the backend to all interfaces:
-
-```bash
-HOST_HTTP_ADDR='0.0.0.0:8787' make backend-dev
-```
+To open the application from a phone connected through WireGuard, see
+"Remote access" below; do not bind the backend to all interfaces without the
+access tokens.
 
 Backend endpoints:
 
@@ -149,20 +147,50 @@ cd frontend
 npm run dev
 ```
 
-The Makefile binds Vite to all interfaces by default. To restrict it to the
-local machine:
+The Makefile and `start.sh` bind Vite to the local machine by default:
 
 ```bash
 HOST_FRONTEND_HOST='127.0.0.1' make frontend-dev
 ```
 
-For WireGuard/mobile access, keep the default or set it explicitly:
+### Remote access (phone over WireGuard, LAN)
 
-```bash
-HOST_FRONTEND_HOST='0.0.0.0' make frontend-dev
-```
+The API has no user accounts. Anyone who can reach the backend, or the Vite
+dev server that proxies `/api`, `/internal` and `/media` to it, can read and
+change every story and the AI settings. Remote access is therefore gated by two
+tokens:
 
-Then open `http://10.10.10.2:5173/` on the phone.
+1. Put long random values in `.env`:
+
+   ```bash
+   API_ACCESS_TOKEN='<long random value>'
+   IMAGE_WORKER_TOKEN='<another long random value>'
+   ```
+
+   `start.sh` and `make backend-dev` forward both. With `API_ACCESS_TOKEN`
+   set, every route except `/health*` requires it, regardless of the bind
+   address. The Perchance userscript keeps using `IMAGE_WORKER_TOKEN` for
+   `/internal/image-worker/*`.
+2. Keep the backend on loopback and expose only the Vite dev server:
+
+   ```bash
+   HOST_FRONTEND_HOST='0.0.0.0' make frontend-dev
+   ```
+
+   (`./start.sh` honours the same variable from `.env`.) Binding the backend
+   itself to a non-loopback address is also possible, but it refuses to start
+   unless both tokens are set or `HTTP_TRUSTED_NETWORK=true` acknowledges that
+   the network restricts access.
+3. On the phone, open once:
+
+   `http://10.10.10.2:5173/api/v1/auth/session?token=<API_ACCESS_TOKEN>`
+
+   It stores an HttpOnly, SameSite=Strict session cookie and redirects to the
+   application. Tools can send `Authorization: Bearer <API_ACCESS_TOKEN>`
+   instead. `DELETE /api/v1/auth/session` clears the cookie.
+
+Generated images under `/media` are covered by the same token, and directory
+listings are disabled.
 
 Open:
 

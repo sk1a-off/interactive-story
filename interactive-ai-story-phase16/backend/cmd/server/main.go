@@ -300,9 +300,17 @@ func main() {
 	if cfg.MediaRoot != "" {
 		mux := http.NewServeMux()
 		mediaPrefix := strings.TrimRight(cfg.MediaBaseURL, "/") + "/"
-		mux.Handle(mediaPrefix, http.StripPrefix(mediaPrefix, http.FileServer(http.Dir(cfg.MediaRoot))))
+		mux.Handle(mediaPrefix, http.StripPrefix(mediaPrefix, httpapi.MediaHandler(cfg.MediaRoot)))
 		mux.Handle("/", handler)
 		serveHandler = mux
+	}
+	// Outermost so that generated media and worker routes are covered too.
+	serveHandler = httpapi.RequireAccessToken(serveHandler, cfg.APIAccessToken, cfg.ImageWorkerToken)
+	switch {
+	case cfg.APIAccessToken != "":
+		logger.Info("api access token required for all routes except health", "addr", cfg.HTTPAddr)
+	case !cfg.ListensOnLoopback():
+		logger.Warn("api reachable from other hosts without an access token; HTTP_TRUSTED_NETWORK acknowledged", "addr", cfg.HTTPAddr)
 	}
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

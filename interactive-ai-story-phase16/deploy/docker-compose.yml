@@ -46,6 +46,10 @@ services:
       STORY_LLM_PROFILE: ${STORY_LLM_PROFILE:-llamacpp-16k-kvq8}
       STORY_LLM_API_KEY: ${STORY_LLM_API_KEY:-}
       IMAGE_WORKER_TOKEN: ${IMAGE_WORKER_TOKEN:-}
+      API_ACCESS_TOKEN: ${API_ACCESS_TOKEN:-}
+      # The container listens on every container interface, but the port below
+      # is published on 127.0.0.1 only; override to false when publishing wider.
+      HTTP_TRUSTED_NETWORK: ${HTTP_TRUSTED_NETWORK:-true}
       SECRET_STORE_PATH: /data/secrets/provider-keys.json
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -23,7 +23,9 @@ Backend runtime:
 | `OMNIVOICE_BASE_URL` | `http://127.0.0.1:6655` | Local narration service endpoint. |
 | `MEDIA_ROOT` | `./data/generated` | Generated image storage root. |
 | `MEDIA_BASE_URL` | `/media` | Public path for generated images. |
-| `IMAGE_WORKER_TOKEN` | empty | Optional Bearer token for every `/internal/image-worker/*` route. |
+| `IMAGE_WORKER_TOKEN` | empty | Bearer token for every `/internal/image-worker/*` route. Optional on loopback, required for a non-loopback `HTTP_ADDR`. |
+| `API_ACCESS_TOKEN` | empty | When set, every route except `/health*` requires it (Bearer header or the cookie issued by `GET /api/v1/auth/session?token=…`). Required for a non-loopback `HTTP_ADDR`. |
+| `HTTP_TRUSTED_NETWORK` | `false` | Allows a non-loopback `HTTP_ADDR` without tokens when the network already restricts access (Docker Compose sets it because the port is published on 127.0.0.1). |
 | `EMBEDDING_BASE_URL` | `http://127.0.0.1:8090` | Local sentence-transformers endpoint. |
 | `EMBEDDING_MODEL` | `deepvk/USER2-small` | Expected embedding model identity. |
 | `GENERATION_EXECUTION_TIMEOUT` | `25m` | Per-attempt story worker budget (positive Go duration). Default leaves headroom above the 20-minute fast-model timeout. |
@@ -47,7 +49,7 @@ Compose and local launcher variables:
 | `HOST_DATABASE_URL` | local PostgreSQL DSN | Shared `make migrate-up`, `make migrate-down`, and `make backend-dev` DSN. |
 | `HOST_STORY_LLM_BASE_URL` | `http://127.0.0.1:8081` | Host launcher Story LLM endpoint. |
 | `HOST_HTTP_ADDR` | `127.0.0.1:8787` | Host launcher backend address. |
-| `HOST_FRONTEND_HOST` | `0.0.0.0` | Vite bind host used by `make frontend-dev`. |
+| `HOST_FRONTEND_HOST` | `127.0.0.1` | Vite bind host used by `make frontend-dev` and `start.sh`; `0.0.0.0` exposes the UI and proxied API (set `API_ACCESS_TOKEN` first, see RUN_LOCAL.md). |
 | `HOST_MEDIA_ROOT` | `../data/generated` | Host launcher media directory. |
 | `HOST_SECRET_STORE_PATH` | `../data/secrets/provider-keys.json` | Host launcher secret store. |
 

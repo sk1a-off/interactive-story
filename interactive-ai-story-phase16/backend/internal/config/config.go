@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -9,20 +10,28 @@ import (
 )
 
 type Config struct {
-	AppEnv                             string
-	HTTPAddr                           string
-	DatabaseURL                        string
-	ChatGPTBridgeTokenFile             string
-	ChatGPTBrowserParallelism          int
-	StoryLLMBaseURL                    string
-	StoryLLMAPIKey                     string
-	StoryLLMModel                      string
-	StoryLLMProfile                    string
-	LocalOwnerID                       string
-	LocalUsername                      string
-	MediaRoot                          string
-	MediaBaseURL                       string
-	ImageWorkerToken                   string
+	AppEnv                    string
+	HTTPAddr                  string
+	DatabaseURL               string
+	ChatGPTBridgeTokenFile    string
+	ChatGPTBrowserParallelism int
+	StoryLLMBaseURL           string
+	StoryLLMAPIKey            string
+	StoryLLMModel             string
+	StoryLLMProfile           string
+	LocalOwnerID              string
+	LocalUsername             string
+	MediaRoot                 string
+	MediaBaseURL              string
+	ImageWorkerToken          string
+	// APIAccessToken, when set, is required on every route except health
+	// checks (Bearer header or the session cookie). Mandatory for non-loopback
+	// listeners unless TrustedNetwork acknowledges the exposure.
+	APIAccessToken string
+	// TrustedNetwork allows a non-loopback listener without tokens, for
+	// deployments where reachability is restricted elsewhere (for example a
+	// container whose port is published on 127.0.0.1 only).
+	TrustedNetwork                     bool
 	SecretStorePath                    string
 	OmniVoiceURL                       string
 	GenerationContextShadow            bool
@@ -56,6 +65,8 @@ func Load() (Config, error) {
 		MediaRoot:                          envOrDefault("MEDIA_ROOT", "./data/generated"),
 		MediaBaseURL:                       envOrDefault("MEDIA_BASE_URL", "/media"),
 		ImageWorkerToken:                   strings.TrimSpace(os.Getenv("IMAGE_WORKER_TOKEN")),
+		APIAccessToken:                     strings.TrimSpace(os.Getenv("API_ACCESS_TOKEN")),
+		TrustedNetwork:                     envEnabled("HTTP_TRUSTED_NETWORK"),
 		SecretStorePath:                    envOrDefault("SECRET_STORE_PATH", "../data/secrets/provider-keys.json"),
 		OmniVoiceURL:                       envOrDefault("OMNIVOICE_BASE_URL", "http://127.0.0.1:6655"),
 		GenerationContextShadow:            envEnabled("GENERATION_CONTEXT_SHADOW_V1"),
@@ -74,6 +85,9 @@ func Load() (Config, error) {
 	if !strings.HasPrefix(cfg.HTTPAddr, ":") && !strings.Contains(cfg.HTTPAddr, ":") {
 		return Config{}, fmt.Errorf("HTTP_ADDR must be a valid listen address: %q", cfg.HTTPAddr)
 	}
+	if err := cfg.validateExposure(); err != nil {
+		return Config{}, err
+	}
 	if !strings.HasPrefix(cfg.MediaBaseURL, "/") {
 		return Config{}, fmt.Errorf("MEDIA_BASE_URL must be a local URL path")
 	}
@@ -86,6 +100,49 @@ func Load() (Config, error) {
 	}
 	cfg.GenerationExecutionTimeout = timeout
 	return cfg, nil
+}
+
+// ListensOnLoopback reports whether HTTPAddr can only be reached from the
+// local machine. An empty or wildcard host (":8080", "0.0.0.0", "[::]")
+// listens on every interface.
+func (c Config) ListensOnLoopback() bool {
+	return hostIsLoopback(c.HTTPAddr)
+}
+
+func hostIsLoopback(addr string) bool {
+	host, _, err := net.SplitHostPort(strings.TrimSpace(addr))
+	if err != nil {
+		return false
+	}
+	host = strings.Trim(host, "[]")
+	if host == "" {
+		return false
+	}
+	if strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// validateExposure refuses to expose an unauthenticated API beyond the local
+// machine. Remote access needs both tokens, or an explicit acknowledgement
+// that the network itself restricts who can reach the listener.
+func (c Config) validateExposure() error {
+	if c.ListensOnLoopback() || c.TrustedNetwork {
+		return nil
+	}
+	var missing []string
+	if c.APIAccessToken == "" {
+		missing = append(missing, "API_ACCESS_TOKEN")
+	}
+	if c.ImageWorkerToken == "" {
+		missing = append(missing, "IMAGE_WORKER_TOKEN")
+	}
+	if len(missing) == 0 {
+		return nil
+	}
+	return fmt.Errorf("HTTP_ADDR=%q is reachable from other hosts: set %s, or set HTTP_TRUSTED_NETWORK=true if the network already restricts access (see docs/implementation/RUN_LOCAL.md, remote access)", c.HTTPAddr, strings.Join(missing, " and "))
 }
 
 func envEnabled(key string) bool {
