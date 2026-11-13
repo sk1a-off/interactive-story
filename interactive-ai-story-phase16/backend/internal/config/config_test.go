@@ -132,3 +132,24 @@ func TestAPITokenRequiresWorkerTokenEvenOnLoopback(t *testing.T) {
 		t.Fatalf("both tokens must load: %v", err)
 	}
 }
+
+func TestPlannerAndProvisionalBeatDefaultOnButHonourExplicitOff(t *testing.T) {
+	t.Setenv("GENERATION_TURN_PLANNER_V1", "")
+	t.Setenv("GENERATION_PROVISIONAL_BEAT_V1", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.GenerationTurnPlanner || !cfg.GenerationProvisionalBeat {
+		t.Fatalf("combined planner and provisional beat must default on: %+v", cfg)
+	}
+	t.Setenv("GENERATION_TURN_PLANNER_V1", "false")
+	t.Setenv("GENERATION_PROVISIONAL_BEAT_V1", "0")
+	cfg, err = Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.GenerationTurnPlanner || cfg.GenerationProvisionalBeat {
+		t.Fatalf("explicit off must be honoured: %+v", cfg)
+	}
+}
