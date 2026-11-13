@@ -33,8 +33,8 @@ Backend runtime:
 Generation switches accept `1`, `true`, `yes`, or `on`:
 
 - `GENERATION_CONTEXT_SHADOW_V1`
-- `GENERATION_TURN_PLANNER_V1`
-- `GENERATION_PROVISIONAL_BEAT_V1`
+- `GENERATION_TURN_PLANNER_V1` (default on: one combined `turn_planner` call replaces the legacy interpreter → director → pacing chain; set `false` for the legacy chain)
+- `GENERATION_PROVISIONAL_BEAT_V1` (default on: the validated writer draft is shown as provisional text before evaluation and commit; set `false` to wait for the full turn)
 - `GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1`
 - `GENERATION_FAST_STATE_V1`
 
