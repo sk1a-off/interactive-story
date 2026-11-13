@@ -86,3 +86,12 @@ export function writePendingReaderGeneration(timelineId: string, pending: Pendin
   if (pending) sessionStorage.setItem(key, JSON.stringify(pending))
   else sessionStorage.removeItem(key)
 }
+
+// The provisional draft is shown until the committed beat it previews is on
+// screen, so the reader never sees the same continuation twice.
+export function provisionalVisible(
+  current: Pick<Current, 'beatId'>,
+  pending: Pick<PendingReaderGeneration, 'provisionalText' | 'fromBeatId'> | null,
+): pending is PendingReaderGeneration & { provisionalText: string } {
+  return Boolean(pending?.provisionalText) && current.beatId === pending?.fromBeatId
+}

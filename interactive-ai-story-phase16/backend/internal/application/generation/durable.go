@@ -260,7 +260,9 @@ func (e DurableExecutor) Execute(ctx context.Context, claimed jobqueue.ClaimedJo
 		}
 	}
 	revisionBase := int64(0)
-	if pipeline.StreamWriter {
+	if pipeline.StreamWriter || pipeline.ProvisionalBeat {
+		// Every attempt publishes provisional revisions in its own epoch so a
+		// reader never accepts a draft from an earlier attempt after a retry.
 		revisionBase = int64(claimed.Reliability.AttemptCount) * 1000000
 	}
 	if e.Sink != nil {
