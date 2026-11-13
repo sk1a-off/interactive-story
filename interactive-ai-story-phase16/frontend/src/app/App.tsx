@@ -8,7 +8,7 @@ import { flushSync } from 'react-dom'
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDirectorInstruction, applyDirectorExact, createActionRequestId, createStory, generateSetup, generationEventsUrl, getCurrent, getDirector, getDirectorHistory, getSaveLibrary, getSetup, startStory, submitAction, createSave, forkSave, previewSave, updateSaveCard, listAISettings, createAIRevision, activateAIRevision, getPromptStudio, createPromptRevision, activatePromptRevision, generateSceneImages, generateParagraphImage, listStories, deleteStory, type PromptRoleSettings, type StoryListItem } from '../lib/api'
-import { applyGenerationUpdate, pendingTurnIsVisible, readPendingReaderGeneration, readerHasCoherentChoices, writePendingReaderGeneration, type GenerationUpdate, type PendingReaderGeneration } from '../lib/readerFlow'
+import { applyGenerationUpdate, pendingTurnIsVisible, provisionalVisible, readPendingReaderGeneration, readerHasCoherentChoices, writePendingReaderGeneration, type GenerationUpdate, type PendingReaderGeneration } from '../lib/readerFlow'
 import { paragraphCanBeIllustrated } from '../lib/illustrationPlacement'
 import { SetupComponentEditor } from './SetupEditor'
 import { SETUP_COMPONENT_ORDER, setupComponentDescription, setupComponentOrderIndex, setupComponentTitle } from './setupEditorModel'
@@ -272,7 +272,7 @@ function Reader(){
     </article>
    })}
   </section>
-  {pendingGeneration?.provisionalText&&<section className="provisional-beat" aria-label="Предварительный текст продолжения"><span>Черновик · ещё не сохранён в истории</span>{splitParagraphs(pendingGeneration.provisionalText).map((paragraph,index)=><p key={`provisional-${pendingGeneration.generationId??'pending'}-${index}`}>{paragraph}</p>)}</section>}
+  {provisionalVisible(v,pendingGeneration)&&<section className="provisional-beat" aria-label="Предварительный текст продолжения"><span>Черновик · ещё не сохранён в истории</span>{splitParagraphs(pendingGeneration.provisionalText).map((paragraph,index)=><p key={`provisional-${pendingGeneration.generationId??'pending'}-${index}`}>{paragraph}</p>)}</section>}
   {generations.length===0&&<div className="scene-image-empty"><p>{regenerate.isPending?'Ставлю иллюстрацию сцены в очередь…':'Иллюстрация подготавливается в фоновой очереди.'}</p></div>}
   <PerchanceWorkerStatus/>
   <div className="scene-image-regenerate"><button className="ghost" onClick={()=>regenerate.mutate()} disabled={regenerate.isPending||imageBusy}>{regenerate.isPending?'Ищу новый момент…':'Найти следующий момент для иллюстрации'}</button></div>

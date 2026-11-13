@@ -70,8 +70,8 @@ func Load() (Config, error) {
 		SecretStorePath:                    envOrDefault("SECRET_STORE_PATH", "../data/secrets/provider-keys.json"),
 		OmniVoiceURL:                       envOrDefault("OMNIVOICE_BASE_URL", "http://127.0.0.1:6655"),
 		GenerationContextShadow:            envEnabled("GENERATION_CONTEXT_SHADOW_V1"),
-		GenerationTurnPlanner:              envEnabled("GENERATION_TURN_PLANNER_V1"),
-		GenerationProvisionalBeat:          envEnabled("GENERATION_PROVISIONAL_BEAT_V1"),
+		GenerationTurnPlanner:              envEnabledDefault("GENERATION_TURN_PLANNER_V1", true),
+		GenerationProvisionalBeat:          envEnabledDefault("GENERATION_PROVISIONAL_BEAT_V1", true),
 		GenerationJournalEvidenceIsolation: envEnabled("GENERATION_JOURNAL_EVIDENCE_ISOLATION_V1"),
 		GenerationFastState:                envEnabled("GENERATION_FAST_STATE_V1"),
 		EmbeddingBaseURL:                   envOrDefault("EMBEDDING_BASE_URL", "http://127.0.0.1:8090"),
@@ -165,4 +165,17 @@ func envOrDefault(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// envEnabledDefault is envEnabled with an explicit default for unset or blank
+// values; "false"/"0"/"no"/"off" still disable the switch.
+func envEnabledDefault(key string, fallback bool) bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv(key))) {
+	case "":
+		return fallback
+	case "1", "true", "yes", "on":
+		return true
+	default:
+		return false
+	}
 }
