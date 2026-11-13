@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { applyGenerationUpdate, pendingTurnIsVisible, readerHasCoherentChoices } from '../src/lib/readerFlow'
+import { applyGenerationUpdate, pendingTurnIsVisible, provisionalVisible, readerHasCoherentChoices } from '../src/lib/readerFlow'
 
 describe('reader turn coherence', () => {
   test('never accepts choices that belong to the previous beat', () => {
@@ -63,4 +63,14 @@ describe('streaming draft snapshots',()=>{
   const next=applyGenerationUpdate('t',retry,{phase:'draft_streaming',provisional:true,revision:2000001,textDelta:'Новый'})
   expect(next?.provisionalText).toBe('Новый')
  })
+})
+
+describe('provisionalVisible', () => {
+  test('shows the draft only while the source beat is still the current one', () => {
+    const pending = { provisionalText: 'Черновик', fromBeatId: 'beat-1' }
+    expect(provisionalVisible({ beatId: 'beat-1' }, pending)).toBe(true)
+    expect(provisionalVisible({ beatId: 'beat-2' }, pending)).toBe(false)
+    expect(provisionalVisible({ beatId: 'beat-1' }, { provisionalText: undefined, fromBeatId: 'beat-1' })).toBe(false)
+    expect(provisionalVisible({ beatId: 'beat-1' }, null)).toBe(false)
+  })
 })
