@@ -135,3 +135,12 @@ func TestMediaHandlerServesFilesButNotDirectoryListings(t *testing.T) {
 		}
 	}
 }
+
+func TestAccessSessionResponsesAreNotCachedOrReferred(t *testing.T) {
+	h := RequireAccessToken(okHandler(), "secret-token", "")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/auth/session?token=secret-token", nil))
+	if rec.Header().Get("Cache-Control") != "no-store" || rec.Header().Get("Referrer-Policy") != "no-referrer" {
+		t.Fatalf("login response must not be cached or leak its URL: %v", rec.Header())
+	}
+}

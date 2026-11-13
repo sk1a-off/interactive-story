@@ -129,6 +129,12 @@ func hostIsLoopback(addr string) bool {
 // machine. Remote access needs both tokens, or an explicit acknowledgement
 // that the network itself restricts who can reach the listener.
 func (c Config) validateExposure() error {
+	// With an API token the worker routes are exempted from it, so they must
+	// carry their own token; otherwise the userscript would be the only
+	// unauthenticated client and the exemption would reopen those routes.
+	if c.APIAccessToken != "" && c.ImageWorkerToken == "" {
+		return fmt.Errorf("API_ACCESS_TOKEN is set: IMAGE_WORKER_TOKEN must be set too so /internal/image-worker/* stays protected")
+	}
 	if c.ListensOnLoopback() || c.TrustedNetwork {
 		return nil
 	}

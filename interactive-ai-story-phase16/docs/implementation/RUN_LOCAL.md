@@ -167,6 +167,8 @@ tokens:
    IMAGE_WORKER_TOKEN='<another long random value>'
    ```
 
+   Both are required together: the worker routes are exempt from the API
+   token so the userscript keeps working, hence they need their own.
    `start.sh` and `make backend-dev` forward both. With `API_ACCESS_TOKEN`
    set, every route except `/health*` requires it, regardless of the bind
    address. The Perchance userscript keeps using `IMAGE_WORKER_TOKEN` for

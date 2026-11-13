@@ -118,3 +118,17 @@ func TestRemoteListenerRequiresTokensOrTrustedNetwork(t *testing.T) {
 		t.Setenv("HTTP_TRUSTED_NETWORK", "")
 	}
 }
+
+func TestAPITokenRequiresWorkerTokenEvenOnLoopback(t *testing.T) {
+	t.Setenv("HTTP_ADDR", "127.0.0.1:8787")
+	t.Setenv("HTTP_TRUSTED_NETWORK", "")
+	t.Setenv("API_ACCESS_TOKEN", "api")
+	t.Setenv("IMAGE_WORKER_TOKEN", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("api token without worker token must be refused: worker routes would be exempt and open")
+	}
+	t.Setenv("IMAGE_WORKER_TOKEN", "worker")
+	if _, err := Load(); err != nil {
+		t.Fatalf("both tokens must load: %v", err)
+	}
+}

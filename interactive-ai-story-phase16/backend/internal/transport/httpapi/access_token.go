@@ -62,6 +62,9 @@ func accessTokenPresented(r *http.Request, token string) bool {
 // session: GET/POST with ?token= sets the cookie and redirects to the
 // application root; DELETE clears it.
 func handleAccessSession(w http.ResponseWriter, r *http.Request, token string) {
+	// The login URL carries the token; keep it out of caches and referrers.
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Referrer-Policy", "no-referrer")
 	switch r.Method {
 	case http.MethodGet, http.MethodPost:
 		provided := strings.TrimSpace(r.URL.Query().Get("token"))
