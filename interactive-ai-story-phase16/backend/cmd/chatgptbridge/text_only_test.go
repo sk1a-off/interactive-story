@@ -19,7 +19,7 @@ func TestTextOnlyRequiresCompatibleWorkerAndNoAttachmentProof(t *testing.T) {
 		b.ServeHTTP(w, r)
 		return w
 	}
-	b.workers["worker-old"] = workerState{Version: "0.4.2", Status: "ready", Seen: b.now()}
+	b.workers["worker-old"] = workerState{Version: "0.4.3", Status: "ready", Seen: b.now()}
 	if w := request(context.Background()); w.Code != 503 || w.Header().Get("X-Story-Bridge-Worker-Version") != chatGPTWorkerVersion {
 		t.Fatal("old worker allowed text-only job", w.Code)
 	}
@@ -32,7 +32,7 @@ func TestTextOnlyRequiresCompatibleWorkerAndNoAttachmentProof(t *testing.T) {
 	if !j.TextOnly || j.Attachment != nil || j.MessageFormat != "readable-json-v3" || !strings.Contains(j.Prompt, "Проверить текст") {
 		t.Fatal("wrong text envelope")
 	}
-	if w := call(b, "/claim", map[string]string{"worker": "worker-old", "version": "0.4.2"}); w.Code != 204 {
+	if w := call(b, "/claim", map[string]string{"worker": "worker-old", "version": "0.4.3"}); w.Code != 204 {
 		t.Fatal("old worker claimed strict text")
 	}
 	w := call(b, "/claim", map[string]string{"worker": "worker-new", "version": chatGPTWorkerVersion})

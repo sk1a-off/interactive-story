@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.4.3
+// @version      0.4.4
 // @description  Story generation and probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.4.3';
+  const VERSION='0.4.4';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -390,25 +390,31 @@
         if(!running||!temporary()||location.pathname!=='/'||roles('user').length||roles('assistant').length||editor()!==box||!reasoningLabel(current.reasoningEffort||'none',requireModel)||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         if(current.attachment){const state=attachmentState(current.attachment);if(!state.present||state.pending||state.error||state.extra)throw Error('TXT исчез или изменился перед отправкой.');}else{assertTextOnly(box,current.prompt);}
         const chatOrigin = location.origin;
-        let conversationPath = null;
-        function verifyReplyRoute(){
+        function replyRoute(){
           const url = new URL(location.href);
           const path = url.pathname.replace(/\/$/,'') || '/';
           if(url.origin!==chatOrigin || url.searchParams.get('temporary-chat')==='false'){
             throw Error('Страница чата изменилась после отправки.');
           }
-          if(conversationPath ? path!==conversationPath : path!=='/' && !/^\/c\/[^/]+$/.test(path)){
+          if(path!=='/' && !/^\/c\/[^/]+$/.test(path)){
             throw Error('После отправки открылась другая страница чата.');
           }
-          // The composer can lose the temporary indicator on a same-document
-          // route update. The receipt still requires this lease's exact prompt.
-          if(path!=='/')conversationPath=path;
+          return path;
         }
         send.click(); // Exactly one click for this lease.
         const expected=current.messageFormat==='readable-json-v3'?current.messageContent:current.prompt;
+        let lastPath = null;
         let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
-          verifyReplyRoute();
+          const path = replyRoute();
+          // ChatGPT can replace a provisional conversation URL while streaming.
+          // Restart the completion check after navigation and correlate the turn again.
+          if(path!==lastPath){
+            lastPath=path;
+            stable='';
+            since=0;
+            emptySince=0;
+          }
           const users=roles('user'),assistants=roles('assistant');
           if(users.length>1||assistants.length>1)throw Error('Неожиданный дополнительный ход чата.');
           const shown=userMessage(current),userText=shown.text;
@@ -433,17 +439,18 @@
             if(!emptySince)emptySince=Date.now();
             // A completed UI with no readable text is a terminal observation,
             // not proof that the underlying model generated no content.
-            if(Date.now()-emptySince>=5000){emptyReply=true;return {text:''};}
+            if(Date.now()-emptySince>=5000){emptyReply=true;return {text:'',path};}
           }else{
             emptySince=0;
             show(d.stopVisible?(text?'Получаю ответ · '+text.length+' символов…':'Модель ещё генерирует ответ…'):text?'Ответ получен. Проверяю завершение…':'Ожидание ответа модели…');
           }
           if(!done||!text){stable='';since=0;return null;}
           if(text!==stable){stable=text;since=Date.now();return null;}
-          return Date.now()-since>=2500 ? {text}:null;
+          return Date.now()-since>=2500 ? {text,path}:null;
         },Math.min(570000,Math.max(130000,current.responseTimeoutMs||130000)));
-        verifyReplyRoute();
-        if(roles('user').length!==1 || roles('assistant').length!==1 || userMessage(current).text!==expected){
+        const finalState = assistantState();
+        if(replyRoute()!==reply.path || roles('user').length!==1 || roles('assistant').length!==1 ||
+           userMessage(current).text!==expected || finalState.text!==reply.text || finalState.diagnostic.stopVisible || !finalState.diagnostic.copyVisible){
           throw Error('Сообщение изменилось до передачи ответа.');
         }
         const accepted=await request('/result',{...lease,reply:reply.text,error:emptyReply?JSON.stringify({version:VERSION,stage:'completed-empty-ui',message:'UI completed without extractable text',assistant:assistantState().diagnostic}):undefined});

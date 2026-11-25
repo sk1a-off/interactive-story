@@ -149,7 +149,13 @@ function fixture(options={}){
    const stop=w.document.createElement('button');
    stop.setAttribute('aria-label','Stop generating');
    assistant.append(stop);
-   w.setTimeout(()=>{w.history.replaceState(null,'',options.routeAfterFirstRead);stop.remove();},1000);
+   if(options.assistantMountsAfterRoute){h.remove();answer.remove();copy.remove();}
+   w.setTimeout(()=>{
+    w.history.replaceState(null,'',options.routeAfterFirstRead);
+    if(options.changedUserAfterRoute)content.textContent='a different request';
+    if(options.assistantMountsAfterRoute){assistant.append(h,answer);assistant.after(copy);}
+    stop.remove();
+   },1000);
   }
   if(options.userCopyOnly){user.append(copy);}
   if(options.readable&&options.fragmentedInline){
@@ -256,7 +262,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.4.3');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.4.4');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -396,6 +402,8 @@ for(const options of [
  {replyRoute:'/c/conversation-a',readable:true,rawEnvelope:true,truncatedMessage:true},
  {replyRoute:'/c/conversation-a',attachment:true},
  {replyRoute:'/',routeAfterFirstRead:'/c/conversation-a'},
+ {replyRoute:'/c/local-chatgpt%3Aprovisional',routeAfterFirstRead:'/c/conversation-a?temporary-chat=true',attachment:true,assistantMountsAfterRoute:true},
+ {replyRoute:'/c/conversation-a',routeAfterFirstRead:'/c/conversation-b',readable:true,rawEnvelope:true},
 ])test('collect the correlated answer when the temporary indicator disappears '+JSON.stringify(options),async()=>{
  const f=fixture(options);
  try{
@@ -408,7 +416,7 @@ for(const options of [
 for(const options of [
  {replyRoute:'/share/other'},
  {replyRoute:'/c/ordinary?temporary-chat=false'},
- {replyRoute:'/c/conversation-a',routeAfterFirstRead:'/c/conversation-b'},
+ {replyRoute:'/c/conversation-a',routeAfterFirstRead:'/c/conversation-b',changedUserAfterRoute:true},
  {replyRoute:'/c/conversation-a',wrongUser:true},
  {leaveTemporaryDuringAuthorization:true},
 ])test('reject an unrelated response or loss of the temporary chat before clicking '+JSON.stringify(options),async()=>{

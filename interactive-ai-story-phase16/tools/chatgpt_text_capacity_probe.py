@@ -33,7 +33,7 @@ def main():
             return json.load(r)
 
     rows = []
-    report = {'synthetic': True, 'provider': 'chatgpt_browser', 'model': 'gpt-6', 'reasoning': 'none', 'worker': '0.4.3', 'started': dt.datetime.now(dt.timezone.utc).isoformat(), 'rows': rows,
+    report = {'synthetic': True, 'provider': 'chatgpt_browser', 'model': 'gpt-6', 'reasoning': 'none', 'worker': '0.4.4', 'started': dt.datetime.now(dt.timezone.utc).isoformat(), 'rows': rows,
               'interpretation': 'Input UTF-8 bytes and Unicode/UTF-16 lengths are measured, not model tokens. Success checks five anchors, not understanding of every record. Largest success is a lower bound; UI failures do not establish model context limits.'}
     args.report.parent.mkdir(parents=True, exist_ok=True)
 
@@ -44,7 +44,7 @@ def main():
         for trial in range(1, args.trials + 1):
             status = api('/status')
             now = dt.datetime.now(dt.timezone.utc)
-            ready = [w for w in status['workers'].values() if w.get('version') == '0.4.3' and w.get('status') == 'ready' and (now - dt.datetime.fromisoformat(w['seen'])).total_seconds() < 15]
+            ready = [w for w in status['workers'].values() if w.get('version') == '0.4.4' and w.get('status') == 'ready' and (now - dt.datetime.fromisoformat(w['seen'])).total_seconds() < 15]
             if status.get('project_input_format') != 'text' or not ready or any(j['state'] in ('queued', 'leased', 'dispatched') for j in status['jobs']):
                 raise SystemExit('Text bridge or ready worker unavailable, or another job is active; no new request sent')
             nonce = secrets.token_hex(12)

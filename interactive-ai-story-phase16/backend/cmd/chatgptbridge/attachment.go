@@ -50,6 +50,6 @@ func textAttachment(in completionRequest, id string) (string, *promptAttachment)
 func supportsAttachment(version string) bool { return version == chatGPTWorkerVersion }
 func supportsProject(version string) bool    { return version == "0.3.0" || supportsAttachment(version) }
 
-const chatGPTWorkerVersion = "0.4.3"
+const chatGPTWorkerVersion = "0.4.4"
 
 func supportsTextOnly(version string) bool { return version == chatGPTWorkerVersion }
