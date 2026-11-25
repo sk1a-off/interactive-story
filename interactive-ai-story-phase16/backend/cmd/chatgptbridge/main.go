@@ -477,10 +477,10 @@ func main() {
 	}
 	b.projectInputFormat = os.Getenv("CHATGPT_BRIDGE_INPUT_FORMAT")
 	if b.projectInputFormat == "" {
-		b.projectInputFormat = "text"
+		b.projectInputFormat = "auto"
 	}
-	if b.projectInputFormat != "txt" && b.projectInputFormat != "text" {
-		log.Fatal("CHATGPT_BRIDGE_INPUT_FORMAT must be txt or text")
+	if b.projectInputFormat != "txt" && b.projectInputFormat != "text" && b.projectInputFormat != "auto" {
+		log.Fatal("CHATGPT_BRIDGE_INPUT_FORMAT must be auto, text or txt")
 	}
 	var limitErr error
 	b.maxTextCharacters, limitErr = textCharacterLimit(os.Getenv("CHATGPT_BRIDGE_MAX_TEXT_CHARS"))

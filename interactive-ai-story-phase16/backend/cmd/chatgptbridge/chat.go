@@ -195,7 +195,19 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var attachment *promptAttachment
-	if project && (b.projectInputFormat == "txt" || r.Header.Get("X-Story-Input-Format") == attachmentFormat) {
+	asFile := b.projectInputFormat == "txt" || r.Header.Get("X-Story-Input-Format") == attachmentFormat
+	textOnly := project && (b.projectInputFormat == "auto" || b.projectInputFormat == "text") && !asFile
+	if textOnly {
+		if length := utf16Characters(prompt); length > b.maxTextCharacters {
+			if b.projectInputFormat == "text" {
+				rejectTextSize(w, length, b.maxTextCharacters)
+				return
+			}
+			asFile = true
+			textOnly = false
+		}
+	}
+	if project && asFile {
 		prompt, attachment = textAttachment(in, id)
 		messageFormat, marker, content = attachmentFormat, "Story request "+id, ""
 		inputEncoding = attachmentFormat
@@ -211,13 +223,6 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 	if size > limit {
 		rejectSize(w, int64(size), limit, "prompt")
 		return
-	}
-	textOnly := project && attachment == nil && b.projectInputFormat == "text"
-	if textOnly {
-		if n := utf16Characters(prompt); n > b.maxTextCharacters {
-			rejectTextSize(w, n, b.maxTextCharacters)
-			return
-		}
 	}
 	b.mu.Lock()
 	b.expire()
