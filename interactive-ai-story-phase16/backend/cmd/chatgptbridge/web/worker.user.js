@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.4.2
+// @version      0.4.3
 // @description  Story generation and probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.4.2';
+  const VERSION='0.4.3';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -387,16 +387,31 @@
         show('GPT-6.2 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8)+' · ожидание ответа…');
         if(!current.attachment)assertTextOnly(box,current.prompt);
         await request('/send',{...lease,...(current.textOnly?{textOnlyVerified:true}:{})}); // A failed/ambiguous authorization NEVER leads to a click or retry.
-        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||'none',requireModel)||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
+        if(!running||!temporary()||location.pathname!=='/'||roles('user').length||roles('assistant').length||editor()!==box||!reasoningLabel(current.reasoningEffort||'none',requireModel)||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         if(current.attachment){const state=attachmentState(current.attachment);if(!state.present||state.pending||state.error||state.extra)throw Error('TXT исчез или изменился перед отправкой.');}else{assertTextOnly(box,current.prompt);}
+        const chatOrigin = location.origin;
+        let conversationPath = null;
+        function verifyReplyRoute(){
+          const url = new URL(location.href);
+          const path = url.pathname.replace(/\/$/,'') || '/';
+          if(url.origin!==chatOrigin || url.searchParams.get('temporary-chat')==='false'){
+            throw Error('Страница чата изменилась после отправки.');
+          }
+          if(conversationPath ? path!==conversationPath : path!=='/' && !/^\/c\/[^/]+$/.test(path)){
+            throw Error('После отправки открылась другая страница чата.');
+          }
+          // The composer can lose the temporary indicator on a same-document
+          // route update. The receipt still requires this lease's exact prompt.
+          if(path!=='/')conversationPath=path;
+        }
         send.click(); // Exactly one click for this lease.
+        const expected=current.messageFormat==='readable-json-v3'?current.messageContent:current.prompt;
         let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;
         const reply=await waitFor(()=>{
-          if(!temporary())throw Error('Временный режим больше не подтверждён.');
+          verifyReplyRoute();
           const users=roles('user'),assistants=roles('assistant');
           if(users.length>1||assistants.length>1)throw Error('Неожиданный дополнительный ход чата.');
           const shown=userMessage(current),userText=shown.text;
-          const expected=current.messageFormat==='readable-json-v3'?current.messageContent:current.prompt;
           if(users.length===1&&userText!==expected){
             show('Проверяю полный текст отправленного запроса…');
             if(!correlationSince)correlationSince=Date.now();
@@ -427,6 +442,10 @@
           if(text!==stable){stable=text;since=Date.now();return null;}
           return Date.now()-since>=2500 ? {text}:null;
         },Math.min(570000,Math.max(130000,current.responseTimeoutMs||130000)));
+        verifyReplyRoute();
+        if(roles('user').length!==1 || roles('assistant').length!==1 || userMessage(current).text!==expected){
+          throw Error('Сообщение изменилось до передачи ответа.');
+        }
         const accepted=await request('/result',{...lease,reply:reply.text,error:emptyReply?JSON.stringify({version:VERSION,stage:'completed-empty-ui',message:'UI completed without extractable text',assistant:assistantState().diagnostic}):undefined});
         knownTerminal=accepted.state;
         if(accepted.state!=='complete')throw Error(emptyReply?'Ответ завершён в интерфейсе, но читаемый текст отсутствует.':'Мост отклонил ответ: неверный JSON или идентификатор.');

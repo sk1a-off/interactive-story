@@ -168,7 +168,7 @@ func (c *Client) request(ctx context.Context, body []byte, agent, stream bool) (
 		}
 		if c.cfg.Provider == "chatgpt_browser" && resp.Header.Get("X-Story-Bridge-State") == "unavailable" {
 			version := resp.Header.Get("X-Story-Bridge-Worker-Version")
-			if version != "0.4.0" && version != "0.4.1" && version != "0.4.2" {
+			if version != "0.4.0" && version != "0.4.1" && version != "0.4.3" {
 				version = "0.3.0"
 			}
 			return nil, fmt.Errorf("%w: запустите рабочее окно ChatGPT с userscript %s", ai.ErrUnavailable, version)

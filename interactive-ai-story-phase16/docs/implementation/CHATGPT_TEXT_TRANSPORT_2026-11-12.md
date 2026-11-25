@@ -38,7 +38,7 @@ Worker проверяет полное содержимое редактора, 
 ./start-chatgpt-bridge.sh
 ```
 
-Установите worker 0.4.2 с http://127.0.0.1:8791/worker.user.js, откройте https://chatgpt.com/?temporary-chat=true#story-bridge-worker и нажмите «Запустить». Токен прежний. Для явного режима файлов: `CHATGPT_BRIDGE_INPUT_FORMAT=txt ./start-chatgpt-bridge.sh`.
+Установите worker 0.4.3 с http://127.0.0.1:8791/worker.user.js, откройте https://chatgpt.com/?temporary-chat=true#story-bridge-worker и нажмите «Запустить». Токен прежний. Для явного режима файлов: `CHATGPT_BRIDGE_INPUT_FORMAT=txt ./start-chatgpt-bridge.sh`.
 
 Для повторного замера запустите мост с `CHATGPT_BRIDGE_INPUT_FORMAT=text` и укажите новый путь отчёта. Скрипт требует свободный мост и готовый worker, прекращает рост размера на первом сбое и не перезаписывает существующий отчёт:
 

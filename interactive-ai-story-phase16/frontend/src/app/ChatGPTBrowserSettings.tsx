@@ -4,7 +4,7 @@ type Props = { reasoning: BrowserReasoning; retries: number; onReasoning: (value
 export function ChatGPTBrowserSettings({ reasoning, retries, onReasoning, onRetries }: Props) {
  return <fieldset className="image-output-settings">
   <legend>ChatGPT в браузере</legend>
-  <p className="muted">Каждый запрос открывается в новом временном чате с GPT-6.2. По умолчанию мост отправляет запросы до 65 536 символов включительно обычным текстом, а более длинные — одним TXT с полным контекстом. Для обоих форматов подходит worker 0.4.2.</p>
+  <p className="muted">Каждый запрос открывается в новом временном чате с GPT-6.2. По умолчанию мост отправляет запросы до 65 536 символов включительно обычным текстом, а более длинные — одним TXT с полным контекстом. Для обоих форматов подходит worker 0.4.3.</p>
   <label>Сила рассуждения<select value={reasoning} onChange={event => onReasoning(event.target.value as BrowserReasoning)}>
    <option value="none">Instant — быстрый ответ</option><option value="medium">Medium — средняя</option><option value="high">High — высокая</option>
   </select></label>

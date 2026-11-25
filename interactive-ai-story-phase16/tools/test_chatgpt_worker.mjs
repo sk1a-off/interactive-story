@@ -118,6 +118,7 @@ function fixture(options={}){
  w.GM_xmlhttpRequest=r=>{
   const path=new URL(r.url).pathname,body=JSON.parse(r.data);requests.push({path,body});
   if(path==='/send'&&options.lostAuthorization){queueMicrotask(()=>r.ontimeout());return;}
+  if(path==='/send'&&options.leaveTemporaryDuringAuthorization)w.history.replaceState(null,'','/');
   if(path==='/send'&&options.fileDuringAuthorization)unexpectedFile();
   if(path==='/send'&&options.removeFileDuringAuthorization)w.document.querySelector('#upload-card')?.remove();
   if(path==='/send'&&options.stopDuringAuthorization)w.document.querySelector('#story-chatgpt-bridge button').click();
@@ -129,6 +130,11 @@ function fixture(options={}){
  };
  w.document.querySelector('button[aria-label="Отправить"]').onclick=()=>{
   clicks++;
+  if(options.replyRoute){
+   w.history.replaceState(null,'',options.replyRoute);
+   w.document.querySelector('header').textContent='Chat';
+   w.document.querySelector('[aria-label="Выйти из режима временного чата"]').remove();
+  }
   const user=w.document.createElement('div');const heading=w.document.createElement('h4');heading.dataset.conversationRole='user';
   const bubble=w.document.createElement('div');bubble.dataset.userMessageBubble='true';const content=w.document.createElement('div');content.dataset.searchResultTarget='';content.textContent=options.wrongUser?'unrelated prompt':options.truncatedMessage?j.prompt.slice(0,10240):j.prompt;bubble.append(content);if(options.expandableMessage||options.truncatedMessage){const more=w.document.createElement('button');more.textContent='Показать ещё';more.onclick=()=>{expansionClicks++;if(options.truncatedMessage&&!options.expansionBlocked){content.textContent=options.splitExpanded?j.prompt.slice(0,10240):j.prompt;if(options.splitExpanded){const rest=w.document.createElement('div');rest.dataset.searchResultTarget='';rest.textContent=j.prompt.slice(10240);bubble.insertBefore(rest,more);}}more.textContent='Показать меньше';};bubble.append(more);}user.append(heading,bubble);
   if(options.attachment){const card=w.document.querySelector('#upload-card');if(card&&!options.sentFileMissing)user.append(card);else card?.remove();}
@@ -139,6 +145,12 @@ function fixture(options={}){
   w.document.querySelector('#transcript').append(user,assistant,copy);
   if(options.externalAnswer)w.document.querySelector('#transcript').append(answer);
   if(options.streamingEmpty){const stop=w.document.createElement('button');stop.setAttribute('aria-label','Stop generating');assistant.append(stop);}
+  if(options.routeAfterFirstRead){
+   const stop=w.document.createElement('button');
+   stop.setAttribute('aria-label','Stop generating');
+   assistant.append(stop);
+   w.setTimeout(()=>{w.history.replaceState(null,'',options.routeAfterFirstRead);stop.remove();},1000);
+  }
   if(options.userCopyOnly){user.append(copy);}
   if(options.readable&&options.fragmentedInline){
    content.replaceChildren();
@@ -244,7 +256,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.4.2');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.4.3');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -376,5 +388,34 @@ test('refuse disabled 6.2 Instant even when the old Instant option is available'
   await until(()=>f.requests.some(r=>r.path==='/fail'));
   assert.equal(f.clicks,0);
   assert.ok(!f.requests.some(r=>r.path==='/send'));
+ }finally{f.close();}
+});
+
+for(const options of [
+ {replyRoute:'/'},
+ {replyRoute:'/c/conversation-a',readable:true,rawEnvelope:true,truncatedMessage:true},
+ {replyRoute:'/c/conversation-a',attachment:true},
+ {replyRoute:'/',routeAfterFirstRead:'/c/conversation-a'},
+])test('collect the correlated answer when the temporary indicator disappears '+JSON.stringify(options),async()=>{
+ const f=fixture(options);
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  assert.equal(f.clicks,1);
+  assert.ok(!f.requests.some(r=>r.path==='/fail'));
+  assert.equal(f.requests.find(r=>r.path==='/result').body.reply,'{"probe_id":"job-id","ok":true}');
+ }finally{f.close();}
+});
+for(const options of [
+ {replyRoute:'/share/other'},
+ {replyRoute:'/c/ordinary?temporary-chat=false'},
+ {replyRoute:'/c/conversation-a',routeAfterFirstRead:'/c/conversation-b'},
+ {replyRoute:'/c/conversation-a',wrongUser:true},
+ {leaveTemporaryDuringAuthorization:true},
+])test('reject an unrelated response or loss of the temporary chat before clicking '+JSON.stringify(options),async()=>{
+ const f=fixture(options);
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/fail'));
+  assert.equal(f.clicks,options.leaveTemporaryDuringAuthorization?0:1);
+  assert.ok(!f.requests.some(r=>r.path==='/result'));
  }finally{f.close();}
 });
