@@ -19,11 +19,11 @@ func TestTextOnlyRequiresCompatibleWorkerAndNoAttachmentProof(t *testing.T) {
 		b.ServeHTTP(w, r)
 		return w
 	}
-	b.workers["worker-old"] = workerState{Version: "0.4.0", Status: "ready", Seen: b.now()}
-	if w := request(context.Background()); w.Code != 503 || w.Header().Get("X-Story-Bridge-Worker-Version") != "0.4.1" {
+	b.workers["worker-old"] = workerState{Version: "0.4.1", Status: "ready", Seen: b.now()}
+	if w := request(context.Background()); w.Code != 503 || w.Header().Get("X-Story-Bridge-Worker-Version") != chatGPTWorkerVersion {
 		t.Fatal("old worker allowed text-only job", w.Code)
 	}
-	b.workers["worker-new"] = workerState{Version: "0.4.1", Status: "ready", Seen: b.now()}
+	b.workers["worker-new"] = workerState{Version: chatGPTWorkerVersion, Status: "ready", Seen: b.now()}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	done := make(chan *httptest.ResponseRecorder, 1)
@@ -32,15 +32,15 @@ func TestTextOnlyRequiresCompatibleWorkerAndNoAttachmentProof(t *testing.T) {
 	if !j.TextOnly || j.Attachment != nil || j.MessageFormat != "readable-json-v3" || !strings.Contains(j.Prompt, "Проверить текст") {
 		t.Fatal("wrong text envelope")
 	}
-	if w := call(b, "/claim", map[string]string{"worker": "worker-old", "version": "0.4.0"}); w.Code != 204 {
+	if w := call(b, "/claim", map[string]string{"worker": "worker-old", "version": "0.4.1"}); w.Code != 204 {
 		t.Fatal("old worker claimed strict text")
 	}
-	w := call(b, "/claim", map[string]string{"worker": "worker-new", "version": "0.4.1"})
+	w := call(b, "/claim", map[string]string{"worker": "worker-new", "version": chatGPTWorkerVersion})
 	var leased job
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &leased) != nil {
 		t.Fatal(w.Code)
 	}
-	body := map[string]any{"worker": leased.Worker, "id": leased.ID, "lease": leased.Lease, "version": "0.4.1"}
+	body := map[string]any{"worker": leased.Worker, "id": leased.ID, "lease": leased.Lease, "version": chatGPTWorkerVersion}
 	if w := call(b, "/send", body); w.Code != 409 {
 		t.Fatal("unverified text authorized", w.Code)
 	}

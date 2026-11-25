@@ -22,10 +22,10 @@ func TestTXTLeaseRequiresNewWorkerAndExactUploadAcknowledgement(t *testing.T) {
 		return w
 	}
 	b.workers["worker-old"] = workerState{Version: "0.3.0", Status: "ready", Seen: b.now()}
-	if w := request(context.Background()); w.Code != 503 || w.Header().Get("X-Story-Bridge-Worker-Version") != "0.4.0" {
+	if w := request(context.Background()); w.Code != 503 || w.Header().Get("X-Story-Bridge-Worker-Version") != chatGPTWorkerVersion {
 		t.Fatal("file job allowed old worker", w.Code)
 	}
-	b.workers["worker-new"] = workerState{Version: "0.4.0", Status: "ready", Seen: b.now()}
+	b.workers["worker-new"] = workerState{Version: chatGPTWorkerVersion, Status: "ready", Seen: b.now()}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	done := make(chan *httptest.ResponseRecorder, 1)
@@ -41,7 +41,7 @@ func TestTXTLeaseRequiresNewWorkerAndExactUploadAcknowledgement(t *testing.T) {
 	if w := call(b, "/claim", map[string]string{"worker": "worker-old", "version": "0.3.0"}); w.Code != 204 {
 		t.Fatal("old worker leased TXT")
 	}
-	w := call(b, "/claim", map[string]string{"worker": "worker-new", "version": "0.4.0"})
+	w := call(b, "/claim", map[string]string{"worker": "worker-new", "version": chatGPTWorkerVersion})
 	var claimed job
 	if w.Code != 200 || json.Unmarshal(w.Body.Bytes(), &claimed) != nil {
 		t.Fatal("new worker unable to claim", w.Code)

@@ -33,7 +33,7 @@ func TestAutoFormatRoutesOnlyTextOverLimitToTXT(t *testing.T) {
 			base, _, _ := readableMessage(in, strings.Repeat("0", len(secret())))
 			story := strings.Replace(user, "Конец", strings.Repeat("А", tc.characters-utf16Characters(base))+"Конец", 1)
 			in.Messages[1].Content = story
-			b.workers["worker-auto"] = workerState{Version: "0.4.1", Status: "ready", Seen: b.now()}
+			b.workers["worker-auto"] = workerState{Version: chatGPTWorkerVersion, Status: "ready", Seen: b.now()}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			data, err := json.Marshal(in)

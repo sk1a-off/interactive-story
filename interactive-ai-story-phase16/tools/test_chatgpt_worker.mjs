@@ -56,7 +56,8 @@ function fixture(options={}){
   picker.replaceChildren(hidden,hiddenOld,visible);
  }
  let openingAttempts=0;
- let selectedModel=options.modelAlreadySelected?'GPT-6':'GPT-5.6 Sol';
+ const preferredModel = options.latestModel ? 'Latest' : options.shortModel ? '6.2' : 'GPT‑6.2';
+ let selectedModel=options.modelAlreadySelected?preferredModel:'GPT-6';
  let effort=options.effortInitially??(options.instantInitially?0:1);
  const modeLabel=()=>['Instant','Medium','High'][effort];
  function renderSimple(menu){
@@ -64,9 +65,17 @@ function fixture(options={}){
   const toggle=w.document.createElement('div');toggle.dataset.modelPickerViewToggle='true';toggle.textContent=modeLabel();menu.append(toggle);
   toggle.onclick=()=>{
    menu.replaceChildren();
-   if(options.modelUnavailable)return;
-   const model=w.document.createElement('div');model.setAttribute('role','menuitemradio');model.setAttribute('aria-checked',String(selectedModel==='GPT-6'));model.textContent='GPT-6';menu.append(model);
-   model.onclick=()=>{if(!options.modelSelectionIgnored)selectedModel='GPT-6';renderSimple(menu);};
+   for (const name of ['GPT-6', ...(options.modelUnavailable ? [] : [preferredModel])]) {
+    const model = w.document.createElement('div');
+    model.setAttribute('role','menuitemradio');
+    model.setAttribute('aria-checked',String(selectedModel===name));
+    model.textContent = name;
+    menu.append(model);
+    model.onclick = () => {
+     if(!options.modelSelectionIgnored)selectedModel=name;
+     renderSimple(menu);
+    };
+   }
   };
   const power=w.document.createElement('div');power.dataset.reasoningSlider='true';
   const track=w.document.createElement('div');track.dataset.modelPickerPowerSlider='';
@@ -79,7 +88,22 @@ function fixture(options={}){
   const existing=w.document.querySelector('[role="menu"]');
   if(existing){if(!options.triggerClickCannotClose){existing.remove();picker.setAttribute('aria-expanded','false');}return;}
   picker.setAttribute('aria-expanded','true');
-  const menu=w.document.createElement('div');menu.setAttribute('role','menu');renderSimple(menu);w.document.body.append(menu);
+  const menu=w.document.createElement('div');menu.setAttribute('role','menu');if(options.directModel){
+   for(const name of ['GPT-6 Instant','6.2 Instant','6.2 Medium']){
+    const item=w.document.createElement('div');
+    item.setAttribute('role','menuitemradio');
+    item.setAttribute('aria-checked',String(selectedModel===name));
+    item.textContent=name;
+    if(name==='6.2 Instant'&&options.directDisabled)item.setAttribute('aria-disabled','true');
+    item.onclick=()=>{
+     selectedModel=name;
+     closeMenu();
+     updatePicker(options.directModeOnly?'Instant':name);
+    };
+    menu.append(item);
+   }
+  }else{renderSimple(menu);}
+  w.document.body.append(menu);
  };
  if(options.triggerPointerOnly){picker.onclick=()=>{};picker.addEventListener('pointerdown',togglePicker);}else{picker.onclick=togglePicker;}
  picker.addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&!w.document.querySelector('[role="menu"]')&&++openingAttempts>(options.ignoredOpens||0))togglePicker();});
@@ -140,7 +164,7 @@ function fixture(options={}){
  if(options.withoutMarker)w.history.replaceState(null,'','/?temporary-chat=true');
  if(options.registeredWorker)w.sessionStorage.setItem('story-chatgpt-probe-uuid','a624163e-3125-4bd7-bd3d-29aab5da74da');
  w.eval(source);
- return {w,requests,get clicks(){return clicks;},get expansionClicks(){return expansionClicks;},get personalizationClicks(){return personalizationClicks;},close:()=>dom.window.close()};
+ return {w,requests,get selectedModel(){return selectedModel;},get clicks(){return clicks;},get expansionClicks(){return expansionClicks;},get personalizationClicks(){return personalizationClicks;},close:()=>dom.window.close()};
 }
 test('one send and completed reply correlated to current lease',async()=>{
  const f=fixture({personalized:true});try{await until(()=>f.requests.some(r=>r.path==='/result')).catch(e=>{throw Error(e.message+' '+f.w.document.querySelector('#story-chatgpt-bridge').textContent+' '+JSON.stringify(f.requests));});assert.equal(f.clicks,1);assert.deepEqual(f.requests.filter(r=>r.path!=='/heartbeat').map(r=>r.path),['/claim','/send','/result']);const body=f.requests.at(-1).body;assert.equal(body.id,'job-id');assert.equal(body.lease,'lease-secret');}finally{f.close();}
@@ -183,7 +207,7 @@ for(const options of [{personalized:true},{noPersonalizationControl:true}])test(
  }finally{f.close();}
 });
 
-for(const options of [{noAnnouncement:true},{noAnnouncement:true,instantInitially:true,modelAlreadySelected:true,menuInitiallyOpen:true}])test('verify GPT-6 before the model list unmounts, then Instant without a live announcement '+JSON.stringify(options),async()=>{
+for(const options of [{noAnnouncement:true},{noAnnouncement:true,instantInitially:true,modelAlreadySelected:true,menuInitiallyOpen:true}])test('verify GPT-6.2 before the model list unmounts, then Instant without a live announcement '+JSON.stringify(options),async()=>{
  const f=fixture(options);
  try{
   await until(()=>f.requests.some(r=>r.path==='/result'));
@@ -220,7 +244,7 @@ test('control diagnostics exclude the prompt and transport credentials',async()=
   const text=f.w.document.querySelector('#story-chatgpt-bridge p').textContent;
   assert.ok(text.startsWith('Диагностика: '));
   const report=JSON.parse(text.slice('Диагностика: '.length));
-  assert.equal(report.version,'0.4.1');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
+  assert.equal(report.version,'0.4.2');assert.equal(report.lastModelFailure.stage,'закрытие меню модели');
   assert.equal(report.current.picker.text,'Medium');
   for(const secret of ['synthetic prompt','lease-secret','a'.repeat(48)])assert.ok(!text.includes(secret));
  }finally{f.close();}
@@ -335,4 +359,22 @@ for(const mode of ['autoAttachment','asyncAutoAttachment','fileDuringAuthorizati
 });
 test('Text: explicitly verifies no files without calling the attachment endpoint',async()=>{
  const f=fixture({textOnly:true,readable:true,rawEnvelope:true});try{await until(()=>f.requests.some(r=>r.path==='/result'));assert.equal(f.clicks,1);assert.equal(f.requests.find(r=>r.path==='/send').body.textOnlyVerified,true);assert.equal(f.requests.filter(r=>r.path==='/attachment').length,0);}finally{f.close();}
+});
+
+for(const options of [{},{shortModel:true},{latestModel:true},{directModel:true},{directModel:true,directModeOnly:true}])test('select GPT-6.2 Instant ahead of the old version '+JSON.stringify(options),async()=>{
+ const f = fixture(options);
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/result'));
+  const expected = options.directModel ? '6.2 Instant' : options.latestModel ? 'Latest' : options.shortModel ? '6.2' : 'GPT‑6.2';
+  assert.equal(f.selectedModel,expected);
+  assert.equal(f.clicks,1);
+ }finally{f.close();}
+});
+test('refuse disabled 6.2 Instant even when the old Instant option is available',async()=>{
+ const f = fixture({directModel:true,directDisabled:true});
+ try{
+  await until(()=>f.requests.some(r=>r.path==='/fail'));
+  assert.equal(f.clicks,0);
+  assert.ok(!f.requests.some(r=>r.path==='/send'));
+ }finally{f.close();}
 });

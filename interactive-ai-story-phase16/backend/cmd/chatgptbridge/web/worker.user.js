@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Interactive Story ChatGPT Probe Worker
 // @namespace    local.interactive-story
-// @version      0.4.1
+// @version      0.4.2
 // @description  Story generation and probes, one fresh Temporary Chat per request.
 // @match        https://chatgpt.com/*
 // @grant        GM_xmlhttpRequest
@@ -13,7 +13,7 @@
 // ==/UserScript==
 (() => {
   'use strict';
-  const VERSION='0.4.1';
+  const VERSION='0.4.2';
   const API='http://127.0.0.1:8791';
   const MARK='#story-bridge-worker';
   const FRESH='https://chatgpt.com/?temporary-chat=true'+MARK;
@@ -76,9 +76,21 @@
       (!!exactButton(['Выйти из режима временного чата','Exit temporary chat']) ||
        /Временный чат|Temporary Chat/i.test(document.querySelector('main header')?.innerText||''));
   }
-  function reasoningLabel(effort="none"){
-    const picker=exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
-    return picker&&controlText(picker)===({none:'Instant',medium:'Medium',high:'High'}[effort]);
+  const modelNames = ['gpt-6.2', '6.2'];
+  const modes = {none:{index:0,label:'Instant'},medium:{index:1,label:'Medium'},high:{index:2,label:'High'}};
+  const modelName = text => text.replace(/[‐‑‒–−]/g,'-').replace(/\s+/g,' ').trim().toLowerCase();
+  const getPicker = () => exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
+  function modeWithModel(text, mode){
+    const selected = modelName(text);
+    const name = modelName(mode.label);
+    return modelNames.some(model => selected === `${model} ${name}` || selected === `${name} ${model}`);
+  }
+  function reasoningLabel(effort='none', requireModel=false){
+    const mode = modes[effort];
+    const picker = getPicker();
+    if(!picker || !mode)return false;
+    const text = controlText(picker);
+    return modeWithModel(text,mode) || (!requireModel && modelName(text) === modelName(mode.label));
   }
   function fileNameSeen(root,file,excluded=[]){
     if(!root||!file)return false;
@@ -203,15 +215,46 @@
     element.dispatchEvent(new MouseEvent('mouseup',{bubbles:true,composed:true,button:0,buttons:0}));
     element.click();
   }
-  async function selectGPT6(effort="none"){
-    const targetMode={none:{index:0,label:'Instant'},medium:{index:1,label:'Medium'},high:{index:2,label:'High'}}[effort];
+  async function selectChatModel(effort='none'){
+    const targetMode = modes[effort];
     if(!targetMode)throw Error('Неизвестная сила рассуждения');
-    const getPicker=()=>exactButton(['Выбрать модель ChatGPT','Choose ChatGPT model']);
-    const visible=selector=>[...document.querySelectorAll(selector)].find(e=>!e.closest('[inert],[aria-hidden="true"]'));
-    const getToggle=()=>visible('[data-model-picker-view-toggle]');
-    const getModel=()=>[...document.querySelectorAll('[role="menuitemradio"]')].find(e=>!e.closest('[inert],[aria-hidden="true"]')&&controlText(e)==='GPT-6'&&e.getAttribute('aria-disabled')!=='true');
-    const activeMenu=()=>[...document.querySelectorAll('[role="menu"]')].find(e=>e.getAttribute('data-state')!=='closed'&&!e.closest('[inert],[aria-hidden="true"]')&&e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider]'));
-    const menuClosed=()=>getPicker()?.getAttribute('aria-expanded')!=='true'&&!activeMenu();
+    const visible = selector => [...document.querySelectorAll(selector)].find(e => !e.closest('[inert],[aria-hidden="true"]'));
+    const getToggle = () => visible('[data-model-picker-view-toggle]');
+    const optionSelector = '[role="menuitemradio"],[role="menuitem"],[role="option"]';
+    const activeMenu = () => {
+      const picker = getPicker();
+      if(picker?.getAttribute('aria-expanded') !== 'true')return null;
+      const menuID = picker.getAttribute('aria-controls');
+      return [...document.querySelectorAll('[role="menu"],[role="listbox"]')].find(e =>
+        (!menuID || e.id === menuID) && e.getAttribute('data-state') !== 'closed' &&
+        !e.closest('[inert],[aria-hidden="true"]') &&
+        e.querySelector('[data-model-picker-view-toggle],[data-reasoning-slider],'+optionSelector));
+    };
+    const options = () => [...activeMenu()?.querySelectorAll(optionSelector) || []].filter(e => !e.closest('[inert],[aria-hidden="true"]'));
+    const optionLabels = e => [e.getAttribute('aria-label') || '',controlText(e),
+      ...[...e.querySelectorAll('span')].map(controlText)].map(modelName);
+    const directOption = () => options().find(e => optionLabels(e).some(text => modeWithModel(text,targetMode)));
+    const familyOption = name => options().find(e => optionLabels(e).includes(name));
+    const selected = e => e && (e.getAttribute('aria-checked') === 'true' || e.getAttribute('aria-selected') === 'true');
+    const activate = e => {
+      if(e.closest('[aria-disabled="true"],[disabled],[data-disabled]'))throw Error('Выбранный пункт недоступен');
+      e.click();
+    };
+    const menuClosed = () => getPicker()?.getAttribute('aria-expanded') !== 'true' && !activeMenu();
+    async function openMenu(){
+      await waitFor(getPicker,15000);
+      for(let attempt=0;attempt<8;attempt++){
+        if(activeMenu())return;
+        const trigger=getPicker();
+        if(trigger&&!trigger.disabled&&trigger.getAttribute('aria-expanded')!=='true'){
+          trigger.focus();
+          for(const type of ['keydown','keyup'])trigger.dispatchEvent(new KeyboardEvent(type,{key:'ArrowDown',code:'ArrowDown',keyCode:40,bubbles:true,composed:true}));
+          if(attempt===3&&trigger.getAttribute('aria-expanded')!=='true')pointerClick(trigger);
+        }
+        await pause(400);
+      }
+      await waitFor(activeMenu,1500);
+    }
     async function closeMenu(){
       if(menuClosed())return;
       // Radix-style triggers can react to pointerdown rather than .click().
@@ -233,54 +276,63 @@
     }
     let stage='открытие меню модели';
     try{
-      const picker=await waitFor(getPicker,15000);
-      // A previous failure or the user may have left the menu open.
-      stage='подтверждение открытия меню модели';
-      // A freshly loaded page can render its controls before event handlers
-      // are ready. ArrowDown requests opening (not a blind toggle).
-      for(let attempt=0;attempt<8;attempt++){
-        const trigger=getPicker();
-        if(trigger?.getAttribute('aria-expanded')==='true'&&activeMenu())break;
-        if(trigger&&!trigger.disabled&&trigger.getAttribute('aria-expanded')!=='true'){
-          trigger.focus();
-          for(const type of ['keydown','keyup'])trigger.dispatchEvent(new KeyboardEvent(type,{key:'ArrowDown',code:'ArrowDown',keyCode:40,bubbles:true,composed:true}));
-          if(attempt===3&&trigger.getAttribute('aria-expanded')!=='true')pointerClick(trigger);
+      await openMenu();
+      stage = 'открытие списка моделей';
+      const families = [...modelNames,'latest','последняя версия','последняя'];
+      if(!directOption() && !families.some(familyOption) && getToggle())getToggle().click();
+      stage = 'выбор GPT-6.2';
+      const choice = await waitFor(() => {
+        const direct = directOption();
+        if(direct)return {direct};
+        const family = families.find(name => familyOption(name));
+        return family && {family};
+      },5000);
+      if(choice.direct){
+        activate(choice.direct);
+        await waitFor(() => reasoningLabel(effort,true) || selected(directOption()) ||
+          (menuClosed() && reasoningLabel(effort)),3000);
+        const requireModel = reasoningLabel(effort,true);
+        if(!requireModel && !selected(directOption())){
+          await openMenu();
+          if(!directOption() && getToggle())getToggle().click();
+          await waitFor(() => selected(directOption()),3000);
         }
-        await pause(400);
+        stage = 'закрытие меню модели';
+        await closeMenu();
+        await waitFor(() => reasoningLabel(effort,requireModel),3000);
+        return {requireModel};
       }
-      await waitFor(()=>getPicker()?.getAttribute('aria-expanded')==='true'&&activeMenu(),1500);
-      stage='открытие списка моделей';
-      (await waitFor(getToggle,5000)).click();
-      stage='выбор GPT-6';
-      let model=await waitFor(getModel,5000);
-      const alreadySelected=model.getAttribute('aria-checked')==='true';
-      model.click();
+      const getChoice = () => familyOption(choice.family);
+      const chosen = getChoice();
+      const alreadySelected = selected(chosen);
+      activate(chosen);
       if(!alreadySelected){
-        // Verify while the model list is visible. Other menu views can unmount it.
-        (await waitFor(getToggle,5000)).click();
-        stage='подтверждение выбранной GPT-6';
-        model=await waitFor(()=>{const e=getModel();return e?.getAttribute('aria-checked')==='true'&&e;},5000);
-        model.click();
+        if(!activeMenu())await openMenu();
+        if(!getChoice() && getToggle())getToggle().click();
+        stage = 'подтверждение выбранной GPT-6.2';
+        await waitFor(() => selected(getChoice()),5000);
+        if(!getToggle())activate(getChoice());
       }
       stage='установка мощности '+targetMode.label;
       const power=await waitFor(()=>visible('[data-reasoning-slider="true"]'),5000);
       const slider=()=>[...document.querySelectorAll('[data-model-picker-power-slider] [role="slider"]')].find(e=>!e.closest('[inert]')&&!e.parentElement.closest('[aria-hidden="true"]'));
-      const selected=()=>{const e=slider();return e&&Number(e.getAttribute('aria-valuenow'))===targetMode.index&&e.getAttribute('aria-valuemin')==='0'&&e.getAttribute('aria-valuemax')==='2';};
+      const selectedMode=()=>{const e=slider();return e&&Number(e.getAttribute('aria-valuenow'))===targetMode.index&&e.getAttribute('aria-valuemin')==='0'&&['2','3'].includes(e.getAttribute('aria-valuemax'));};
       power.focus();
-      for(let i=0;i<5&&!selected();i++){
+      for(let i=0;i<5&&!selectedMode();i++){
         const current=slider();if(!current)throw Error('Не найдена шкала рассуждения');
         const key=Number(current.getAttribute('aria-valuenow'))<targetMode.index?'ArrowRight':'ArrowLeft';
         for(const type of ['keydown','keyup'])power.dispatchEvent(new KeyboardEvent(type,{key,code:key,bubbles:true}));
         await pause(150);
       }
-      await waitFor(()=>selected()&&controlText(getToggle())===targetMode.label,5000);
+      await waitFor(()=>selectedMode()&&(modelName(controlText(getToggle()))===modelName(targetMode.label)||modeWithModel(controlText(getToggle()),targetMode)),5000);
       stage='закрытие меню модели';
       await closeMenu();
       await waitFor(()=>reasoningLabel(effort),3000);
+      return {requireModel:false};
     }catch(e){
       lastModelFailure={stage,...modelSnapshot()};
       try{await closeMenu();}catch{/* Preserve the original failed stage; never send. */}
-      throw Error('GPT-6: '+stage+'. '+(e.message||e));
+      throw Error('GPT-6.2: '+stage+'. '+(e.message||e));
     }
   }
   function editor(){return document.querySelector('[contenteditable="true"][role="textbox"]');}
@@ -322,8 +374,8 @@
         if(!current){show('Готов. Ожидание задания…');await pause(1500);continue;}
         const lease={worker,id:current.id,lease:current.lease};
         sessionStorage.setItem(KEY+'pending',JSON.stringify(lease));
-        show('Выбор GPT-6 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8));
-        await selectGPT6(current.reasoningEffort||"none");
+        show('Выбор GPT-6.2 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8));
+        const {requireModel}=await selectChatModel(current.reasoningEffort||'none');
         if(!running||!empty())throw Error('Страница изменилась до отправки.');
         const box=editor();box.focus();
         // Use the browser editing command so the React composer receives a native input event.
@@ -331,11 +383,11 @@
         if(!editorMatches(box,current.prompt))throw Error('Текст поля не совпадает с заданием.');
         if(current.attachment){show('Загружаю TXT · '+current.attachment.bytes+' байт…');await attachText(current.attachment,lease);}else{await prepareTextOnly(box,current.prompt);}
         const send=await waitFor(()=>{const e=exactButton(['Отправить','Send']);return e&&!e.disabled&&e;},5000);
-        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
-        show('GPT-6 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8)+' · ожидание ответа…');
+        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||'none',requireModel)||roles('user').length||roles('assistant').length)throw Error('Проверка перед отправкой не пройдена.');
+        show('GPT-6.2 · '+(current.reasoningEffort||'none')+' · '+current.id.slice(0,8)+' · ожидание ответа…');
         if(!current.attachment)assertTextOnly(box,current.prompt);
         await request('/send',{...lease,...(current.textOnly?{textOnlyVerified:true}:{})}); // A failed/ambiguous authorization NEVER leads to a click or retry.
-        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||"none")||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
+        if(!running||!temporary()||!reasoningLabel(current.reasoningEffort||'none',requireModel)||!editorMatches(box,current.prompt))throw Error('Отправка остановлена после разрешения.');
         if(current.attachment){const state=attachmentState(current.attachment);if(!state.present||state.pending||state.error||state.extra)throw Error('TXT исчез или изменился перед отправкой.');}else{assertTextOnly(box,current.prompt);}
         send.click(); // Exactly one click for this lease.
         let stable='',since=0,emptySince=0,correlationSince=0,expandedBubble=null,emptyReply=false;

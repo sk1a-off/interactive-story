@@ -237,11 +237,8 @@ func (b *bridge) chatCompletions(w http.ResponseWriter, r *http.Request) {
 			b.mu.Unlock()
 			w.Header().Set("X-Story-Bridge-State", "unavailable")
 			required := "0.3.0"
-			if attachment != nil {
-				required = "0.4.0"
-			}
-			if textOnly {
-				required = "0.4.1"
+			if attachment != nil || textOnly {
+				required = chatGPTWorkerVersion
 			}
 			w.Header().Set("X-Story-Bridge-Worker-Version", required)
 			http.Error(w, "Start ChatGPT worker "+required+" before using the browser provider", 503)
